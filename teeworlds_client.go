@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"os"
 	"slices"
 	"time"
 )
@@ -21,20 +22,19 @@ func ctrlToken(myToken []byte) []byte {
 	return data
 }
 
-func pumpNetwork(ch chan []byte) {
-	packet := make([]byte, maxPacksize)
+func getConnection() (net.Conn, error) {
 	conn, err := net.Dial("udp", "127.0.0.1:8303")
 	if err != nil {
 		fmt.Printf("Some error %v", err)
-		return
 	}
+	return conn, err
+}
 
-	// myToken := []byte{0xfe, 0xed, 0xba, 0xbe}
-	myToken := []byte{0x01, 0x02, 0x03, 0x04}
-	conn.Write(ctrlToken(myToken))
+func readNetwork(ch chan []byte, conn net.Conn) {
+	packet := make([]byte, maxPacksize)
 
 	for {
-		_, err = bufio.NewReader(conn).Read(packet)
+		_, err := bufio.NewReader(conn).Read(packet)
 		if err == nil {
 			ch <- packet
 		} else {
@@ -46,25 +46,35 @@ func pumpNetwork(ch chan []byte) {
 	conn.Close()
 }
 
-func onMessage(data []byte) {
+func onMessage(data []byte, conn net.Conn) {
 	if data[0] == msgCtrlToken {
 		serverToken := data[8:12]
 		fmt.Printf("got token %v\n", serverToken)
+		conn.Write([]byte{0xff, 0xff, 0xff})
 	} else {
-		fmt.Println("unknown message")
+		fmt.Printf("unknown message: %v\n", data)
 	}
 }
 
 func main() {
 	ch := make(chan []byte, maxPacksize)
 
-	go pumpNetwork(ch)
+	conn, err := getConnection()
+	if err != nil {
+		fmt.Printf("error connecting %v\n", err)
+		os.Exit(1)
+	}
+
+	go readNetwork(ch, conn)
+
+	myToken := []byte{0x01, 0x02, 0x03, 0x04}
+	conn.Write(ctrlToken(myToken))
 
 	for {
 		time.Sleep(10_000_000)
 		select {
 		case msg := <-ch:
-			onMessage(msg)
+			onMessage(msg, conn)
 		default:
 			// do nothing
 		}
