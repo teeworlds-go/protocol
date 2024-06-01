@@ -19,6 +19,7 @@ const (
 	msgCtrlClose   = 0x04
 
 	msgSysMapChange = 0x05
+	msgGameMotd     = 0x02
 )
 
 func ctrlToken(myToken []byte) []byte {
@@ -63,8 +64,6 @@ func (client TeeworldsClient) sendCtrlMsg(data []byte) {
 	flags := []byte{0x04, 0x00, 0x00}
 	packet := slices.Concat(flags, client.serverToken[:], data)
 
-	// fmt.Printf("sending %v\n", packet)
-
 	client.conn.Write(packet)
 }
 
@@ -92,6 +91,39 @@ func (client TeeworldsClient) sendInfo() {
 	client.conn.Write(packet)
 }
 
+func (client TeeworldsClient) sendStartInfo() {
+	info := []byte{
+		0x41, 0x14, 0x03, 0x36, 0x67, 0x6f, 0x70, 0x68, 0x65, 0x72, 0x00, 0x00, 0x40, 0x67, 0x72, 0x65,
+		0x65, 0x6e, 0x73, 0x77, 0x61, 0x72, 0x64, 0x00, 0x64, 0x75, 0x6f, 0x64, 0x6f, 0x6e, 0x6e, 0x79,
+		0x00, 0x00, 0x73, 0x74, 0x61, 0x6e, 0x64, 0x61, 0x72, 0x64, 0x00, 0x73, 0x74, 0x61, 0x6e, 0x64,
+		0x61, 0x72, 0x64, 0x00, 0x73, 0x74, 0x61, 0x6e, 0x64, 0x61, 0x72, 0x64, 0x00, 0x01, 0x01, 0x00,
+		0x00, 0x00, 0x00, 0x80, 0xfc, 0xaf, 0x05, 0xeb, 0x83, 0xd0, 0x0a, 0x80, 0xfe, 0x07, 0x80, 0xfe,
+		0x07, 0x80, 0xfe, 0x07, 0x80, 0xfe, 0x07,
+	}
+
+	packet := slices.Concat(
+		[]byte{0x00, 0x04, 0x01},
+		client.serverToken[:],
+		info,
+	)
+
+	client.conn.Write(packet)
+}
+
+func (client TeeworldsClient) sendEnterGame() {
+	enter := []byte{
+		0x40, 0x01, 0x04, 0x27,
+	}
+
+	packet := slices.Concat(
+		[]byte{0x00, 0x07, 0x01},
+		client.serverToken[:],
+		enter,
+	)
+
+	client.conn.Write(packet)
+}
+
 func isCtrlMsg(data []byte) bool {
 	return data[0] == 0x04
 }
@@ -99,6 +131,24 @@ func isCtrlMsg(data []byte) bool {
 func isMapChange(data []byte) bool {
 	// unsafe and trol
 	return data[10] == msgSysMapChange
+}
+
+func isCompressed(data []byte) bool {
+	// we don't talk about it
+	return data[0] == 0x10
+}
+
+func numberOfChunks(data []byte) int {
+	return int(data[2])
+}
+
+func isReadyToEnter(data []byte) bool {
+	return !isCompressed(data) && numberOfChunks(data) == 3
+}
+
+func isConReady(data []byte) bool {
+	// unsafe and yemDX level troling
+	return isCompressed(data) // data[10] == msgSysMapChange
 }
 
 func byteSliceToString(s []byte) string {
@@ -115,7 +165,7 @@ func (client *TeeworldsClient) onMessage(data []byte) {
 		fmt.Printf("got ctrl msg %d\n", ctrlMsg)
 		if ctrlMsg == msgCtrlToken {
 			copy(client.serverToken[:], data[8:12])
-			fmt.Printf("got server token %v\n", client.serverToken)
+			fmt.Printf("got server token %x\n", client.serverToken)
 			client.sendCtrlMsg(slices.Concat([]byte{msgCtrlConnect}, client.clientToken[:]))
 		} else if ctrlMsg == msgCtrlAccept {
 			fmt.Println("got accept")
@@ -129,14 +179,20 @@ func (client *TeeworldsClient) onMessage(data []byte) {
 
 			os.Exit(0)
 		} else {
-			fmt.Printf("unknown control message: %v\n", data)
+			fmt.Printf("unknown control message: %x\n", data)
 		}
 	} else if isMapChange(data) {
 		fmt.Println("got map change")
 		client.sendReady()
 
+	} else if isConReady(data) {
+		fmt.Println("got ready")
+		client.sendStartInfo()
+	} else if isReadyToEnter(data) {
+		fmt.Println("got ready to enter")
+		client.sendEnterGame()
 	} else {
-		fmt.Printf("unknown message: %v\n", data)
+		fmt.Printf("unknown message: %x\n", data)
 	}
 }
 
