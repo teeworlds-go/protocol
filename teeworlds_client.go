@@ -37,7 +37,7 @@ func getConnection() (net.Conn, error) {
 	return conn, err
 }
 
-func readNetwork(ch chan []byte, conn net.Conn) {
+func readNetwork(ch chan<- []byte, conn net.Conn) {
 	packet := make([]byte, maxPacksize)
 
 	for {
@@ -54,14 +54,14 @@ func readNetwork(ch chan []byte, conn net.Conn) {
 }
 
 type TeeworldsClient struct {
-	clientToken []byte
-	serverToken []byte
+	clientToken [4]byte
+	serverToken [4]byte
 	conn        net.Conn
 }
 
 func (client TeeworldsClient) sendCtrlMsg(data []byte) {
 	flags := []byte{0x04, 0x00, 0x00}
-	packet := slices.Concat(flags, client.serverToken, data)
+	packet := slices.Concat(flags, client.serverToken[:], data)
 
 	// fmt.Printf("sending %v\n", packet)
 
@@ -71,7 +71,7 @@ func (client TeeworldsClient) sendCtrlMsg(data []byte) {
 func (client TeeworldsClient) sendReady() {
 	packet := slices.Concat(
 		[]byte{0x00, 0x01, 0x01},
-		client.serverToken,
+		client.serverToken[:],
 		[]byte{0x40, 0x01, 0x02, 0x25},
 	)
 	client.conn.Write(packet)
@@ -85,7 +85,7 @@ func (client TeeworldsClient) sendInfo() {
 
 	packet := slices.Concat(
 		[]byte{0x00, 0x00, 0x01},
-		client.serverToken,
+		client.serverToken[:],
 		info,
 	)
 
@@ -114,9 +114,9 @@ func (client *TeeworldsClient) onMessage(data []byte) {
 		ctrlMsg := data[7]
 		fmt.Printf("got ctrl msg %d\n", ctrlMsg)
 		if ctrlMsg == msgCtrlToken {
-			client.serverToken = data[8:12]
-			fmt.Printf("got token %v\n", client.serverToken)
-			client.sendCtrlMsg(slices.Concat([]byte{msgCtrlConnect}, client.clientToken))
+			copy(client.serverToken[:], data[8:12])
+			fmt.Printf("got server token %v\n", client.serverToken)
+			client.sendCtrlMsg(slices.Concat([]byte{msgCtrlConnect}, client.clientToken[:]))
 		} else if ctrlMsg == msgCtrlAccept {
 			fmt.Println("got accept")
 			client.sendInfo()
@@ -149,15 +149,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	client := TeeworldsClient{
-		clientToken: []byte{0x01, 0x02, 0x03, 0x04},
-		serverToken: []byte{0xff, 0xff, 0xff, 0xff},
+	client := &TeeworldsClient{
+		clientToken: [4]byte{0x01, 0x02, 0x03, 0x04},
+		serverToken: [4]byte{0xff, 0xff, 0xff, 0xff},
 		conn:        conn,
 	}
 
 	go readNetwork(ch, client.conn)
 
-	conn.Write(ctrlToken(client.clientToken))
+	conn.Write(ctrlToken(client.clientToken[:]))
 
 	for {
 		time.Sleep(10_000_000)
