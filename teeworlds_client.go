@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"net"
 	"os"
@@ -100,6 +101,14 @@ func isMapChange(data []byte) bool {
 	return data[10] == msgSysMapChange
 }
 
+func byteSliceToString(s []byte) string {
+	n := bytes.IndexByte(s, 0)
+	if n >= 0 {
+		s = s[:n]
+	}
+	return string(s)
+}
+
 func (client *TeeworldsClient) onMessage(data []byte) {
 	if isCtrlMsg(data) {
 		ctrlMsg := data[7]
@@ -112,12 +121,12 @@ func (client *TeeworldsClient) onMessage(data []byte) {
 			fmt.Println("got accept")
 			client.sendInfo()
 		} else if ctrlMsg == msgCtrlClose {
-			if (len(data) > 8) {
-				reason := data[8:]
-				fmt.Printf("disconnected (%s)\n", reason)
-			} else {
-				fmt.Println("disconnected")
-			}
+			// TODO: get length from packet header to determine if a reason is set or not
+			// len(data) -> is 1400 (maxPacketLen)
+
+			reason := byteSliceToString(data[8:])
+			fmt.Printf("disconnected (%s)\n", reason)
+
 			os.Exit(0)
 		} else {
 			fmt.Printf("unknown control message: %v\n", data)
