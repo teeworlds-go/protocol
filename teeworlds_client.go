@@ -10,8 +10,14 @@ import (
 )
 
 const (
-	maxPacksize  = 1400
-	msgCtrlToken = 0x04
+	maxPacksize = 1400
+
+	msgCtrlConnect = 0x01
+	msgCtrlAccept  = 0x02
+	msgCtrlToken   = 0x05
+	msgCtrlClose   = 0x04
+
+	msgSysMapChange = 0x05
 )
 
 func ctrlToken(myToken []byte) []byte {
@@ -46,11 +52,80 @@ func readNetwork(ch chan []byte, conn net.Conn) {
 	conn.Close()
 }
 
-func onMessage(data []byte, conn net.Conn) {
-	if data[0] == msgCtrlToken {
-		serverToken := data[8:12]
-		fmt.Printf("got token %v\n", serverToken)
-		conn.Write([]byte{0xff, 0xff, 0xff})
+type TeeworldsClient struct {
+	clientToken []byte
+	serverToken []byte
+	conn        net.Conn
+}
+
+func (client TeeworldsClient) sendCtrlMsg(data []byte) {
+	flags := []byte{0x04, 0x00, 0x00}
+	packet := slices.Concat(flags, client.serverToken, data)
+
+	// fmt.Printf("sending %v\n", packet)
+
+	client.conn.Write(packet)
+}
+
+func (client TeeworldsClient) sendReady() {
+	packet := slices.Concat(
+		[]byte{0x00, 0x01, 0x01},
+		client.serverToken,
+		[]byte{0x40, 0x01, 0x02, 0x25},
+	)
+	client.conn.Write(packet)
+}
+
+func (client TeeworldsClient) sendInfo() {
+	info := []byte{0x40, 0x28, 0x01, 0x03, 0x30, 0x2E, 0x37, 0x20, 0x38, 0x30, 0x32, 0x66,
+		0x31, 0x62, 0x65, 0x36, 0x30, 0x61, 0x30, 0x35, 0x36, 0x36, 0x35, 0x66,
+		0x00, 0x6D, 0x79, 0x5F, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6F, 0x72, 0x64,
+		0x5F, 0x31, 0x32, 0x33, 0x00, 0x85, 0x1C, 0x00}
+
+	packet := slices.Concat(
+		[]byte{0x00, 0x00, 0x01},
+		client.serverToken,
+		info,
+	)
+
+	client.conn.Write(packet)
+}
+
+func isCtrlMsg(data []byte) bool {
+	return data[0] == 0x04
+}
+
+func isMapChange(data []byte) bool {
+	// unsafe and trol
+	return data[10] == msgSysMapChange
+}
+
+func (client *TeeworldsClient) onMessage(data []byte) {
+	if isCtrlMsg(data) {
+		ctrlMsg := data[7]
+		fmt.Printf("got ctrl msg %d\n", ctrlMsg)
+		if ctrlMsg == msgCtrlToken {
+			client.serverToken = data[8:12]
+			fmt.Printf("got token %v\n", client.serverToken)
+			client.sendCtrlMsg(slices.Concat([]byte{msgCtrlConnect}, client.clientToken))
+		} else if ctrlMsg == msgCtrlAccept {
+			fmt.Println("got accept")
+			client.sendInfo()
+		} else if ctrlMsg == msgCtrlClose {
+			if (len(data) > 8) {
+				reason := data[8:]
+				fmt.Printf("disconnected (%s)\n", reason)
+			} else {
+				fmt.Println("disconnected")
+			}
+			os.Exit(0)
+		} else {
+			fmt.Printf("unknown control message: %v\n", data)
+		}
+	} else if isMapChange(data) {
+		fmt.Println("got map change")
+		client.sendReady()
+
 	} else {
 		fmt.Printf("unknown message: %v\n", data)
 	}
@@ -65,16 +140,21 @@ func main() {
 		os.Exit(1)
 	}
 
-	go readNetwork(ch, conn)
+	client := TeeworldsClient{
+		clientToken: []byte{0x01, 0x02, 0x03, 0x04},
+		serverToken: []byte{0xff, 0xff, 0xff, 0xff},
+		conn:        conn,
+	}
 
-	myToken := []byte{0x01, 0x02, 0x03, 0x04}
-	conn.Write(ctrlToken(myToken))
+	go readNetwork(ch, client.conn)
+
+	conn.Write(ctrlToken(client.clientToken))
 
 	for {
 		time.Sleep(10_000_000)
 		select {
 		case msg := <-ch:
-			onMessage(msg, conn)
+			client.onMessage(msg)
 		default:
 			// do nothing
 		}
