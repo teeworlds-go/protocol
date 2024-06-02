@@ -1,4 +1,4 @@
-package teeworlds
+package main
 
 import (
 	"bufio"
