@@ -1,3 +1,6 @@
-# teeworlds_client
+# teeworlds
 
-Me playing around
+A client side network protocol implementation of the game teeworlds.
+
+WORK IN PROGRESS
+

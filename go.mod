@@ -1,3 +1,3 @@
-module github.com/ChillerDragon/teeworlds_client
+module github.com/teeworlds-go/teeworlds
 
 go 1.22.3
