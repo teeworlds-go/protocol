@@ -1,4 +1,4 @@
-package main
+package packet
 
 import (
 	"reflect"
@@ -10,13 +10,13 @@ import (
 
 func TestPackFlagsUnset(t *testing.T) {
 	flags := PacketFlags{
-		connless:    false,
-		compression: false,
-		resend:      false,
-		control:     false,
+		Connless:    false,
+		Compression: false,
+		Resend:      false,
+		Control:     false,
 	}
 
-	got := flags.pack()
+	got := flags.Pack()
 	want := []byte{0b0000}
 
 	if !reflect.DeepEqual(got, want) {
@@ -26,13 +26,13 @@ func TestPackFlagsUnset(t *testing.T) {
 
 func TestPackFlagsCompressionSet(t *testing.T) {
 	flags := PacketFlags{
-		connless:    false,
-		compression: true,
-		resend:      false,
-		control:     false,
+		Connless:    false,
+		Compression: true,
+		Resend:      false,
+		Control:     false,
 	}
 
-	got := flags.pack()
+	got := flags.Pack()
 	want := []byte{0b0100}
 
 	if !reflect.DeepEqual(got, want) {
@@ -42,13 +42,13 @@ func TestPackFlagsCompressionSet(t *testing.T) {
 
 func TestPackFlagsAllSet(t *testing.T) {
 	flags := PacketFlags{
-		connless:    true,
-		compression: true,
-		resend:      true,
-		control:     true,
+		Connless:    true,
+		Compression: true,
+		Resend:      true,
+		Control:     true,
 	}
 
-	got := flags.pack()
+	got := flags.Pack()
 	want := []byte{0b1111}
 
 	if !reflect.DeepEqual(got, want) {
@@ -61,13 +61,13 @@ func TestPackFlagsAllSet(t *testing.T) {
 func TestUnpackFlagsAllSet(t *testing.T) {
 	got := PacketFlags{}
 	want := PacketFlags{
-		connless:    true,
-		compression: true,
-		resend:      true,
-		control:     true,
+		Connless:    true,
+		Compression: true,
+		Resend:      true,
+		Control:     true,
 	}
 
-	got.unpack([]byte{0b00111100})
+	got.Unpack([]byte{0b00111100})
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %v, wanted %v", got, want)
@@ -77,13 +77,13 @@ func TestUnpackFlagsAllSet(t *testing.T) {
 func TestUnpackFlagsControlSet(t *testing.T) {
 	got := PacketFlags{}
 	want := PacketFlags{
-		connless:    false,
-		compression: false,
-		resend:      false,
-		control:     true,
+		Connless:    false,
+		Compression: false,
+		Resend:      false,
+		Control:     true,
 	}
 
-	got.unpack([]byte{0b00000100})
+	got.Unpack([]byte{0b00000100})
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %v, wanted %v", got, want)
@@ -93,13 +93,13 @@ func TestUnpackFlagsControlSet(t *testing.T) {
 func TestUnpackFlagsUnset(t *testing.T) {
 	got := PacketFlags{}
 	want := PacketFlags{
-		connless:    false,
-		compression: false,
-		resend:      false,
-		control:     false,
+		Connless:    false,
+		Compression: false,
+		Resend:      false,
+		Control:     false,
 	}
 
-	got.unpack([]byte{0b00000000})
+	got.Unpack([]byte{0b00000000})
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %v, wanted %v", got, want)
@@ -111,18 +111,18 @@ func TestUnpackFlagsUnset(t *testing.T) {
 func TestUnpackCloseWithReason(t *testing.T) {
 	got := PacketHeader{}
 	want := PacketHeader{
-		flags: PacketFlags{
-			connless:    false,
-			compression: false,
-			resend:      false,
-			control:     true,
+		Flags: PacketFlags{
+			Connless:    false,
+			Compression: false,
+			Resend:      false,
+			Control:     true,
 		},
-		ack:       10,
-		numChunks: 0,
-		token:     [4]byte{0xcf, 0x2e, 0xde, 0x1d},
+		Ack:       10,
+		NumChunks: 0,
+		Token:     [4]byte{0xcf, 0x2e, 0xde, 0x1d},
 	}
 
-	got.unpack(slices.Concat([]byte{0x04, 0x0a, 0x00, 0xcf, 0x2e, 0xde, 0x1d, 0x04}, []byte("shutdown"), []byte{0x00}))
+	got.Unpack(slices.Concat([]byte{0x04, 0x0a, 0x00, 0xcf, 0x2e, 0xde, 0x1d, 0x04}, []byte("shutdown"), []byte{0x00}))
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %v, wanted %v", got, want)
@@ -132,18 +132,18 @@ func TestUnpackCloseWithReason(t *testing.T) {
 func TestUnpackHeaderFlagsControlSet(t *testing.T) {
 	got := PacketHeader{}
 	want := PacketHeader{
-		flags: PacketFlags{
-			connless:    false,
-			compression: false,
-			resend:      false,
-			control:     true,
+		Flags: PacketFlags{
+			Connless:    false,
+			Compression: false,
+			Resend:      false,
+			Control:     true,
 		},
-		ack:       0,
-		numChunks: 0,
-		token:     [4]byte{0xff, 0xff, 0xff, 0xff},
+		Ack:       0,
+		NumChunks: 0,
+		Token:     [4]byte{0xff, 0xff, 0xff, 0xff},
 	}
 
-	got.unpack([]byte{0b00000100, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff})
+	got.Unpack([]byte{0b00000100, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff})
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %v, wanted %v", got, want)
@@ -153,18 +153,18 @@ func TestUnpackHeaderFlagsControlSet(t *testing.T) {
 func TestUnpackHeaderFlagsAllSet(t *testing.T) {
 	got := PacketHeader{}
 	want := PacketHeader{
-		flags: PacketFlags{
-			connless:    true,
-			compression: true,
-			resend:      true,
-			control:     true,
+		Flags: PacketFlags{
+			Connless:    true,
+			Compression: true,
+			Resend:      true,
+			Control:     true,
 		},
-		ack:       0,
-		numChunks: 0,
-		token:     [4]byte{0xff, 0xff, 0xff, 0xff},
+		Ack:       0,
+		NumChunks: 0,
+		Token:     [4]byte{0xff, 0xff, 0xff, 0xff},
 	}
 
-	got.unpack([]byte{0b00111100, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff})
+	got.Unpack([]byte{0b00111100, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff})
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %v, wanted %v", got, want)

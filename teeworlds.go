@@ -8,6 +8,9 @@ import (
 	"os"
 	"slices"
 	"time"
+
+	"github.com/teeworlds-go/huffman"
+	"github.com/teeworlds-go/teeworlds/packet"
 )
 
 const (
@@ -160,7 +163,10 @@ func byteSliceToString(s []byte) string {
 }
 
 func (client *TeeworldsClient) onMessage(data []byte) {
-	if isCtrlMsg(data) {
+	header := packet.PacketHeader{}
+	header.Unpack(data)
+
+	if header.Flags.Control {
 		ctrlMsg := data[7]
 		fmt.Printf("got ctrl msg %d\n", ctrlMsg)
 		if ctrlMsg == msgCtrlToken {
@@ -181,10 +187,19 @@ func (client *TeeworldsClient) onMessage(data []byte) {
 		} else {
 			fmt.Printf("unknown control message: %x\n", data)
 		}
+	} else if header.Flags.Compression {
+		payload := data[8:]
+		fmt.Printf("got compressed data: %v\n", payload)
+		huff := huffman.Huffman{}
+		decompressed, err := huff.Decompress(payload)
+		if err != nil {
+			fmt.Printf("huffman error: %v\n", err)
+			return
+		}
+		fmt.Printf("got    decompressed: %v\n", decompressed)
 	} else if isMapChange(data) {
 		fmt.Println("got map change")
 		client.sendReady()
-
 	} else if isConReady(data) {
 		fmt.Println("got ready")
 		client.sendStartInfo()
