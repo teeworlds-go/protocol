@@ -17,7 +17,7 @@ func UnpackChunks(data []byte) []Chunk {
 			i++
 		}
 		end := i + chunk.Header.Size
-		chunk.Data = make([]byte, end - i)
+		chunk.Data = make([]byte, end-i)
 		copy(chunk.Data[:], data[i:end])
 		i += chunk.Header.Size
 		chunks = append(chunks, chunk)
@@ -25,4 +25,3 @@ func UnpackChunks(data []byte) []Chunk {
 
 	return chunks
 }
-
