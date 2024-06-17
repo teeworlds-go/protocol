@@ -11,6 +11,7 @@ import (
 
 	"github.com/teeworlds-go/huffman"
 	"github.com/teeworlds-go/teeworlds/chunk"
+	"github.com/teeworlds-go/teeworlds/packer"
 	"github.com/teeworlds-go/teeworlds/packet"
 )
 
@@ -168,7 +169,7 @@ func byteSliceToString(s []byte) string {
 	return string(s)
 }
 
-func (client *TeeworldsClient) onSystemMsg(msg int, chunk chunk.Chunk) {
+func (client *TeeworldsClient) onSystemMsg(msg int, chunk chunk.Chunk, u *packer.Unpacker) {
 	if msg == msgSysMapChange {
 		fmt.Println("got map change")
 		client.sendReady()
@@ -180,7 +181,7 @@ func (client *TeeworldsClient) onSystemMsg(msg int, chunk chunk.Chunk) {
 	}
 }
 
-func (client *TeeworldsClient) onGameMsg(msg int, chunk chunk.Chunk) {
+func (client *TeeworldsClient) onGameMsg(msg int, chunk chunk.Chunk, u *packer.Unpacker) {
 	if msg == msgGameReadyToEnter {
 		fmt.Println("got ready to enter")
 		client.sendEnterGame()
@@ -192,16 +193,18 @@ func (client *TeeworldsClient) onGameMsg(msg int, chunk chunk.Chunk) {
 func (client *TeeworldsClient) onMessage(chunk chunk.Chunk) {
 	fmt.Printf("got chunk size=%d data=%v\n", chunk.Header.Size, chunk.Data)
 
-	// TODO: we need to int unpack this because it can be 2 bytes long
-	msg := int(chunk.Data[0])
+	u := packer.Unpacker{}
+	u.Reset(chunk.Data)
+
+	msg := u.GetInt()
 
 	sys := msg&1 != 0
 	msg >>= 1
 
 	if sys {
-		client.onSystemMsg(msg, chunk)
+		client.onSystemMsg(msg, chunk, &u)
 	} else {
-		client.onGameMsg(msg, chunk)
+		client.onGameMsg(msg, chunk, &u)
 	}
 }
 

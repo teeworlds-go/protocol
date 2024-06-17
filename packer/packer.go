@@ -1,9 +1,113 @@
 package packer
 
-import "errors"
+import (
+	"slices"
+)
 
-func PackInt(num int) ([]byte, error) {
-	dstLen := 4
+type Unpacker struct {
+	data []byte
+	idx  int
+}
+
+func (u *Unpacker) Reset(data []byte) {
+	u.data = slices.Clone(data)
+	u.idx = 0
+}
+
+// first byte of the current buffer
+func (u *Unpacker) byte() byte {
+	return u.data[u.idx]
+}
+
+// consume one byte
+func (u *Unpacker) getByte() byte {
+	b := u.data[u.idx]
+	u.idx++
+	return b
+}
+
+const (
+	Sanitize                = 1
+	SanitizeCC              = 2
+	SanitizeSkipWhitespaces = 4
+)
+
+func (u *Unpacker) GetStringSanitized(sanitizeType int) string {
+	bytes := []byte{}
+
+	skipping := sanitizeType&SanitizeSkipWhitespaces != 0
+
+	for {
+		b := u.getByte()
+		if b == 0x00 {
+			break
+		}
+
+		if skipping {
+			if b == ' ' || b == '\t' || b == '\n' {
+				continue
+			}
+			skipping = false
+		}
+
+		if sanitizeType&SanitizeCC != 0 {
+			if b < 32 {
+				b = ' '
+			}
+		} else if sanitizeType&Sanitize != 0 {
+			if b < 32 && !(b == '\r') && !(b == '\n') && !(b == '\t') {
+				b = ' '
+			}
+		}
+
+		bytes = append(bytes, b)
+	}
+
+	return string(bytes)
+}
+
+func (u *Unpacker) GetString() string {
+	return u.GetStringSanitized(Sanitize)
+}
+
+func (u *Unpacker) GetInt() int {
+	sign := int(u.byte()>>6) & 1
+	res := int(u.byte() & 0x3F)
+	// fake loop should only loop once
+	// its the poor mans goto hack
+	for {
+		if (u.byte() & 0x80) == 0 {
+			break
+		}
+		u.idx += 1
+		res |= int(u.byte()&0x7F) << 6
+
+		if (u.byte() & 0x80) == 0 {
+			break
+		}
+		u.idx += 1
+		res |= int(u.byte()&0x7F) << (6 + 7)
+
+		if (u.byte() & 0x80) == 0 {
+			break
+		}
+		u.idx += 1
+		res |= int(u.byte()&0x7F) << (6 + 7 + 7)
+
+		if (u.byte() & 0x80) == 0 {
+			break
+		}
+		u.idx += 1
+		res |= int(u.byte()&0x7F) << (6 + 7 + 7 + 7)
+		break
+	}
+
+	u.idx += 1
+	res ^= -sign
+	return res
+}
+
+func PackInt(num int) []byte {
 	res := []byte{0x00}
 	idx := 0
 	if num < 0 {
@@ -14,10 +118,6 @@ func PackInt(num int) ([]byte, error) {
 	res[0] |= byte(num & 0x3F) // pack 6 bit into dst
 	num >>= 6                  // discard 6 bits
 	for num != 0 {
-		if idx > dstLen {
-			return nil, errors.New("Int too big")
-		}
-
 		res = append(res, 0x00)
 
 		res[idx] |= 0x80 // set extend bit
@@ -26,7 +126,7 @@ func PackInt(num int) ([]byte, error) {
 		num >>= 7                   // discard 7 bits
 	}
 
-	return res, nil
+	return res
 }
 
 func UnpackInt(data []byte) int {

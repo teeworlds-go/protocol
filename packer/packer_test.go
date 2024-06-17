@@ -8,12 +8,8 @@ import (
 // pack
 
 func TestPackSmallPositiveInts(t *testing.T) {
-	got, err := PackInt(1)
+	got := PackInt(1)
 	want := []byte{0x01}
-
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %v, wanted %v", got, want)
@@ -21,34 +17,22 @@ func TestPackSmallPositiveInts(t *testing.T) {
 }
 
 func TestPackMultiBytePositiveInts(t *testing.T) {
-	got, err := PackInt(63)
+	got := PackInt(63)
 	want := []byte{0x3F}
 
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
-
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %v, wanted %v", got, want)
 	}
 
-	got, err = PackInt(64)
+	got = PackInt(64)
 	want = []byte{0x80, 0x01}
 
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
-
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %v, wanted %v", got, want)
 	}
 
-	got, err = PackInt(65)
+	got = PackInt(65)
 	want = []byte{0x81, 0x01}
-
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %v, wanted %v", got, want)
@@ -56,23 +40,15 @@ func TestPackMultiBytePositiveInts(t *testing.T) {
 }
 
 func TestPackSmallNegativeInts(t *testing.T) {
-	got, err := PackInt(-1)
+	got := PackInt(-1)
 	want := []byte{0x40}
-
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %v, wanted %v", got, want)
 	}
 
-	got, err = PackInt(-2)
+	got = PackInt(-2)
 	want = []byte{0x41}
-
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %v, wanted %v", got, want)
@@ -80,34 +56,22 @@ func TestPackSmallNegativeInts(t *testing.T) {
 }
 
 func TestPackMultiByteNegativeInts(t *testing.T) {
-	got, err := PackInt(-63)
+	got := PackInt(-63)
 	want := []byte{0x7E}
 
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
-
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %v, wanted %v", got, want)
 	}
 
-	got, err = PackInt(-64)
+	got = PackInt(-64)
 	want = []byte{0x7F}
 
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
-
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %v, wanted %v", got, want)
 	}
 
-	got, err = PackInt(-65)
+	got = PackInt(-65)
 	want = []byte{0xC0, 0x01}
-
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %v, wanted %v", got, want)
