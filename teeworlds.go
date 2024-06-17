@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/teeworlds-go/huffman"
+	"github.com/teeworlds-go/teeworlds/chunk"
 	"github.com/teeworlds-go/teeworlds/packet"
 )
 
@@ -21,8 +22,11 @@ const (
 	msgCtrlToken   = 0x05
 	msgCtrlClose   = 0x04
 
-	msgSysMapChange = 0x05
-	msgGameMotd     = 0x02
+	msgSysMapChange = 2
+	msgSysConReady  = 5
+
+	msgGameReadyToEnter = 8
+	msgGameMotd         = 1
 )
 
 func ctrlToken(myToken []byte) []byte {
@@ -42,10 +46,12 @@ func getConnection() (net.Conn, error) {
 }
 
 func readNetwork(ch chan<- []byte, conn net.Conn) {
-	packet := make([]byte, maxPacksize)
+	buf := make([]byte, maxPacksize)
 
 	for {
-		_, err := bufio.NewReader(conn).Read(packet)
+		len, err := bufio.NewReader(conn).Read(buf)
+		packet := make([]byte, len)
+		copy(packet[:], buf[:])
 		if err == nil {
 			ch <- packet
 		} else {
@@ -162,15 +168,63 @@ func byteSliceToString(s []byte) string {
 	return string(s)
 }
 
-func (client *TeeworldsClient) onMessage(data []byte) {
+func (client *TeeworldsClient) onSystemMsg(msg int, chunk chunk.Chunk) {
+	if msg == msgSysMapChange {
+		fmt.Println("got map change")
+		client.sendReady()
+	} else if msg == msgSysConReady {
+		fmt.Println("got ready")
+		client.sendStartInfo()
+	} else {
+		fmt.Printf("unknown system message id=%d data=%x\n", msg, chunk.Data)
+	}
+}
+
+func (client *TeeworldsClient) onGameMsg(msg int, chunk chunk.Chunk) {
+	if msg == msgGameReadyToEnter {
+		fmt.Println("got ready to enter")
+		client.sendEnterGame()
+	} else {
+		fmt.Printf("unknown game message id=%d data=%x\n", msg, chunk.Data)
+	}
+}
+
+func (client *TeeworldsClient) onMessage(chunk chunk.Chunk) {
+	fmt.Printf("got chunk size=%d data=%v\n", chunk.Header.Size, chunk.Data)
+
+	// TODO: we need to int unpack this because it can be 2 bytes long
+	msg := int(chunk.Data[0])
+
+	sys := msg&1 != 0
+	msg >>= 1
+
+	if sys {
+		client.onSystemMsg(msg, chunk)
+	} else {
+		client.onGameMsg(msg, chunk)
+	}
+}
+
+func (client *TeeworldsClient) onPacketPayload(header []byte, data []byte) {
+	fmt.Printf("got payload: %x %x\n", header, data)
+	chunks := chunk.UnpackChunks(data)
+
+	for _, c := range chunks {
+		client.onMessage(c)
+	}
+}
+
+func (client *TeeworldsClient) onPacket(data []byte) {
 	header := packet.PacketHeader{}
-	header.Unpack(data)
+	headerRaw := data[:7]
+	payload := data[7:]
+	header.Unpack(headerRaw)
 
 	if header.Flags.Control {
-		ctrlMsg := data[7]
+		ctrlMsg := payload[0]
 		fmt.Printf("got ctrl msg %d\n", ctrlMsg)
 		if ctrlMsg == msgCtrlToken {
-			copy(client.serverToken[:], data[8:12])
+			copy(client.serverToken[:], payload[1:5])
 			fmt.Printf("got server token %x\n", client.serverToken)
 			client.sendCtrlMsg(slices.Concat([]byte{msgCtrlConnect}, client.clientToken[:]))
 		} else if ctrlMsg == msgCtrlAccept {
@@ -180,35 +234,29 @@ func (client *TeeworldsClient) onMessage(data []byte) {
 			// TODO: get length from packet header to determine if a reason is set or not
 			// len(data) -> is 1400 (maxPacketLen)
 
-			reason := byteSliceToString(data[8:])
+			reason := byteSliceToString(payload)
 			fmt.Printf("disconnected (%s)\n", reason)
 
 			os.Exit(0)
 		} else {
 			fmt.Printf("unknown control message: %x\n", data)
 		}
-	} else if header.Flags.Compression {
-		payload := data[8:]
-		fmt.Printf("got compressed data: %v\n", payload)
+		return
+	}
+
+	if header.Flags.Compression {
+		fmt.Printf("got compressed data: %x\n", payload)
 		huff := huffman.Huffman{}
-		decompressed, err := huff.Decompress(payload)
+		var err error
+		payload, err = huff.Decompress(payload)
 		if err != nil {
 			fmt.Printf("huffman error: %v\n", err)
 			return
 		}
-		fmt.Printf("got    decompressed: %v\n", decompressed)
-	} else if isMapChange(data) {
-		fmt.Println("got map change")
-		client.sendReady()
-	} else if isConReady(data) {
-		fmt.Println("got ready")
-		client.sendStartInfo()
-	} else if isReadyToEnter(data) {
-		fmt.Println("got ready to enter")
-		client.sendEnterGame()
-	} else {
-		fmt.Printf("unknown message: %x\n", data)
+		fmt.Printf("got    decompressed: %x\n", payload)
 	}
+
+	client.onPacketPayload(headerRaw, payload)
 }
 
 func main() {
@@ -234,7 +282,7 @@ func main() {
 		time.Sleep(10_000_000)
 		select {
 		case msg := <-ch:
-			client.onMessage(msg)
+			client.onPacket(msg)
 		default:
 			// do nothing
 		}
