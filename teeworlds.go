@@ -18,13 +18,15 @@ import (
 const (
 	maxPacksize = 1400
 
-	msgCtrlConnect = 0x01
-	msgCtrlAccept  = 0x02
-	msgCtrlToken   = 0x05
-	msgCtrlClose   = 0x04
+	msgCtrlKeepAlive = 0x00
+	msgCtrlConnect   = 0x01
+	msgCtrlAccept    = 0x02
+	msgCtrlToken     = 0x05
+	msgCtrlClose     = 0x04
 
-	msgSysMapChange = 2
-	msgSysConReady  = 5
+	msgSysMapChange  = 2
+	msgSysConReady   = 5
+	msgSysSnapSingle = 8
 
 	msgGameReadyToEnter = 8
 	msgGameMotd         = 1
@@ -68,12 +70,24 @@ type TeeworldsClient struct {
 	clientToken [4]byte
 	serverToken [4]byte
 	conn        net.Conn
+
+	Ack int
 }
 
 func (client TeeworldsClient) sendCtrlMsg(data []byte) {
-	flags := []byte{0x04, 0x00, 0x00}
-	packet := slices.Concat(flags, client.serverToken[:], data)
+	header := packet.PacketHeader{
+		Flags: packet.PacketFlags{
+			Connless:    false,
+			Compression: false,
+			Resend:      false,
+			Control:     true,
+		},
+		Ack:       client.Ack,
+		NumChunks: 0,
+		Token:     client.serverToken,
+	}
 
+	packet := slices.Concat(header.Pack(), data)
 	client.conn.Write(packet)
 }
 
@@ -84,6 +98,10 @@ func (client TeeworldsClient) sendReady() {
 		[]byte{0x40, 0x01, 0x02, 0x25},
 	)
 	client.conn.Write(packet)
+}
+
+func (client TeeworldsClient) sendKeepAlive() {
+	client.sendCtrlMsg([]byte{msgCtrlKeepAlive})
 }
 
 func (client TeeworldsClient) sendInfo() {
@@ -176,6 +194,10 @@ func (client *TeeworldsClient) onSystemMsg(msg int, chunk chunk.Chunk, u *packer
 	} else if msg == msgSysConReady {
 		fmt.Println("got ready")
 		client.sendStartInfo()
+	} else if msg == msgSysSnapSingle {
+		tick := u.GetInt()
+		fmt.Printf("got snap single tick=%d\n", tick)
+		client.sendKeepAlive()
 	} else {
 		fmt.Printf("unknown system message id=%d data=%x\n", msg, chunk.Data)
 	}
@@ -192,6 +214,10 @@ func (client *TeeworldsClient) onGameMsg(msg int, chunk chunk.Chunk, u *packer.U
 
 func (client *TeeworldsClient) onMessage(chunk chunk.Chunk) {
 	fmt.Printf("got chunk size=%d data=%v\n", chunk.Header.Size, chunk.Data)
+
+	if chunk.Header.Flags.Vital {
+		client.Ack++
+	}
 
 	u := packer.Unpacker{}
 	u.Reset(chunk.Data)

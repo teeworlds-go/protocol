@@ -1,5 +1,7 @@
 package packet
 
+import "slices"
+
 const (
 	packetFlagControl     = 1
 	packetFlagResend      = 2
@@ -19,6 +21,43 @@ type PacketHeader struct {
 	Ack       int
 	NumChunks int
 	Token     [4]byte
+
+	// connless
+	ResponseToken [4]byte
+}
+
+func (header *PacketHeader) Pack() []byte {
+	flags := 0
+	if header.Flags.Control {
+		flags |= packetFlagControl
+	}
+	if header.Flags.Resend {
+		flags |= packetFlagResend
+	}
+	if header.Flags.Compression {
+		flags |= packetFlagCompression
+	}
+	if header.Flags.Connless {
+		flags |= packetFlagConnless
+	}
+
+	if header.Flags.Connless {
+		version := 1
+		return slices.Concat(
+			[]byte{byte(((packetFlagConnless << 2) & 0x0fc) | (version & 0x03))},
+			header.Token[:],
+			header.ResponseToken[:],
+		)
+	}
+
+	return slices.Concat(
+		[]byte{
+			byte(((flags << 2) & 0xfc) | ((header.Ack >> 8) & 0x03)),
+			byte(header.Ack & 0x0ff),
+			byte(header.NumChunks),
+		},
+		header.Token[:],
+	)
 }
 
 func (header *PacketHeader) Unpack(packet []byte) {

@@ -6,7 +6,29 @@ import (
 	"testing"
 )
 
-// pack
+// pack header
+
+func TestPackHeader(t *testing.T) {
+	header := PacketHeader{
+		Flags: PacketFlags{
+			Connless:    false,
+			Compression: false,
+			Resend:      false,
+			Control:     true,
+		},
+		Ack:       10,
+		NumChunks: 0,
+		Token:     [4]byte{0xcf, 0x2e, 0xde, 0x1d},
+	}
+	got := header.Pack()
+	want := []byte{0x04, 0x0a, 0x00, 0xcf, 0x2e, 0xde, 0x1d}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("got %v, wanted %v", got, want)
+	}
+}
+
+// pack flags
 
 func TestPackFlagsUnset(t *testing.T) {
 	flags := PacketFlags{
