@@ -28,8 +28,9 @@ const (
 	msgSysConReady   = 5
 	msgSysSnapSingle = 8
 
-	msgGameReadyToEnter = 8
 	msgGameMotd         = 1
+	msgGameSvChat       = 3
+	msgGameReadyToEnter = 8
 )
 
 func ctrlToken(myToken []byte) []byte {
@@ -195,25 +196,35 @@ func (client *TeeworldsClient) onSystemMsg(msg int, chunk chunk.Chunk, u *packer
 		fmt.Println("got ready")
 		client.sendStartInfo()
 	} else if msg == msgSysSnapSingle {
-		tick := u.GetInt()
-		fmt.Printf("got snap single tick=%d\n", tick)
+		// tick := u.GetInt()
+		// fmt.Printf("got snap single tick=%d\n", tick)
 		client.sendKeepAlive()
 	} else {
 		fmt.Printf("unknown system message id=%d data=%x\n", msg, chunk.Data)
 	}
 }
 
+func onChatMessage(mode int, clientId int, targetId int, message string) {
+	fmt.Printf("[chat] %d: %s\n", clientId, message)
+}
+
 func (client *TeeworldsClient) onGameMsg(msg int, chunk chunk.Chunk, u *packer.Unpacker) {
 	if msg == msgGameReadyToEnter {
 		fmt.Println("got ready to enter")
 		client.sendEnterGame()
+	} else if msg == msgGameSvChat {
+		mode := u.GetInt()
+		clientId := u.GetInt()
+		targetId := u.GetInt()
+		message := u.GetString()
+		onChatMessage(mode, clientId, targetId, message)
 	} else {
 		fmt.Printf("unknown game message id=%d data=%x\n", msg, chunk.Data)
 	}
 }
 
 func (client *TeeworldsClient) onMessage(chunk chunk.Chunk) {
-	fmt.Printf("got chunk size=%d data=%v\n", chunk.Header.Size, chunk.Data)
+	// fmt.Printf("got chunk size=%d data=%v\n", chunk.Header.Size, chunk.Data)
 
 	if chunk.Header.Flags.Vital {
 		client.Ack++
@@ -235,7 +246,6 @@ func (client *TeeworldsClient) onMessage(chunk chunk.Chunk) {
 }
 
 func (client *TeeworldsClient) onPacketPayload(header []byte, data []byte) {
-	fmt.Printf("got payload: %x %x\n", header, data)
 	chunks := chunk.UnpackChunks(data)
 
 	for _, c := range chunks {
@@ -274,7 +284,6 @@ func (client *TeeworldsClient) onPacket(data []byte) {
 	}
 
 	if header.Flags.Compression {
-		fmt.Printf("got compressed data: %x\n", payload)
 		huff := huffman.Huffman{}
 		var err error
 		payload, err = huff.Decompress(payload)
@@ -282,7 +291,6 @@ func (client *TeeworldsClient) onPacket(data []byte) {
 			fmt.Printf("huffman error: %v\n", err)
 			return
 		}
-		fmt.Printf("got    decompressed: %x\n", payload)
 	}
 
 	client.onPacketPayload(headerRaw, payload)
