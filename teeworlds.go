@@ -11,12 +11,15 @@ import (
 
 	"github.com/teeworlds-go/huffman"
 	"github.com/teeworlds-go/teeworlds/chunk"
+	message "github.com/teeworlds-go/teeworlds/messages"
 	"github.com/teeworlds-go/teeworlds/packer"
 	"github.com/teeworlds-go/teeworlds/packet"
 )
 
 const (
 	maxPacksize = 1400
+
+	MaxClients = 64
 
 	msgCtrlKeepAlive = 0x00
 	msgCtrlConnect   = 0x01
@@ -28,9 +31,10 @@ const (
 	msgSysConReady   = 5
 	msgSysSnapSingle = 8
 
-	msgGameMotd         = 1
+	msgGameSvMotd       = 1
 	msgGameSvChat       = 3
 	msgGameReadyToEnter = 8
+	msgGameSvClientInfo = 18
 )
 
 func ctrlToken(myToken []byte) []byte {
@@ -67,12 +71,18 @@ func readNetwork(ch chan<- []byte, conn net.Conn) {
 	conn.Close()
 }
 
+type Player struct {
+	info message.SvClientInfo
+}
+
 type TeeworldsClient struct {
 	clientToken [4]byte
 	serverToken [4]byte
 	conn        net.Conn
 
 	Ack int
+
+	Players []Player
 }
 
 func (client TeeworldsClient) sendCtrlMsg(data []byte) {
@@ -204,20 +214,35 @@ func (client *TeeworldsClient) onSystemMsg(msg int, chunk chunk.Chunk, u *packer
 	}
 }
 
-func onChatMessage(mode int, clientId int, targetId int, message string) {
-	fmt.Printf("[chat] %d: %s\n", clientId, message)
+func (client *TeeworldsClient) OnChatMessage(mode int, clientId int, targetId int, message string) {
+	name := client.Players[clientId].info.Name
+	fmt.Printf("[chat] <%s> %s\n", name, message)
+}
+
+func (client *TeeworldsClient) OnMotd(motd string) {
+	fmt.Printf("[motd] %s\n", motd)
 }
 
 func (client *TeeworldsClient) onGameMsg(msg int, chunk chunk.Chunk, u *packer.Unpacker) {
 	if msg == msgGameReadyToEnter {
 		fmt.Println("got ready to enter")
 		client.sendEnterGame()
+	} else if msg == msgGameSvMotd {
+		motd := u.GetString()
+		if motd != "" {
+			client.OnMotd(motd)
+		}
 	} else if msg == msgGameSvChat {
 		mode := u.GetInt()
 		clientId := u.GetInt()
 		targetId := u.GetInt()
 		message := u.GetString()
-		onChatMessage(mode, clientId, targetId, message)
+		client.OnChatMessage(mode, clientId, targetId, message)
+	} else if msg == msgGameSvClientInfo {
+		clientId := packer.UnpackInt(chunk.Data[1:])
+		client.Players[clientId].info.Unpack(u)
+
+		fmt.Printf("got client info id=%d name=%s\n", clientId, client.Players[clientId].info.Name)
 	} else {
 		fmt.Printf("unknown game message id=%d data=%x\n", msg, chunk.Data)
 	}
@@ -309,6 +334,8 @@ func main() {
 		clientToken: [4]byte{0x01, 0x02, 0x03, 0x04},
 		serverToken: [4]byte{0xff, 0xff, 0xff, 0xff},
 		conn:        conn,
+		Ack:         0,
+		Players:     make([]Player, MaxClients),
 	}
 
 	go readNetwork(ch, client.conn)

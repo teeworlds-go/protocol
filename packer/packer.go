@@ -26,6 +26,10 @@ func (u *Unpacker) getByte() byte {
 	return b
 }
 
+func (u *Unpacker) Data() []byte {
+	return u.data
+}
+
 const (
 	Sanitize                = 1
 	SanitizeCC              = 2
