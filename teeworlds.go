@@ -102,17 +102,31 @@ func (client TeeworldsClient) sendCtrlMsg(data []byte) {
 	client.conn.Write(packet)
 }
 
-func (client TeeworldsClient) sendReady() {
-	packet := slices.Concat(
-		[]byte{0x00, 0x01, 0x01},
-		client.serverToken[:],
-		[]byte{0x40, 0x01, 0x02, 0x25},
-	)
-	client.conn.Write(packet)
-}
-
 func (client TeeworldsClient) sendKeepAlive() {
 	client.sendCtrlMsg([]byte{msgCtrlKeepAlive})
+}
+
+func (client TeeworldsClient) sendReady() {
+	ready := []byte{0x40, 0x01, 0x02, 0x25}
+
+	client.sendPacket(ready, 1)
+}
+
+func (client TeeworldsClient) sendPacket(payload []byte, numChunks int) {
+	header := packet.PacketHeader{
+		Flags: packet.PacketFlags{
+			Connless:    false,
+			Compression: false,
+			Resend:      false,
+			Control:     false,
+		},
+		Ack:       client.Ack,
+		NumChunks: numChunks,
+		Token:     client.serverToken,
+	}
+
+	packet := slices.Concat(header.Pack(), payload)
+	client.conn.Write(packet)
 }
 
 func (client TeeworldsClient) sendInfo() {
@@ -121,13 +135,7 @@ func (client TeeworldsClient) sendInfo() {
 		0x00, 0x6D, 0x79, 0x5F, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6F, 0x72, 0x64,
 		0x5F, 0x31, 0x32, 0x33, 0x00, 0x85, 0x1C, 0x00}
 
-	packet := slices.Concat(
-		[]byte{0x00, 0x00, 0x01},
-		client.serverToken[:],
-		info,
-	)
-
-	client.conn.Write(packet)
+	client.sendPacket(info, 1)
 }
 
 func (client TeeworldsClient) sendStartInfo() {
@@ -140,13 +148,7 @@ func (client TeeworldsClient) sendStartInfo() {
 		0x07, 0x80, 0xfe, 0x07, 0x80, 0xfe, 0x07,
 	}
 
-	packet := slices.Concat(
-		[]byte{0x00, 0x04, 0x01},
-		client.serverToken[:],
-		info,
-	)
-
-	client.conn.Write(packet)
+	client.sendPacket(info, 1)
 }
 
 func (client TeeworldsClient) sendEnterGame() {
@@ -154,40 +156,7 @@ func (client TeeworldsClient) sendEnterGame() {
 		0x40, 0x01, 0x04, 0x27,
 	}
 
-	packet := slices.Concat(
-		[]byte{0x00, 0x07, 0x01},
-		client.serverToken[:],
-		enter,
-	)
-
-	client.conn.Write(packet)
-}
-
-func isCtrlMsg(data []byte) bool {
-	return data[0] == 0x04
-}
-
-func isMapChange(data []byte) bool {
-	// unsafe and trol
-	return data[10] == msgSysMapChange
-}
-
-func isCompressed(data []byte) bool {
-	// we don't talk about it
-	return data[0] == 0x10
-}
-
-func numberOfChunks(data []byte) int {
-	return int(data[2])
-}
-
-func isReadyToEnter(data []byte) bool {
-	return !isCompressed(data) && numberOfChunks(data) == 3
-}
-
-func isConReady(data []byte) bool {
-	// unsafe and yemDX level troling
-	return isCompressed(data) // data[10] == msgSysMapChange
+	client.sendPacket(enter, 1)
 }
 
 func byteSliceToString(s []byte) string {
