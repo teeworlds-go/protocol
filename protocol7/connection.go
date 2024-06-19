@@ -10,28 +10,9 @@ import (
 	"github.com/teeworlds-go/huffman"
 	"github.com/teeworlds-go/teeworlds/chunk"
 	message "github.com/teeworlds-go/teeworlds/messages"
+	"github.com/teeworlds-go/teeworlds/network7"
 	"github.com/teeworlds-go/teeworlds/packer"
 	"github.com/teeworlds-go/teeworlds/packet"
-)
-
-const (
-	MaxClients = 64
-
-	msgCtrlKeepAlive = 0x00
-	msgCtrlConnect   = 0x01
-	msgCtrlAccept    = 0x02
-	msgCtrlToken     = 0x05
-	msgCtrlClose     = 0x04
-
-	msgSysMapChange  = 2
-	msgSysConReady   = 5
-	msgSysSnapSingle = 8
-
-	msgGameSvMotd       = 1
-	msgGameSvChat       = 3
-	msgGameReadyToEnter = 8
-	msgGameSvClientInfo = 18
-	msgGameClStartInfo  = 27
 )
 
 type Player struct {
@@ -81,7 +62,7 @@ func (c *Connection) SendCtrlMsg(data []byte) {
 }
 
 func (c *Connection) SendKeepAlive() {
-	c.SendCtrlMsg([]byte{msgCtrlKeepAlive})
+	c.SendCtrlMsg([]byte{byte(network7.MsgCtrlKeepAlive)})
 }
 
 func (c *Connection) SendReady() {
@@ -92,7 +73,7 @@ func (c *Connection) SendReady() {
 }
 
 type ChunkArgs struct {
-	MsgId   int
+	MsgId   network7.NetMsg
 	System  bool
 	Flags   chunk.ChunkFlags
 	Payload []byte
@@ -105,7 +86,7 @@ func (client *Connection) PackChunk(c ChunkArgs) []byte {
 	}
 
 	client.Sequence++
-	msgAndSys := packer.PackInt(c.MsgId)
+	msgAndSys := packer.PackMsg(c.MsgId)
 
 	chunkHeader := chunk.ChunkHeader{
 		Flags: c.Flags,
@@ -177,7 +158,7 @@ func (client *Connection) SendStartInfo() {
 	}
 
 	payload := client.PackChunk(ChunkArgs{
-		MsgId: msgGameClStartInfo,
+		MsgId: network7.MsgGameClStartInfo,
 		Flags: chunk.ChunkFlags{
 			Vital: true,
 		},
@@ -203,14 +184,14 @@ func byteSliceToString(s []byte) string {
 	return string(s)
 }
 
-func (client *Connection) OnSystemMsg(msg int, chunk chunk.Chunk, u *packer.Unpacker) {
-	if msg == msgSysMapChange {
+func (client *Connection) OnSystemMsg(msg network7.NetMsg, chunk chunk.Chunk, u *packer.Unpacker) {
+	if msg == network7.MsgSysMapChange {
 		fmt.Println("got map change")
 		client.SendReady()
-	} else if msg == msgSysConReady {
+	} else if msg == network7.MsgSysConReady {
 		fmt.Println("got ready")
 		client.SendStartInfo()
-	} else if msg == msgSysSnapSingle {
+	} else if msg == network7.MsgSysSnapSingle {
 		// tick := u.GetInt()
 		// fmt.Printf("got snap single tick=%d\n", tick)
 		client.SendKeepAlive()
@@ -228,22 +209,22 @@ func (client *Connection) OnMotd(motd string) {
 	fmt.Printf("[motd] %s\n", motd)
 }
 
-func (client *Connection) OnGameMsg(msg int, chunk chunk.Chunk, u *packer.Unpacker) {
-	if msg == msgGameReadyToEnter {
+func (client *Connection) OnGameMsg(msg network7.NetMsg, chunk chunk.Chunk, u *packer.Unpacker) {
+	if msg == network7.MsgGameReadyToEnter {
 		fmt.Println("got ready to enter")
 		client.SendEnterGame()
-	} else if msg == msgGameSvMotd {
+	} else if msg == network7.MsgGameSvMotd {
 		motd := u.GetString()
 		if motd != "" {
 			client.OnMotd(motd)
 		}
-	} else if msg == msgGameSvChat {
+	} else if msg == network7.MsgGameSvChat {
 		mode := u.GetInt()
 		clientId := u.GetInt()
 		targetId := u.GetInt()
 		message := u.GetString()
 		client.OnChatMessage(mode, clientId, targetId, message)
-	} else if msg == msgGameSvClientInfo {
+	} else if msg == network7.MsgGameSvClientInfo {
 		clientId := packer.UnpackInt(chunk.Data[1:])
 		client.Players[clientId].Info.Unpack(u)
 
@@ -269,9 +250,9 @@ func (client *Connection) OnMessage(chunk chunk.Chunk) {
 	msg >>= 1
 
 	if sys {
-		client.OnSystemMsg(msg, chunk, &u)
+		client.OnSystemMsg(network7.NetMsg(msg), chunk, &u)
 	} else {
-		client.OnGameMsg(msg, chunk, &u)
+		client.OnGameMsg(network7.NetMsg(msg), chunk, &u)
 	}
 }
 
@@ -290,16 +271,16 @@ func (client *Connection) OnPacket(data []byte) {
 	header.Unpack(headerRaw)
 
 	if header.Flags.Control {
-		ctrlMsg := payload[0]
+		ctrlMsg := network7.ControlMsg(payload[0])
 		fmt.Printf("got ctrl msg %d\n", ctrlMsg)
-		if ctrlMsg == msgCtrlToken {
+		if ctrlMsg == network7.MsgCtrlToken {
 			copy(client.ServerToken[:], payload[1:5])
 			fmt.Printf("got server token %x\n", client.ServerToken)
-			client.SendCtrlMsg(slices.Concat([]byte{msgCtrlConnect}, client.ClientToken[:]))
-		} else if ctrlMsg == msgCtrlAccept {
+			client.SendCtrlMsg(slices.Concat([]byte{byte(network7.MsgCtrlConnect)}, client.ClientToken[:]))
+		} else if ctrlMsg == network7.MsgCtrlAccept {
 			fmt.Println("got accept")
 			client.SendInfo()
-		} else if ctrlMsg == msgCtrlClose {
+		} else if ctrlMsg == network7.MsgCtrlClose {
 			// TODO: get length from packet header to determine if a reason is set or not
 			// len(data) -> is 1400 (maxPacketLen)
 

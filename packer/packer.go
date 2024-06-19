@@ -2,6 +2,8 @@ package packer
 
 import (
 	"slices"
+
+	"github.com/teeworlds-go/teeworlds/network7"
 )
 
 type Unpacker struct {
@@ -123,6 +125,10 @@ func PackBool(b bool) []byte {
 		return []byte{0x01}
 	}
 	return []byte{0x00}
+}
+
+func PackMsg(msg network7.NetMsg) []byte {
+	return PackInt(int(msg))
 }
 
 func PackInt(num int) []byte {

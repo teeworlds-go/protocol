@@ -7,13 +7,12 @@ import (
 	"os"
 	"time"
 
+	"github.com/teeworlds-go/teeworlds/network7"
 	"github.com/teeworlds-go/teeworlds/protocol7"
 )
 
 const (
 	maxPacksize = 1400
-
-	MaxClients = 64
 )
 
 func getConnection() (net.Conn, error) {
@@ -56,7 +55,7 @@ func main() {
 		ServerToken: [4]byte{0xff, 0xff, 0xff, 0xff},
 		Conn:        conn,
 		Ack:         0,
-		Players:     make([]protocol7.Player, MaxClients),
+		Players:     make([]protocol7.Player, network7.MaxClients),
 	}
 
 	go readNetwork(ch, client.Conn)
