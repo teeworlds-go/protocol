@@ -9,14 +9,14 @@ import (
 
 	"github.com/teeworlds-go/huffman"
 	"github.com/teeworlds-go/teeworlds/chunk"
-	message "github.com/teeworlds-go/teeworlds/messages"
+	"github.com/teeworlds-go/teeworlds/messages7"
 	"github.com/teeworlds-go/teeworlds/network7"
 	"github.com/teeworlds-go/teeworlds/packer"
 	"github.com/teeworlds-go/teeworlds/packet"
 )
 
 type Player struct {
-	Info message.SvClientInfo
+	Info messages7.SvClientInfo
 }
 
 type Connection struct {
@@ -133,7 +133,7 @@ func (client *Connection) SendInfo() {
 }
 
 func (client *Connection) SendStartInfo() {
-	info := message.ClStartInfo{
+	info := messages7.ClStartInfo{
 		Name:                  "gopher",
 		Clan:                  "",
 		Country:               0,

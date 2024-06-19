@@ -1,11 +1,12 @@
-package message
+package messages7
 
-import "github.com/teeworlds-go/teeworlds/packer"
+import (
+	"slices"
 
-type SvClientInfo struct {
-	ClientId              int
-	Local                 bool
-	Team                  int
+	"github.com/teeworlds-go/teeworlds/packer"
+)
+
+type ClStartInfo struct {
 	Name                  string
 	Clan                  string
 	Country               int
@@ -23,16 +24,39 @@ type SvClientInfo struct {
 	CustomColorEyes       bool
 	ColorBody             int
 	ColorMarking          int
+	ColorDecoration       int
 	ColorHands            int
 	ColorFeet             int
 	ColorEyes             int
-	Silent                bool
 }
 
-func (info *SvClientInfo) Unpack(u *packer.Unpacker) {
-	info.ClientId = u.GetInt()
-	info.Local = u.GetInt() != 0
-	info.Team = u.GetInt()
+func (info *ClStartInfo) Pack() []byte {
+	return slices.Concat(
+		packer.PackStr(info.Name),
+		packer.PackStr(info.Clan),
+		packer.PackInt(info.Country),
+		packer.PackStr(info.Body),
+		packer.PackStr(info.Marking),
+		packer.PackStr(info.Decoration),
+		packer.PackStr(info.Hands),
+		packer.PackStr(info.Feet),
+		packer.PackStr(info.Eyes),
+		packer.PackBool(info.CustomColorBody),
+		packer.PackBool(info.CustomColorMarking),
+		packer.PackBool(info.CustomColorDecoration),
+		packer.PackBool(info.CustomColorHands),
+		packer.PackBool(info.CustomColorFeet),
+		packer.PackBool(info.CustomColorEyes),
+		packer.PackInt(info.ColorBody),
+		packer.PackInt(info.ColorMarking),
+		packer.PackInt(info.ColorDecoration),
+		packer.PackInt(info.ColorHands),
+		packer.PackInt(info.ColorFeet),
+		packer.PackInt(info.ColorEyes),
+	)
+}
+
+func (info *ClStartInfo) Unpack(u *packer.Unpacker) {
 	info.Name = u.GetString()
 	info.Clan = u.GetString()
 	info.Country = u.GetInt()
@@ -50,8 +74,8 @@ func (info *SvClientInfo) Unpack(u *packer.Unpacker) {
 	info.CustomColorEyes = u.GetInt() != 0
 	info.ColorBody = u.GetInt()
 	info.ColorMarking = u.GetInt()
+	info.ColorDecoration = u.GetInt()
 	info.ColorHands = u.GetInt()
 	info.ColorFeet = u.GetInt()
 	info.ColorEyes = u.GetInt()
-	info.Silent = u.GetInt() != 0
 }

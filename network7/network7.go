@@ -22,4 +22,3 @@ const (
 
 type ControlMsg int
 type NetMsg int
-
