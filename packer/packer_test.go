@@ -7,6 +7,24 @@ import (
 
 // pack
 
+func TestPackEmptyString(t *testing.T) {
+	got := PackStr("")
+	want := []byte{0x00}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("got %v, wanted %v", got, want)
+	}
+}
+
+func TestPackSimpleString(t *testing.T) {
+	got := PackStr("foo")
+	want := []byte{'f', 'o', 'o', 0x00}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("got %v, wanted %v", got, want)
+	}
+}
+
 func TestPackSmallPositiveInts(t *testing.T) {
 	got := PackInt(1)
 	want := []byte{0x01}

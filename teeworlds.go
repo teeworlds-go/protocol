@@ -35,6 +35,7 @@ const (
 	msgGameSvChat       = 3
 	msgGameReadyToEnter = 8
 	msgGameSvClientInfo = 18
+	msgGameClStartInfo  = 27
 )
 
 func ctrlToken(myToken []byte) []byte {
@@ -80,12 +81,19 @@ type TeeworldsClient struct {
 	serverToken [4]byte
 	conn        net.Conn
 
+	// The amount of vital chunks received
 	Ack int
+
+	// The amount of vital chunks sent
+	Sequence int
+
+	// The amount of vital chunks acknowledged by the peer
+	PeerAck int
 
 	Players []Player
 }
 
-func (client TeeworldsClient) sendCtrlMsg(data []byte) {
+func (client *TeeworldsClient) sendCtrlMsg(data []byte) {
 	header := packet.PacketHeader{
 		Flags: packet.PacketFlags{
 			Connless:    false,
@@ -102,17 +110,51 @@ func (client TeeworldsClient) sendCtrlMsg(data []byte) {
 	client.conn.Write(packet)
 }
 
-func (client TeeworldsClient) sendKeepAlive() {
+func (client *TeeworldsClient) sendKeepAlive() {
 	client.sendCtrlMsg([]byte{msgCtrlKeepAlive})
 }
 
-func (client TeeworldsClient) sendReady() {
+func (client *TeeworldsClient) sendReady() {
 	ready := []byte{0x40, 0x01, 0x02, 0x25}
 
+	client.Sequence++
 	client.sendPacket(ready, 1)
 }
 
-func (client TeeworldsClient) sendPacket(payload []byte, numChunks int) {
+type ChunkArgs struct {
+	MsgId   int
+	System  bool
+	Flags   chunk.ChunkFlags
+	Payload []byte
+}
+
+func (client *TeeworldsClient) packChunk(c ChunkArgs) []byte {
+	c.MsgId <<= 1
+	if c.System {
+		c.MsgId |= 1
+	}
+
+	client.Sequence++
+	msgAndSys := packer.PackInt(c.MsgId)
+
+	chunkHeader := chunk.ChunkHeader{
+		Flags: c.Flags,
+		Size:  len(msgAndSys) + len(c.Payload),
+		Seq:   client.Sequence,
+	}
+
+	data := slices.Concat(
+		chunkHeader.Pack(),
+		msgAndSys,
+		c.Payload,
+	)
+
+	fmt.Printf("packed chunk: %x\n", data)
+
+	return data
+}
+
+func (client *TeeworldsClient) sendPacket(payload []byte, numChunks int) {
 	header := packet.PacketHeader{
 		Flags: packet.PacketFlags{
 			Connless:    false,
@@ -129,29 +171,53 @@ func (client TeeworldsClient) sendPacket(payload []byte, numChunks int) {
 	client.conn.Write(packet)
 }
 
-func (client TeeworldsClient) sendInfo() {
+func (client *TeeworldsClient) sendInfo() {
 	info := []byte{0x40, 0x28, 0x01, 0x03, 0x30, 0x2E, 0x37, 0x20, 0x38, 0x30, 0x32, 0x66,
 		0x31, 0x62, 0x65, 0x36, 0x30, 0x61, 0x30, 0x35, 0x36, 0x36, 0x35, 0x66,
 		0x00, 0x6D, 0x79, 0x5F, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6F, 0x72, 0x64,
 		0x5F, 0x31, 0x32, 0x33, 0x00, 0x85, 0x1C, 0x00}
 
+	client.Sequence++
 	client.sendPacket(info, 1)
 }
 
-func (client TeeworldsClient) sendStartInfo() {
-	info := []byte{
-		0x41, 0x14, 0x03, 0x36, 0x67, 0x6f, 0x70, 0x68, 0x65, 0x72, 0x00, 0x00, 0x40, 0x67, 0x72, 0x65,
-		0x65, 0x6e, 0x73, 0x77, 0x61, 0x72, 0x64, 0x00, 0x64, 0x75, 0x6f, 0x64, 0x6f, 0x6e, 0x6e, 0x79,
-		0x00, 0x00, 0x73, 0x74, 0x61, 0x6e, 0x64, 0x61, 0x72, 0x64, 0x00, 0x73, 0x74, 0x61, 0x6e, 0x64,
-		0x61, 0x72, 0x64, 0x00, 0x73, 0x74, 0x61, 0x6e, 0x64, 0x61, 0x72, 0x64, 0x00, 0x01, 0x01, 0x00,
-		0x00, 0x00, 0x00, 0x80, 0xfc, 0xaf, 0x05, 0xeb, 0x83, 0xd0, 0x0a, 0x80, 0xfe, 0x07, 0x80, 0xfe,
-		0x07, 0x80, 0xfe, 0x07, 0x80, 0xfe, 0x07,
+func (client *TeeworldsClient) sendStartInfo() {
+	info := message.ClStartInfo{
+		Name:                  "gopher",
+		Clan:                  "",
+		Country:               0,
+		Body:                  "greensward",
+		Marking:               "duodonny",
+		Decoration:            "",
+		Hands:                 "standard",
+		Feet:                  "standard",
+		Eyes:                  "standard",
+		CustomColorBody:       false,
+		CustomColorMarking:    false,
+		CustomColorDecoration: false,
+		CustomColorHands:      false,
+		CustomColorFeet:       false,
+		CustomColorEyes:       false,
+		ColorBody:             0,
+		ColorMarking:          0,
+		ColorDecoration:       0,
+		ColorHands:            0,
+		ColorFeet:             0,
+		ColorEyes:             0,
 	}
 
-	client.sendPacket(info, 1)
+	payload := client.packChunk(ChunkArgs{
+		MsgId: msgGameClStartInfo,
+		Flags: chunk.ChunkFlags{
+			Vital: true,
+		},
+		Payload: info.Pack(),
+	})
+
+	client.sendPacket(payload, 1)
 }
 
-func (client TeeworldsClient) sendEnterGame() {
+func (client *TeeworldsClient) sendEnterGame() {
 	enter := []byte{
 		0x40, 0x01, 0x04, 0x27,
 	}

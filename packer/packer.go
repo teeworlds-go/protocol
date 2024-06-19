@@ -111,6 +111,20 @@ func (u *Unpacker) GetInt() int {
 	return res
 }
 
+func PackStr(str string) []byte {
+	return slices.Concat(
+		[]byte(str),
+		[]byte{0x00},
+	)
+}
+
+func PackBool(b bool) []byte {
+	if b {
+		return []byte{0x01}
+	}
+	return []byte{0x00}
+}
+
 func PackInt(num int) []byte {
 	res := []byte{0x00}
 	idx := 0
