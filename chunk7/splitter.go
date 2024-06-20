@@ -1,4 +1,4 @@
-package chunk
+package chunk7
 
 // data has to be the uncompressed payload of a teeworlds packet
 // without the packet header

@@ -8,11 +8,11 @@ import (
 	"slices"
 
 	"github.com/teeworlds-go/huffman"
-	"github.com/teeworlds-go/teeworlds/chunk"
+	"github.com/teeworlds-go/teeworlds/chunk7"
 	"github.com/teeworlds-go/teeworlds/messages7"
 	"github.com/teeworlds-go/teeworlds/network7"
 	"github.com/teeworlds-go/teeworlds/packer"
-	"github.com/teeworlds-go/teeworlds/packet"
+	"github.com/teeworlds-go/teeworlds/packet7"
 )
 
 type Player struct {
@@ -45,8 +45,8 @@ func (c *Connection) SendCtrlToken(myToken []byte) {
 }
 
 func (c *Connection) SendCtrlMsg(data []byte) {
-	header := packet.PacketHeader{
-		Flags: packet.PacketFlags{
+	header := packet7.PacketHeader{
+		Flags: packet7.PacketFlags{
 			Connless:    false,
 			Compression: false,
 			Resend:      false,
@@ -75,7 +75,7 @@ func (c *Connection) SendReady() {
 type ChunkArgs struct {
 	MsgId   network7.NetMsg
 	System  bool
-	Flags   chunk.ChunkFlags
+	Flags   chunk7.ChunkFlags
 	Payload []byte
 }
 
@@ -88,7 +88,7 @@ func (client *Connection) PackChunk(c ChunkArgs) []byte {
 	client.Sequence++
 	msgAndSys := packer.PackMsg(c.MsgId)
 
-	chunkHeader := chunk.ChunkHeader{
+	chunkHeader := chunk7.ChunkHeader{
 		Flags: c.Flags,
 		Size:  len(msgAndSys) + len(c.Payload),
 		Seq:   client.Sequence,
@@ -106,8 +106,8 @@ func (client *Connection) PackChunk(c ChunkArgs) []byte {
 }
 
 func (client *Connection) SendPacket(payload []byte, numChunks int) {
-	header := packet.PacketHeader{
-		Flags: packet.PacketFlags{
+	header := packet7.PacketHeader{
+		Flags: packet7.PacketFlags{
 			Connless:    false,
 			Compression: false,
 			Resend:      false,
@@ -159,7 +159,7 @@ func (client *Connection) SendStartInfo() {
 
 	payload := client.PackChunk(ChunkArgs{
 		MsgId: network7.MsgGameClStartInfo,
-		Flags: chunk.ChunkFlags{
+		Flags: chunk7.ChunkFlags{
 			Vital: true,
 		},
 		Payload: info.Pack(),
@@ -184,7 +184,7 @@ func byteSliceToString(s []byte) string {
 	return string(s)
 }
 
-func (client *Connection) OnSystemMsg(msg network7.NetMsg, chunk chunk.Chunk, u *packer.Unpacker) {
+func (client *Connection) OnSystemMsg(msg network7.NetMsg, chunk chunk7.Chunk, u *packer.Unpacker) {
 	if msg == network7.MsgSysMapChange {
 		fmt.Println("got map change")
 		client.SendReady()
@@ -209,7 +209,7 @@ func (client *Connection) OnMotd(motd string) {
 	fmt.Printf("[motd] %s\n", motd)
 }
 
-func (client *Connection) OnGameMsg(msg network7.NetMsg, chunk chunk.Chunk, u *packer.Unpacker) {
+func (client *Connection) OnGameMsg(msg network7.NetMsg, chunk chunk7.Chunk, u *packer.Unpacker) {
 	if msg == network7.MsgGameReadyToEnter {
 		fmt.Println("got ready to enter")
 		client.SendEnterGame()
@@ -234,7 +234,7 @@ func (client *Connection) OnGameMsg(msg network7.NetMsg, chunk chunk.Chunk, u *p
 	}
 }
 
-func (client *Connection) OnMessage(chunk chunk.Chunk) {
+func (client *Connection) OnMessage(chunk chunk7.Chunk) {
 	// fmt.Printf("got chunk size=%d data=%v\n", chunk.Header.Size, chunk.Data)
 
 	if chunk.Header.Flags.Vital {
@@ -257,7 +257,7 @@ func (client *Connection) OnMessage(chunk chunk.Chunk) {
 }
 
 func (client *Connection) OnPacketPayload(header []byte, data []byte) {
-	chunks := chunk.UnpackChunks(data)
+	chunks := chunk7.UnpackChunks(data)
 
 	for _, c := range chunks {
 		client.OnMessage(c)
@@ -265,7 +265,7 @@ func (client *Connection) OnPacketPayload(header []byte, data []byte) {
 }
 
 func (client *Connection) OnPacket(data []byte) {
-	header := packet.PacketHeader{}
+	header := packet7.PacketHeader{}
 	headerRaw := data[:7]
 	payload := data[7:]
 	header.Unpack(headerRaw)
