@@ -3,9 +3,7 @@ package protocol7
 import (
 	"bytes"
 	"fmt"
-	"net"
 	"os"
-	"slices"
 
 	"github.com/teeworlds-go/huffman"
 	"github.com/teeworlds-go/teeworlds/chunk7"
@@ -21,7 +19,6 @@ type Player struct {
 type Connection struct {
 	ClientToken [4]byte
 	ServerToken [4]byte
-	Conn        net.Conn
 
 	// The amount of vital chunks received
 	Ack int
@@ -62,27 +59,6 @@ func (connection *Connection) CtrlToken() *Packet {
 	)
 
 	return response
-}
-
-func (c *Connection) SendCtrlMsg(data []byte) {
-	header := PacketHeader{
-		Flags: PacketFlags{
-			Connless:    false,
-			Compression: false,
-			Resend:      false,
-			Control:     true,
-		},
-		Ack:       c.Ack,
-		NumChunks: 0,
-		Token:     c.ServerToken,
-	}
-
-	packet := slices.Concat(header.Pack(), data)
-	c.Conn.Write(packet)
-}
-
-func (c *Connection) SendKeepAlive() {
-	c.SendCtrlMsg([]byte{byte(network7.MsgCtrlKeepAlive)})
 }
 
 func (client *Connection) MsgStartInfo() messages7.ClStartInfo {
@@ -129,7 +105,7 @@ func (connection *Connection) OnSystemMsg(msg int, chunk chunk7.Chunk, u *packer
 	} else if msg == network7.MsgSysSnapSingle {
 		// tick := u.GetInt()
 		// fmt.Printf("got snap single tick=%d\n", tick)
-		connection.SendKeepAlive()
+		response.Messages = append(response.Messages, messages7.CtrlKeepAlive{})
 	} else {
 		fmt.Printf("unknown system message id=%d data=%x\n", msg, chunk.Data)
 	}

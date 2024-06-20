@@ -53,12 +53,11 @@ func main() {
 	client := &protocol7.Connection{
 		ClientToken: [4]byte{0x01, 0x02, 0x03, 0x04},
 		ServerToken: [4]byte{0xff, 0xff, 0xff, 0xff},
-		Conn:        conn,
 		Ack:         0,
 		Players:     make([]protocol7.Player, network7.MaxClients),
 	}
 
-	go readNetwork(ch, client.Conn)
+	go readNetwork(ch, conn)
 
 	packet := client.CtrlToken()
 	conn.Write(packet.Pack(client))
