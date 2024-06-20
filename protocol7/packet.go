@@ -1,6 +1,13 @@
-package packet7
+package protocol7
 
-import "slices"
+import (
+	"slices"
+
+	"github.com/teeworlds-go/teeworlds/chunk7"
+	"github.com/teeworlds-go/teeworlds/messages7"
+	"github.com/teeworlds-go/teeworlds/network7"
+	"github.com/teeworlds-go/teeworlds/packer"
+)
 
 const (
 	packetFlagControl     = 1
@@ -24,6 +31,72 @@ type PacketHeader struct {
 
 	// connless
 	ResponseToken [4]byte
+}
+
+type Packet struct {
+	Header   PacketHeader
+	Messages []messages7.NetMessage
+}
+
+func PackChunk(msg messages7.NetMessage, connection *Connection) []byte {
+	if msg.MsgType() == network7.TypeControl {
+		return msg.Pack()
+	}
+
+	msgId := msg.MsgId() << 1
+	if msg.System() {
+		msgId |= 1
+	}
+
+	if msg.Vital() {
+		connection.Sequence++
+	}
+
+	msgAndSys := packer.PackInt(msgId)
+	payload := msg.Pack()
+
+	// TODO: support resend
+	chunkHeader := chunk7.ChunkHeader{
+		Flags: chunk7.ChunkFlags{
+			Vital: msg.Vital(),
+		},
+		Size: len(msgAndSys) + len(payload),
+		Seq:  connection.Sequence,
+	}
+
+	data := slices.Concat(
+		chunkHeader.Pack(),
+		msgAndSys,
+		payload,
+	)
+
+	return data
+}
+
+func (packet *Packet) Pack(connection *Connection) []byte {
+	payload := []byte{}
+	control := false
+
+	for _, msg := range packet.Messages {
+		payload = append(payload, PackChunk(msg, connection)...)
+		if msg.MsgType() == network7.TypeControl {
+			control = true
+		}
+	}
+
+	packet.Header.NumChunks = len(packet.Messages)
+
+	if control {
+		packet.Header.Flags.Connless = false
+		packet.Header.Flags.Compression = false
+		packet.Header.Flags.Resend = false
+		packet.Header.Flags.Control = true
+	}
+
+	return slices.Concat(
+		packet.Header.Pack(),
+		payload,
+	)
 }
 
 func (header *PacketHeader) Pack() []byte {

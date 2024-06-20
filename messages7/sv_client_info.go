@@ -1,6 +1,9 @@
 package messages7
 
-import "github.com/teeworlds-go/teeworlds/packer"
+import (
+	"github.com/teeworlds-go/teeworlds/network7"
+	"github.com/teeworlds-go/teeworlds/packer"
+)
 
 type SvClientInfo struct {
 	ClientId              int
@@ -27,6 +30,22 @@ type SvClientInfo struct {
 	ColorFeet             int
 	ColorEyes             int
 	Silent                bool
+}
+
+func (info *SvClientInfo) MsgId() int {
+	return network7.MsgGameSvClientInfo
+}
+
+func (info *SvClientInfo) MsgType() network7.MsgType {
+	return network7.TypeNet
+}
+
+func (info *SvClientInfo) System() bool {
+	return false
+}
+
+func (info *SvClientInfo) Vital() bool {
+	return true
 }
 
 func (info *SvClientInfo) Unpack(u *packer.Unpacker) {

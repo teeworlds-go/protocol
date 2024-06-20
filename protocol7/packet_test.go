@@ -1,4 +1,4 @@
-package packet7
+package protocol7
 
 import (
 	"reflect"

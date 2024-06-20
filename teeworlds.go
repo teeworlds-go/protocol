@@ -60,13 +60,20 @@ func main() {
 
 	go readNetwork(ch, client.Conn)
 
-	client.SendCtrlToken([]byte{0xff, 0xff, 0xff, 0xff})
+	packet := client.CtrlToken()
+	conn.Write(packet.Pack(client))
 
 	for {
 		time.Sleep(10_000_000)
 		select {
 		case msg := <-ch:
-			client.OnPacket(msg)
+			packet, err = client.OnPacket(msg)
+			if err != nil {
+				panic(err)
+			}
+			if packet != nil {
+				conn.Write(packet.Pack(client))
+			}
 		default:
 			// do nothing
 		}

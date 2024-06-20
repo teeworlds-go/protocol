@@ -3,6 +3,7 @@ package messages7
 import (
 	"slices"
 
+	"github.com/teeworlds-go/teeworlds/network7"
 	"github.com/teeworlds-go/teeworlds/packer"
 )
 
@@ -30,7 +31,23 @@ type ClStartInfo struct {
 	ColorEyes             int
 }
 
-func (info *ClStartInfo) Pack() []byte {
+func (info ClStartInfo) MsgId() int {
+	return network7.MsgGameClStartInfo
+}
+
+func (info ClStartInfo) MsgType() network7.MsgType {
+	return network7.TypeNet
+}
+
+func (info ClStartInfo) System() bool {
+	return false
+}
+
+func (info ClStartInfo) Vital() bool {
+	return true
+}
+
+func (info ClStartInfo) Pack() []byte {
 	return slices.Concat(
 		packer.PackStr(info.Name),
 		packer.PackStr(info.Clan),
