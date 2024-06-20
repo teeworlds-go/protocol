@@ -26,4 +26,3 @@ func (msg CtrlKeepAlive) Vital() bool {
 func (msg CtrlKeepAlive) Pack() []byte {
 	return []byte{network7.MsgCtrlKeepAlive}
 }
-

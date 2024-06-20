@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/teeworlds-go/teeworlds/messages7"
 	"github.com/teeworlds-go/teeworlds/network7"
 	"github.com/teeworlds-go/teeworlds/protocol7"
 )
@@ -71,6 +72,17 @@ func main() {
 				panic(err)
 			}
 			if packet != nil {
+
+				// example of modifying outgoing traffic
+				for i, msg := range packet.Messages {
+					if msg.MsgId() == network7.MsgCtrlConnect {
+						if connect, ok := packet.Messages[0].(messages7.CtrlConnect); ok {
+							connect.Token = [4]byte{0xaa, 0xaa, 0xaa, 0xaa}
+							packet.Messages[i] = connect
+						}
+					}
+				}
+
 				conn.Write(packet.Pack(client))
 			}
 		default:
