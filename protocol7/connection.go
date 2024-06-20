@@ -111,9 +111,9 @@ func (connection *Connection) OnSystemMsg(msg int, chunk chunk7.Chunk, u *packer
 	}
 }
 
-func (client *Connection) OnChatMessage(mode int, clientId int, targetId int, message string) {
-	name := client.Players[clientId].Info.Name
-	fmt.Printf("[chat] <%s> %s\n", name, message)
+func (client *Connection) OnChatMessage(msg *messages7.SvChat) {
+	name := client.Players[msg.ClientId].Info.Name
+	fmt.Printf("[chat] <%s> %s\n", name, msg.Message)
 }
 
 func (client *Connection) OnMotd(motd string) {
@@ -131,11 +131,10 @@ func (client *Connection) OnGameMsg(msg int, chunk chunk7.Chunk, u *packer.Unpac
 			client.OnMotd(motd)
 		}
 	} else if msg == network7.MsgGameSvChat {
-		mode := u.GetInt()
-		clientId := u.GetInt()
-		targetId := u.GetInt()
-		message := u.GetString()
-		client.OnChatMessage(mode, clientId, targetId, message)
+		chat := &messages7.SvChat{}
+		chat.Unpack(u)
+		client.OnChatMessage(chat)
+		result.Packet.Messages = append(result.Packet.Messages, chat)
 	} else if msg == network7.MsgGameSvClientInfo {
 		clientId := packer.UnpackInt(chunk.Data[1:])
 		client.Players[clientId].Info.Unpack(u)
@@ -202,6 +201,7 @@ func (connection *Connection) OnPacket(data []byte) (*PacketResult, error) {
 			copy(connection.ServerToken[:], payload[1:5])
 			result.Response.Header.Token = connection.ServerToken
 			fmt.Printf("got server token %x\n", connection.ServerToken)
+			result.Packet.Messages = append(result.Packet.Messages, &messages7.CtrlToken{Token: connection.ServerToken})
 			result.Response.Messages = append(
 				result.Response.Messages,
 				&messages7.CtrlConnect{
@@ -210,6 +210,7 @@ func (connection *Connection) OnPacket(data []byte) (*PacketResult, error) {
 			)
 		} else if ctrlMsg == network7.MsgCtrlAccept {
 			fmt.Println("got accept")
+			result.Packet.Messages = append(result.Packet.Messages, &messages7.CtrlAccept{})
 			// TODO: don't hardcode info
 			result.Response.Messages = append(result.Response.Messages, &messages7.Info{})
 		} else if ctrlMsg == network7.MsgCtrlClose {

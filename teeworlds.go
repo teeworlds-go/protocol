@@ -73,12 +73,26 @@ func main() {
 			}
 			if result.Response != nil {
 
+				// example of inspecting incoming trafic
+				for i, msg := range result.Packet.Messages {
+					if msg.MsgId() == network7.MsgGameSvChat {
+						var chat *messages7.SvChat
+						var ok bool
+						if chat, ok = result.Packet.Messages[i].(*messages7.SvChat); ok {
+							fmt.Printf("got chat msg: %s\n", chat.Message)
+
+							// modify chat if this was a proxy
+							result.Response.Messages[i] = chat
+						}
+					}
+				}
+
 				// example of modifying outgoing traffic
 				for i, msg := range result.Response.Messages {
 					if msg.MsgId() == network7.MsgCtrlConnect {
 						var connect *messages7.CtrlConnect
 						var ok bool
-						if connect, ok = result.Response.Messages[0].(*messages7.CtrlConnect); ok {
+						if connect, ok = result.Response.Messages[i].(*messages7.CtrlConnect); ok {
 							connect.Token = [4]byte{0xaa, 0xaa, 0xaa, 0xaa}
 							result.Response.Messages[i] = connect
 						}
