@@ -60,34 +60,33 @@ func main() {
 
 	go readNetwork(ch, conn)
 
-	packet := client.CtrlToken()
-	conn.Write(packet.Pack(client))
+	tokenPacket := client.CtrlToken()
+	conn.Write(tokenPacket.Pack(client))
 
 	for {
 		time.Sleep(10_000_000)
 		select {
 		case msg := <-ch:
-			packet, err = client.OnPacket(msg)
+			result, err := client.OnPacket(msg)
 			if err != nil {
 				panic(err)
 			}
-			if packet != nil {
+			if result.Response != nil {
 
 				// example of modifying outgoing traffic
-				for i, msg := range packet.Messages {
+				for i, msg := range result.Response.Messages {
 					if msg.MsgId() == network7.MsgCtrlConnect {
-						if connect, ok := packet.Messages[0].(messages7.CtrlConnect); ok {
+						if connect, ok := result.Response.Messages[0].(messages7.CtrlConnect); ok {
 							connect.Token = [4]byte{0xaa, 0xaa, 0xaa, 0xaa}
-							packet.Messages[i] = connect
+							result.Response.Messages[i] = connect
 						}
 					}
 				}
 
-				conn.Write(packet.Pack(client))
+				conn.Write(result.Response.Pack(client))
 			}
 		default:
 			// do nothing
 		}
 	}
-
 }
