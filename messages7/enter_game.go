@@ -2,6 +2,7 @@ package messages7
 
 import (
 	"github.com/teeworlds-go/teeworlds/network7"
+	"github.com/teeworlds-go/teeworlds/packer"
 )
 
 type EnterGame struct {
@@ -25,4 +26,7 @@ func (msg EnterGame) Vital() bool {
 
 func (msg EnterGame) Pack() []byte {
 	return []byte{}
+}
+
+func (msg *EnterGame) Unpack(u *packer.Unpacker) {
 }

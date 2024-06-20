@@ -53,7 +53,7 @@ func (connection *Connection) CtrlToken() *Packet {
 	response.Header.Flags.Control = true
 	response.Messages = append(
 		response.Messages,
-		messages7.CtrlToken{
+		&messages7.CtrlToken{
 			Token: connection.ClientToken,
 		},
 	)
@@ -61,8 +61,8 @@ func (connection *Connection) CtrlToken() *Packet {
 	return response
 }
 
-func (client *Connection) MsgStartInfo() messages7.ClStartInfo {
-	return messages7.ClStartInfo{
+func (client *Connection) MsgStartInfo() *messages7.ClStartInfo {
+	return &messages7.ClStartInfo{
 		Name:                  "gopher",
 		Clan:                  "",
 		Country:               0,
@@ -98,14 +98,14 @@ func byteSliceToString(s []byte) string {
 func (connection *Connection) OnSystemMsg(msg int, chunk chunk7.Chunk, u *packer.Unpacker, result *PacketResult) {
 	if msg == network7.MsgSysMapChange {
 		fmt.Println("got map change")
-		result.Response.Messages = append(result.Response.Messages, messages7.Ready{})
+		result.Response.Messages = append(result.Response.Messages, &messages7.Ready{})
 	} else if msg == network7.MsgSysConReady {
 		fmt.Println("got ready")
 		result.Response.Messages = append(result.Response.Messages, connection.MsgStartInfo())
 	} else if msg == network7.MsgSysSnapSingle {
 		// tick := u.GetInt()
 		// fmt.Printf("got snap single tick=%d\n", tick)
-		result.Response.Messages = append(result.Response.Messages, messages7.CtrlKeepAlive{})
+		result.Response.Messages = append(result.Response.Messages, &messages7.CtrlKeepAlive{})
 	} else {
 		fmt.Printf("unknown system message id=%d data=%x\n", msg, chunk.Data)
 	}
@@ -123,7 +123,8 @@ func (client *Connection) OnMotd(motd string) {
 func (client *Connection) OnGameMsg(msg int, chunk chunk7.Chunk, u *packer.Unpacker, result *PacketResult) {
 	if msg == network7.MsgGameReadyToEnter {
 		fmt.Println("got ready to enter")
-		result.Response.Messages = append(result.Response.Messages, messages7.EnterGame{})
+		result.Packet.Messages = append(result.Packet.Messages, &messages7.Ready{})
+		result.Response.Messages = append(result.Response.Messages, &messages7.EnterGame{})
 	} else if msg == network7.MsgGameSvMotd {
 		motd := u.GetString()
 		if motd != "" {
@@ -203,14 +204,14 @@ func (connection *Connection) OnPacket(data []byte) (*PacketResult, error) {
 			fmt.Printf("got server token %x\n", connection.ServerToken)
 			result.Response.Messages = append(
 				result.Response.Messages,
-				messages7.CtrlConnect{
+				&messages7.CtrlConnect{
 					Token: connection.ClientToken,
 				},
 			)
 		} else if ctrlMsg == network7.MsgCtrlAccept {
 			fmt.Println("got accept")
 			// TODO: don't hardcode info
-			result.Response.Messages = append(result.Response.Messages, messages7.Info{})
+			result.Response.Messages = append(result.Response.Messages, &messages7.Info{})
 		} else if ctrlMsg == network7.MsgCtrlClose {
 			// TODO: get length from packet header to determine if a reason is set or not
 			// len(data) -> is 1400 (maxPacketLen)

@@ -76,7 +76,9 @@ func main() {
 				// example of modifying outgoing traffic
 				for i, msg := range result.Response.Messages {
 					if msg.MsgId() == network7.MsgCtrlConnect {
-						if connect, ok := result.Response.Messages[0].(messages7.CtrlConnect); ok {
+						var connect *messages7.CtrlConnect
+						var ok bool
+						if connect, ok = result.Response.Messages[0].(*messages7.CtrlConnect); ok {
 							connect.Token = [4]byte{0xaa, 0xaa, 0xaa, 0xaa}
 							result.Response.Messages[i] = connect
 						}

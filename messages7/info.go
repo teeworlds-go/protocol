@@ -2,6 +2,7 @@ package messages7
 
 import (
 	"github.com/teeworlds-go/teeworlds/network7"
+	"github.com/teeworlds-go/teeworlds/packer"
 )
 
 type Info struct {
@@ -30,4 +31,9 @@ func (msg Info) Pack() []byte {
 		0x00, 0x6D, 0x79, 0x5F, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6F, 0x72, 0x64,
 		0x5F, 0x31, 0x32, 0x33, 0x00, 0x85, 0x1C, 0x00,
 	}
+}
+
+func (msg *Info) Unpack(u *packer.Unpacker) {
+	// TODO: implement
+	panic("not implemented")
 }

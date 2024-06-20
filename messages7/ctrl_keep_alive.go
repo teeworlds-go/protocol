@@ -2,6 +2,7 @@ package messages7
 
 import (
 	"github.com/teeworlds-go/teeworlds/network7"
+	"github.com/teeworlds-go/teeworlds/packer"
 )
 
 type CtrlKeepAlive struct {
@@ -25,4 +26,7 @@ func (msg CtrlKeepAlive) Vital() bool {
 
 func (msg CtrlKeepAlive) Pack() []byte {
 	return []byte{network7.MsgCtrlKeepAlive}
+}
+
+func (msg *CtrlKeepAlive) Unpack(u *packer.Unpacker) {
 }
