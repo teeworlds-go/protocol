@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"slices"
 
 	"github.com/teeworlds-go/huffman"
 	"github.com/teeworlds-go/teeworlds/chunk7"
@@ -95,7 +96,7 @@ func byteSliceToString(s []byte) string {
 	return string(s)
 }
 
-func (connection *Connection) OnSystemMsg(msg int, chunk chunk7.Chunk, u *packer.Unpacker, result *PacketResult) {
+func (connection *Connection) OnSystemMsg(msg int, chunk chunk7.Chunk, u *packer.Unpacker, result *PacketResult) bool {
 	if msg == network7.MsgSysMapChange {
 		fmt.Println("got map change")
 		result.Response.Messages = append(result.Response.Messages, &messages7.Ready{})
@@ -108,7 +109,9 @@ func (connection *Connection) OnSystemMsg(msg int, chunk chunk7.Chunk, u *packer
 		result.Response.Messages = append(result.Response.Messages, &messages7.CtrlKeepAlive{})
 	} else {
 		fmt.Printf("unknown system message id=%d data=%x\n", msg, chunk.Data)
+		return false
 	}
+	return true
 }
 
 func (client *Connection) OnChatMessage(msg *messages7.SvChat) {
@@ -124,7 +127,7 @@ func (client *Connection) OnMotd(motd string) {
 	fmt.Printf("[motd] %s\n", motd)
 }
 
-func (client *Connection) OnGameMsg(msg int, chunk chunk7.Chunk, u *packer.Unpacker, result *PacketResult) {
+func (client *Connection) OnGameMsg(msg int, chunk chunk7.Chunk, u *packer.Unpacker, result *PacketResult) bool {
 	if msg == network7.MsgGameReadyToEnter {
 		fmt.Println("got ready to enter")
 		result.Packet.Messages = append(result.Packet.Messages, &messages7.Ready{ChunkHeader: &chunk.Header})
@@ -146,10 +149,12 @@ func (client *Connection) OnGameMsg(msg int, chunk chunk7.Chunk, u *packer.Unpac
 		fmt.Printf("got client info id=%d name=%s\n", clientId, client.Players[clientId].Info.Name)
 	} else {
 		fmt.Printf("unknown game message id=%d data=%x\n", msg, chunk.Data)
+		return false
 	}
+	return true
 }
 
-func (client *Connection) OnMessage(chunk chunk7.Chunk, result *PacketResult) {
+func (client *Connection) OnMessage(chunk chunk7.Chunk, result *PacketResult) bool {
 	// fmt.Printf("got chunk size=%d data=%v\n", chunk.Header.Size, chunk.Data)
 
 	if chunk.Header.Flags.Vital {
@@ -165,17 +170,22 @@ func (client *Connection) OnMessage(chunk chunk7.Chunk, result *PacketResult) {
 	msg >>= 1
 
 	if sys {
-		client.OnSystemMsg(msg, chunk, &u, result)
-	} else {
-		client.OnGameMsg(msg, chunk, &u, result)
+		return client.OnSystemMsg(msg, chunk, &u, result)
 	}
+	return client.OnGameMsg(msg, chunk, &u, result)
 }
 
 func (connection *Connection) OnPacketPayload(data []byte, result *PacketResult) (*PacketResult, error) {
 	chunks := chunk7.UnpackChunks(data)
 
 	for _, c := range chunks {
-		connection.OnMessage(c, result)
+		if connection.OnMessage(c, result) == false {
+			unknown := &messages7.Unknown{
+				Data: slices.Concat(c.Header.Pack(), c.Data),
+				Type: network7.TypeNet,
+			}
+			result.Packet.Messages = append(result.Packet.Messages, unknown)
+		}
 	}
 	return result, nil
 
@@ -190,6 +200,17 @@ type PacketResult struct {
 	Packet *Packet
 }
 
+// TODO: there should be a Packet.Unpack()
+//
+//	and it should only do the parsing no state handling or responses
+//	and Connection.OnPack() should take a Packet instance as parameter
+//	not raw data
+//	So ideally it would look like this:
+//
+//	packet := Packet{}
+//	packet.Unpack(data)
+//	conn := Connection{}
+//	result, err := conn.OnPacket(packet)
 func (connection *Connection) OnPacket(data []byte) (*PacketResult, error) {
 	result := &PacketResult{
 		Response: connection.BuildResponse(),
@@ -226,6 +247,11 @@ func (connection *Connection) OnPacket(data []byte) (*PacketResult, error) {
 
 			os.Exit(0)
 		} else {
+			unknown := &messages7.Unknown{
+				Data: payload,
+				Type: network7.TypeControl,
+			}
+			result.Packet.Messages = append(result.Packet.Messages, unknown)
 			fmt.Printf("unknown control message: %x\n", data)
 		}
 

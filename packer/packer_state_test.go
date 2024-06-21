@@ -5,6 +5,33 @@ import (
 	"testing"
 )
 
+// rest
+
+func TestUnpackRest(t *testing.T) {
+	u := Unpacker{}
+	u.Reset([]byte{0x01, 0xff, 0xaa})
+
+	{
+		got := u.GetInt()
+		want := 1
+
+		if got != want {
+			t.Errorf("got %v, wanted %v", got, want)
+		}
+	}
+
+	{
+		got := u.Rest()
+		want := []byte{0xff, 0xaa}
+
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("got %v, wanted %v", got, want)
+		}
+	}
+}
+
+// client info
+
 func TestUnpackClientInfo(t *testing.T) {
 	u := Unpacker{}
 	u.Reset([]byte{

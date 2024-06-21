@@ -30,6 +30,10 @@ func (u *Unpacker) Data() []byte {
 	return u.data
 }
 
+func (u *Unpacker) Rest() []byte {
+	return u.data[u.idx:]
+}
+
 const (
 	Sanitize                = 1
 	SanitizeCC              = 2

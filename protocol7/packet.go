@@ -40,6 +40,9 @@ type Packet struct {
 }
 
 func PackChunk(msg messages7.NetMessage, connection *Connection) []byte {
+	if _, ok := msg.(*messages7.Unknown); ok {
+		return msg.Pack()
+	}
 	if msg.MsgType() == network7.TypeControl {
 		return msg.Pack()
 	}
