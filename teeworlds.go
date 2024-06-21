@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/teeworlds-go/teeworlds/messages7"
@@ -16,8 +17,8 @@ const (
 	maxPacksize = 1400
 )
 
-func getConnection() (net.Conn, error) {
-	conn, err := net.Dial("udp", "127.0.0.1:8303")
+func getConnection(serverIp string, serverPort int) (net.Conn, error) {
+	conn, err := net.Dial("udp", fmt.Sprintf("%s:%d", serverIp, serverPort))
 	if err != nil {
 		fmt.Printf("Some error %v", err)
 	}
@@ -45,7 +46,25 @@ func readNetwork(ch chan<- []byte, conn net.Conn) {
 func main() {
 	ch := make(chan []byte, maxPacksize)
 
-	conn, err := getConnection()
+	serverIp := "127.0.0.1"
+	serverPort := 8303
+
+	if len(os.Args) > 1 {
+		if os.Args[1][0] == '-' {
+			fmt.Println("usage: ./teeworlds [serverIp] [serverPort]")
+			os.Exit(1)
+		}
+		serverIp = os.Args[1]
+	}
+	if len(os.Args) > 2 {
+		var err error
+		serverPort, err = strconv.Atoi(os.Args[2])
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	conn, err := getConnection(serverIp, serverPort)
 	if err != nil {
 		fmt.Printf("error connecting %v\n", err)
 		os.Exit(1)
@@ -71,7 +90,7 @@ func main() {
 			if err != nil {
 				panic(err)
 			}
-			if result.Response != nil {
+			if result != nil && result.Response != nil {
 
 				// example of inspecting incoming trafic
 				for i, msg := range result.Packet.Messages {

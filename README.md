@@ -8,7 +8,7 @@ WORK IN PROGRESS
 
 ```
 go build
-./teeworlds
+./teeworlds 127.0.0.1 8303
 ```
 
 ## tests
