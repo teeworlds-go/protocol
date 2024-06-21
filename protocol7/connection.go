@@ -112,6 +112,10 @@ func (connection *Connection) OnSystemMsg(msg int, chunk chunk7.Chunk, u *packer
 }
 
 func (client *Connection) OnChatMessage(msg *messages7.SvChat) {
+	if msg.ClientId < 0 || msg.ClientId > network7.MaxClients {
+		fmt.Printf("[chat] *** %s\n", msg.Message)
+		return
+	}
 	name := client.Players[msg.ClientId].Info.Name
 	fmt.Printf("[chat] <%s> %s\n", name, msg.Message)
 }
