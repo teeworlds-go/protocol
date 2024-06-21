@@ -82,7 +82,7 @@ func main() {
 							fmt.Printf("got chat msg: %s\n", chat.Message)
 
 							// modify chat if this was a proxy
-							result.Response.Messages[i] = chat
+							result.Packet.Messages[i] = chat
 						}
 					}
 				}
