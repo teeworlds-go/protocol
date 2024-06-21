@@ -1,11 +1,14 @@
 package messages7
 
 import (
+	"github.com/teeworlds-go/teeworlds/chunk7"
 	"github.com/teeworlds-go/teeworlds/network7"
 	"github.com/teeworlds-go/teeworlds/packer"
 )
 
 type SvClientInfo struct {
+	header *chunk7.ChunkHeader
+
 	ClientId              int
 	Local                 bool
 	Team                  int
@@ -73,4 +76,12 @@ func (info *SvClientInfo) Unpack(u *packer.Unpacker) {
 	info.ColorFeet = u.GetInt()
 	info.ColorEyes = u.GetInt()
 	info.Silent = u.GetInt() != 0
+}
+
+func (msg *SvClientInfo) Header() *chunk7.ChunkHeader {
+	return msg.header
+}
+
+func (msg *SvClientInfo) SetHeader(header *chunk7.ChunkHeader) {
+	msg.header = header
 }

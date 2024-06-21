@@ -3,11 +3,14 @@ package messages7
 import (
 	"slices"
 
+	"github.com/teeworlds-go/teeworlds/chunk7"
 	"github.com/teeworlds-go/teeworlds/network7"
 	"github.com/teeworlds-go/teeworlds/packer"
 )
 
 type ClStartInfo struct {
+	header *chunk7.ChunkHeader
+
 	Name                  string
 	Clan                  string
 	Country               int
@@ -95,4 +98,12 @@ func (info *ClStartInfo) Unpack(u *packer.Unpacker) {
 	info.ColorHands = u.GetInt()
 	info.ColorFeet = u.GetInt()
 	info.ColorEyes = u.GetInt()
+}
+
+func (msg *ClStartInfo) Header() *chunk7.ChunkHeader {
+	return msg.header
+}
+
+func (msg *ClStartInfo) SetHeader(header *chunk7.ChunkHeader) {
+	msg.header = header
 }

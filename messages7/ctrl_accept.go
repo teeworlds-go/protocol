@@ -3,6 +3,7 @@ package messages7
 import (
 	"slices"
 
+	"github.com/teeworlds-go/teeworlds/chunk7"
 	"github.com/teeworlds-go/teeworlds/network7"
 	"github.com/teeworlds-go/teeworlds/packer"
 )
@@ -36,4 +37,11 @@ func (msg CtrlAccept) Pack() []byte {
 }
 
 func (msg *CtrlAccept) Unpack(u *packer.Unpacker) {
+}
+
+func (msg *CtrlAccept) Header() *chunk7.ChunkHeader {
+	return nil
+}
+
+func (msg *CtrlAccept) SetHeader(header *chunk7.ChunkHeader) {
 }

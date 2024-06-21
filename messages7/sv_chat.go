@@ -3,11 +3,14 @@ package messages7
 import (
 	"slices"
 
+	"github.com/teeworlds-go/teeworlds/chunk7"
 	"github.com/teeworlds-go/teeworlds/network7"
 	"github.com/teeworlds-go/teeworlds/packer"
 )
 
 type SvChat struct {
+	header *chunk7.ChunkHeader
+
 	Mode     int
 	ClientId int
 	TargetId int
@@ -44,4 +47,12 @@ func (msg *SvChat) Unpack(u *packer.Unpacker) {
 	msg.ClientId = u.GetInt()
 	msg.TargetId = u.GetInt()
 	msg.Message = u.GetString()
+}
+
+func (msg *SvChat) Header() *chunk7.ChunkHeader {
+	return msg.header
+}
+
+func (msg *SvChat) SetHeader(header *chunk7.ChunkHeader) {
+	msg.header = header
 }

@@ -3,6 +3,7 @@ package messages7
 import (
 	"slices"
 
+	"github.com/teeworlds-go/teeworlds/chunk7"
 	"github.com/teeworlds-go/teeworlds/network7"
 	"github.com/teeworlds-go/teeworlds/packer"
 )
@@ -38,4 +39,11 @@ func (msg CtrlConnect) Pack() []byte {
 // TODO: no idea if this works
 func (msg *CtrlConnect) Unpack(u *packer.Unpacker) {
 	msg.Token = [4]byte(u.Data())
+}
+
+func (msg *CtrlConnect) Header() *chunk7.ChunkHeader {
+	return nil
+}
+
+func (msg *CtrlConnect) SetHeader(header *chunk7.ChunkHeader) {
 }

@@ -55,17 +55,20 @@ func PackChunk(msg messages7.NetMessage, connection *Connection) []byte {
 	msgAndSys := packer.PackInt(msgId)
 	payload := msg.Pack()
 
-	// TODO: support resend
-	chunkHeader := chunk7.ChunkHeader{
-		Flags: chunk7.ChunkFlags{
-			Vital: msg.Vital(),
-		},
-		Size: len(msgAndSys) + len(payload),
-		Seq:  connection.Sequence,
+	if msg.Header() == nil {
+		header := &chunk7.ChunkHeader{
+			Flags: chunk7.ChunkFlags{
+				Vital: msg.Vital(),
+			},
+			Seq: connection.Sequence,
+		}
+		msg.SetHeader(header)
 	}
 
+	msg.Header().Size = len(msgAndSys) + len(payload)
+
 	data := slices.Concat(
-		chunkHeader.Pack(),
+		msg.Header().Pack(),
 		msgAndSys,
 		payload,
 	)

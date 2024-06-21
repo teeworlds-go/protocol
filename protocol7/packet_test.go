@@ -4,7 +4,75 @@ import (
 	"reflect"
 	"slices"
 	"testing"
+
+	"github.com/teeworlds-go/teeworlds/chunk7"
+	"github.com/teeworlds-go/teeworlds/messages7"
 )
+
+// update chunk headers
+
+func TestPackUpdateChunkHeaders(t *testing.T) {
+	// The chunk header is nil by default
+	packet := Packet{}
+	packet.Messages = append(packet.Messages, &messages7.SvChat{Message: "foo"})
+
+	{
+		got := packet.Messages[0].Header()
+
+		if got != nil {
+			t.Errorf("got %v, wanted %v", got, nil)
+		}
+	}
+
+	// When packing the chunk header will be set automatically
+	// Based on the current context
+	conn := &Connection{Sequence: 1}
+	packet.Pack(conn)
+
+	{
+		got := packet.Messages[0].Header()
+		want := &chunk7.ChunkHeader{
+			Flags: chunk7.ChunkFlags{
+				Vital: true,
+			},
+			Size: 8,
+			Seq:  2,
+		}
+
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("got %v, wanted %v", got, want)
+		}
+	}
+
+	// When the chunk header is already set
+	// Packing will only update the size
+
+	var chat *messages7.SvChat
+	var ok bool
+	if chat, ok = packet.Messages[0].(*messages7.SvChat); ok {
+		chat.Message = "hello world"
+		packet.Messages[0] = chat
+	} else {
+		t.Fatal("failed to cast chat message")
+	}
+
+	packet.Pack(conn)
+
+	{
+		got := packet.Messages[0].Header()
+		want := &chunk7.ChunkHeader{
+			Flags: chunk7.ChunkFlags{
+				Vital: true,
+			},
+			Size: 16,
+			Seq:  2,
+		}
+
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("got %v, wanted %v", got, want)
+		}
+	}
+}
 
 // pack header
 

@@ -1,11 +1,13 @@
 package messages7
 
 import (
+	"github.com/teeworlds-go/teeworlds/chunk7"
 	"github.com/teeworlds-go/teeworlds/network7"
 	"github.com/teeworlds-go/teeworlds/packer"
 )
 
 type EnterGame struct {
+	header *chunk7.ChunkHeader
 }
 
 func (msg EnterGame) MsgId() int {
@@ -29,4 +31,12 @@ func (msg EnterGame) Pack() []byte {
 }
 
 func (msg *EnterGame) Unpack(u *packer.Unpacker) {
+}
+
+func (msg *EnterGame) Header() *chunk7.ChunkHeader {
+	return msg.header
+}
+
+func (msg *EnterGame) SetHeader(header *chunk7.ChunkHeader) {
+	msg.header = header
 }
