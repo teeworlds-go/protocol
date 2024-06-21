@@ -123,7 +123,7 @@ func (client *Connection) OnMotd(motd string) {
 func (client *Connection) OnGameMsg(msg int, chunk chunk7.Chunk, u *packer.Unpacker, result *PacketResult) {
 	if msg == network7.MsgGameReadyToEnter {
 		fmt.Println("got ready to enter")
-		result.Packet.Messages = append(result.Packet.Messages, &messages7.Ready{})
+		result.Packet.Messages = append(result.Packet.Messages, &messages7.Ready{ChunkHeader: &chunk.Header})
 		result.Response.Messages = append(result.Response.Messages, &messages7.EnterGame{})
 	} else if msg == network7.MsgGameSvMotd {
 		motd := u.GetString()
@@ -131,7 +131,7 @@ func (client *Connection) OnGameMsg(msg int, chunk chunk7.Chunk, u *packer.Unpac
 			client.OnMotd(motd)
 		}
 	} else if msg == network7.MsgGameSvChat {
-		chat := &messages7.SvChat{}
+		chat := &messages7.SvChat{ChunkHeader: &chunk.Header}
 		chat.Unpack(u)
 		client.OnChatMessage(chat)
 		result.Packet.Messages = append(result.Packet.Messages, chat)

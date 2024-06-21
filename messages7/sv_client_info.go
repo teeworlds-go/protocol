@@ -7,7 +7,7 @@ import (
 )
 
 type SvClientInfo struct {
-	header *chunk7.ChunkHeader
+	ChunkHeader *chunk7.ChunkHeader
 
 	ClientId              int
 	Local                 bool
@@ -79,9 +79,9 @@ func (info *SvClientInfo) Unpack(u *packer.Unpacker) {
 }
 
 func (msg *SvClientInfo) Header() *chunk7.ChunkHeader {
-	return msg.header
+	return msg.ChunkHeader
 }
 
 func (msg *SvClientInfo) SetHeader(header *chunk7.ChunkHeader) {
-	msg.header = header
+	msg.ChunkHeader = header
 }

@@ -15,5 +15,5 @@ type NetMessage interface {
 	Unpack(u *packer.Unpacker)
 
 	Header() *chunk7.ChunkHeader
-	SetHeader(chunkHeader *chunk7.ChunkHeader)
+	SetHeader(header *chunk7.ChunkHeader)
 }

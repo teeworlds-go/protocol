@@ -9,7 +9,7 @@ import (
 )
 
 type ClStartInfo struct {
-	header *chunk7.ChunkHeader
+	ChunkHeader *chunk7.ChunkHeader
 
 	Name                  string
 	Clan                  string
@@ -101,9 +101,9 @@ func (info *ClStartInfo) Unpack(u *packer.Unpacker) {
 }
 
 func (msg *ClStartInfo) Header() *chunk7.ChunkHeader {
-	return msg.header
+	return msg.ChunkHeader
 }
 
 func (msg *ClStartInfo) SetHeader(header *chunk7.ChunkHeader) {
-	msg.header = header
+	msg.ChunkHeader = header
 }

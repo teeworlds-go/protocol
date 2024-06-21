@@ -7,7 +7,7 @@ import (
 )
 
 type Info struct {
-	header *chunk7.ChunkHeader
+	ChunkHeader *chunk7.ChunkHeader
 }
 
 func (msg Info) MsgId() int {
@@ -41,9 +41,9 @@ func (msg *Info) Unpack(u *packer.Unpacker) {
 }
 
 func (msg *Info) Header() *chunk7.ChunkHeader {
-	return msg.header
+	return msg.ChunkHeader
 }
 
 func (msg *Info) SetHeader(header *chunk7.ChunkHeader) {
-	msg.header = header
+	msg.ChunkHeader = header
 }

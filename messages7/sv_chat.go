@@ -9,7 +9,7 @@ import (
 )
 
 type SvChat struct {
-	header *chunk7.ChunkHeader
+	ChunkHeader *chunk7.ChunkHeader
 
 	Mode     int
 	ClientId int
@@ -50,9 +50,9 @@ func (msg *SvChat) Unpack(u *packer.Unpacker) {
 }
 
 func (msg *SvChat) Header() *chunk7.ChunkHeader {
-	return msg.header
+	return msg.ChunkHeader
 }
 
 func (msg *SvChat) SetHeader(header *chunk7.ChunkHeader) {
-	msg.header = header
+	msg.ChunkHeader = header
 }

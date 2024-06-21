@@ -7,7 +7,7 @@ import (
 )
 
 type ReadyToEnter struct {
-	header *chunk7.ChunkHeader
+	ChunkHeader *chunk7.ChunkHeader
 }
 
 func (msg ReadyToEnter) MsgId() int {
@@ -34,9 +34,9 @@ func (msg *ReadyToEnter) Unpack(u *packer.Unpacker) {
 }
 
 func (msg *ReadyToEnter) Header() *chunk7.ChunkHeader {
-	return msg.header
+	return msg.ChunkHeader
 }
 
 func (msg *ReadyToEnter) SetHeader(header *chunk7.ChunkHeader) {
-	msg.header = header
+	msg.ChunkHeader = header
 }
