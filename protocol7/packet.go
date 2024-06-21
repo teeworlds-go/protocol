@@ -3,6 +3,7 @@ package protocol7
 import (
 	"slices"
 
+	"github.com/teeworlds-go/huffman"
 	"github.com/teeworlds-go/teeworlds/chunk7"
 	"github.com/teeworlds-go/teeworlds/messages7"
 	"github.com/teeworlds-go/teeworlds/network7"
@@ -94,6 +95,16 @@ func (packet *Packet) Pack(connection *Connection) []byte {
 		packet.Header.Flags.Compression = false
 		packet.Header.Flags.Resend = false
 		packet.Header.Flags.Control = true
+	}
+
+	if packet.Header.Flags.Compression {
+		// TODO: store huffman object in connection to avoid reallocating memory
+		huff := huffman.Huffman{}
+		var err error
+		payload, err = huff.Compress(payload)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	return slices.Concat(
