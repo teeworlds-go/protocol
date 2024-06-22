@@ -1,8 +1,6 @@
-# teeworlds
+# go-teeworlds-protocol
 
 A client side network protocol implementation of the game teeworlds.
-
-WORK IN PROGRESS
 
 ## run client
 
@@ -16,4 +14,8 @@ go build
 ```
 go test ./...
 ```
+
+## projects using go-teeworlds-protocol
+
+- [MITM teeworlds proxy](https://github.com/teeworlds-go/proxy)
 

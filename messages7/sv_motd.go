@@ -1,9 +1,9 @@
 package messages7
 
 import (
-	"github.com/teeworlds-go/teeworlds/chunk7"
-	"github.com/teeworlds-go/teeworlds/network7"
-	"github.com/teeworlds-go/teeworlds/packer"
+	"github.com/teeworlds-go/go-teeworlds-protocol/chunk7"
+	"github.com/teeworlds-go/go-teeworlds-protocol/network7"
+	"github.com/teeworlds-go/go-teeworlds-protocol/packer"
 )
 
 type SvMotd struct {

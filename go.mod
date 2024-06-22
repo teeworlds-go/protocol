@@ -1,4 +1,4 @@
-module github.com/teeworlds-go/teeworlds
+module github.com/teeworlds-go/go-teeworlds-protocol
 
 go 1.22.3
 

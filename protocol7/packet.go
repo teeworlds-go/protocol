@@ -3,11 +3,11 @@ package protocol7
 import (
 	"slices"
 
+	"github.com/teeworlds-go/go-teeworlds-protocol/chunk7"
+	"github.com/teeworlds-go/go-teeworlds-protocol/messages7"
+	"github.com/teeworlds-go/go-teeworlds-protocol/network7"
+	"github.com/teeworlds-go/go-teeworlds-protocol/packer"
 	"github.com/teeworlds-go/huffman"
-	"github.com/teeworlds-go/teeworlds/chunk7"
-	"github.com/teeworlds-go/teeworlds/messages7"
-	"github.com/teeworlds-go/teeworlds/network7"
-	"github.com/teeworlds-go/teeworlds/packer"
 )
 
 const (

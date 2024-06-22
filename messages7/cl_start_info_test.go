@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/teeworlds-go/teeworlds/packer"
+	"github.com/teeworlds-go/go-teeworlds-protocol/packer"
 )
 
 func TestPackStartInfo(t *testing.T) {
