@@ -9,13 +9,14 @@ const (
 	MsgCtrlToken     = 0x05
 	MsgCtrlClose     = 0x04
 
-	MsgSysInfo       = 1
-	MsgSysMapChange  = 2
-	MsgSysConReady   = 5
-	MsgSysSnapEmpty  = 7
-	MsgSysSnapSingle = 8
-	MsgSysReady      = 18
-	MsgSysEnterGame  = 19
+	MsgSysInfo        = 1
+	MsgSysMapChange   = 2
+	MsgSysConReady    = 5
+	MsgSysSnapEmpty   = 7
+	MsgSysSnapSingle  = 8
+	MsgSysInputTiming = 10
+	MsgSysReady       = 18
+	MsgSysEnterGame   = 19
 
 	MsgGameSvMotd       = 1
 	MsgGameSvChat       = 3

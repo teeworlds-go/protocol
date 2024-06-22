@@ -104,6 +104,10 @@ func (connection *Connection) OnSystemMsg(msg messages7.NetMessage, response *Pa
 	case *messages7.SnapSingle:
 		// fmt.Printf("got snap single tick=%d\n", msg.GameTick)
 		response.Messages = append(response.Messages, &messages7.CtrlKeepAlive{})
+	case *messages7.SnapEmpty:
+		// fmt.Printf("got snap empty tick=%d\n", msg.GameTick)
+	case *messages7.InputTiming:
+		// fmt.Printf("timing time left=%d\n", msg.TimeLeft)
 	default:
 		fmt.Printf("unknown system message id=%d payload=%x\n", msg.MsgId(), msg.Pack())
 		return false
