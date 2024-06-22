@@ -80,6 +80,118 @@ func PackChunk(msg messages7.NetMessage, connection *Connection) []byte {
 	return data
 }
 
+func (packet *Packet) unpackSystem(msgId int, chunk chunk7.Chunk, u *packer.Unpacker) bool {
+	if msgId == network7.MsgSysMapChange {
+		msg := &messages7.MapChange{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgSysConReady {
+		msg := &messages7.ConReady{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else {
+		return false
+	}
+	// packet.Messages[len(packet.Messages)-1].SetHeader(&chunk.Header)
+	return true
+}
+
+func (packet *Packet) unpackGame(msgId int, chunk chunk7.Chunk, u *packer.Unpacker) bool {
+	if msgId == network7.MsgGameReadyToEnter {
+		msg := &messages7.Ready{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgGameSvMotd {
+		msg := &messages7.SvMotd{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgGameSvChat {
+		msg := &messages7.SvChat{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgGameSvClientInfo {
+		msg := &messages7.SvClientInfo{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else {
+		return false
+	}
+	return true
+}
+
+func (packet *Packet) unpackChunk(chunk chunk7.Chunk) bool {
+	u := packer.Unpacker{}
+	u.Reset(chunk.Data)
+
+	msg := u.GetInt()
+
+	sys := msg&1 != 0
+	msg >>= 1
+
+	if sys {
+		return packet.unpackSystem(msg, chunk, &u)
+	}
+	return packet.unpackGame(msg, chunk, &u)
+}
+
+func (packet *Packet) unpackPayload(payload []byte) {
+	chunks := chunk7.UnpackChunks(payload)
+
+	for _, c := range chunks {
+		if packet.unpackChunk(c) == false {
+			unknown := &messages7.Unknown{
+				Data: slices.Concat(c.Header.Pack(), c.Data),
+				Type: network7.TypeNet,
+			}
+			packet.Messages = append(packet.Messages, unknown)
+		}
+	}
+}
+
+// Only returns an error if there is invalid huffman compression applied
+// Unknown messages will be unpacked as messages7.Unknown
+// There is no validation no messages will be dropped
+func (packet *Packet) Unpack(data []byte) error {
+	packet.Header.Unpack(data[:7])
+	payload := data[7:]
+
+	if packet.Header.Flags.Control {
+		unpacker := packer.Unpacker{}
+		unpacker.Reset(payload)
+		ctrlMsg := unpacker.GetInt()
+		if ctrlMsg == network7.MsgCtrlToken {
+			msg := &messages7.CtrlToken{}
+			msg.Unpack(&unpacker)
+			packet.Messages = append(packet.Messages, msg)
+		} else if ctrlMsg == network7.MsgCtrlAccept {
+			packet.Messages = append(packet.Messages, &messages7.CtrlAccept{})
+		} else if ctrlMsg == network7.MsgCtrlClose {
+			msg := &messages7.CtrlClose{}
+			msg.Unpack(&unpacker)
+			packet.Messages = append(packet.Messages, msg)
+		} else {
+			unknown := &messages7.Unknown{
+				Data: payload,
+				Type: network7.TypeControl,
+			}
+			packet.Messages = append(packet.Messages, unknown)
+		}
+		return nil
+	}
+
+	if packet.Header.Flags.Compression {
+		huff := huffman.Huffman{}
+		var err error
+		payload, err = huff.Decompress(payload)
+		if err != nil {
+			return err
+		}
+	}
+
+	packet.unpackPayload(payload)
+	return nil
+}
+
 func (packet *Packet) Pack(connection *Connection) []byte {
 	payload := []byte{}
 	control := false
