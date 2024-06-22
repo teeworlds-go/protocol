@@ -93,6 +93,10 @@ func (packet *Packet) unpackSystem(msgId int, chunk chunk7.Chunk, u *packer.Unpa
 		msg := &messages7.SnapSingle{ChunkHeader: &chunk.Header}
 		msg.Unpack(u)
 		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgSysSnapEmpty {
+		msg := &messages7.SnapEmpty{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
 	} else {
 		return false
 	}

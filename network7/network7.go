@@ -12,6 +12,7 @@ const (
 	MsgSysInfo       = 1
 	MsgSysMapChange  = 2
 	MsgSysConReady   = 5
+	MsgSysSnapEmpty  = 7
 	MsgSysSnapSingle = 8
 	MsgSysReady      = 18
 	MsgSysEnterGame  = 19
