@@ -92,6 +92,19 @@ func byteSliceToString(s []byte) string {
 	return string(s)
 }
 
+func (connection *Connection) printUnknownMessage(msg messages7.NetMessage, msgType string) {
+	fmt.Printf("%s message id=%d\n", msgType, msg.MsgId())
+	if msg.Header() == nil {
+		fmt.Println("  header: nil")
+	} else {
+		fmt.Printf("  header: %x\n", msg.Header().Pack())
+	}
+	fmt.Printf("  payload: %x\n", msg.Pack())
+	if msg.Header() != nil {
+		fmt.Printf("  full msg: %x%x\n", msg.Header().Pack(), msg.Pack())
+	}
+}
+
 func (connection *Connection) OnSystemMsg(msg messages7.NetMessage, response *Packet) bool {
 	// TODO: is this shadow nasty?
 	switch msg := msg.(type) {
@@ -108,8 +121,12 @@ func (connection *Connection) OnSystemMsg(msg messages7.NetMessage, response *Pa
 		// fmt.Printf("got snap empty tick=%d\n", msg.GameTick)
 	case *messages7.InputTiming:
 		// fmt.Printf("timing time left=%d\n", msg.TimeLeft)
+	case *messages7.Unknown:
+		// TODO: msg id of unknown messages should not be -1
+		fmt.Println("TODO: why is the msg id -1???")
+		connection.printUnknownMessage(msg, "unknown system")
 	default:
-		fmt.Printf("unknown system message id=%d payload=%x\n", msg.MsgId(), msg.Pack())
+		connection.printUnknownMessage(msg, "unhandled system")
 		return false
 	}
 	return true
@@ -131,14 +148,18 @@ func (connection *Connection) OnGameMsg(msg messages7.NetMessage, response *Pack
 		fmt.Println("got ready to enter")
 		response.Messages = append(response.Messages, &messages7.EnterGame{})
 	case *messages7.SvMotd:
-		fmt.Printf("[motd] %s\n", msg.Message)
+		if msg.Message != "" {
+			fmt.Printf("[motd] %s\n", msg.Message)
+		}
 	case *messages7.SvChat:
 		connection.OnChatMessage(msg)
 	case *messages7.SvClientInfo:
 		connection.Players[msg.ClientId].Info = *msg
 		fmt.Printf("got client info id=%d name=%s\n", msg.ClientId, msg.Name)
+	case *messages7.Unknown:
+		connection.printUnknownMessage(msg, "unknown game")
 	default:
-		fmt.Printf("unknown game message id=%d payload=%x\n", msg.MsgId(), msg.Pack())
+		connection.printUnknownMessage(msg, "unhandled game")
 		return false
 	}
 	return true
