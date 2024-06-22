@@ -39,8 +39,7 @@ func (msg Unknown) System() bool {
 }
 
 func (msg Unknown) Vital() bool {
-	// TODO: check is not ctrl and then unpack Data
-	panic("not implemented yet")
+	panic("You are not mean't to pack unknown messages. Use msg.Header().Vital instead.")
 }
 
 func (msg Unknown) Pack() []byte {
@@ -52,7 +51,10 @@ func (msg *Unknown) Unpack(u *packer.Unpacker) {
 }
 
 func (msg *Unknown) Header() *chunk7.ChunkHeader {
-	return nil
+	if msg.Type == network7.TypeControl {
+		return nil
+	}
+	return msg.ChunkHeader
 }
 
 func (msg *Unknown) SetHeader(header *chunk7.ChunkHeader) {

@@ -135,12 +135,10 @@ func TestRepackUnknownMessages(t *testing.T) {
 	}
 
 	conn := Connection{}
-	result, err := conn.OnPacket(dump)
-	if err != nil {
-		t.Errorf("Unexpected error %v\n", err)
-	}
 
-	repack := result.Packet.Pack(&conn)
+	packet := Packet{}
+	packet.Unpack(dump)
+	repack := packet.Pack(&conn)
 
 	if !reflect.DeepEqual(repack, dump) {
 		t.Errorf("got %v, wanted %v", repack, dump)

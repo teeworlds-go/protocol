@@ -89,6 +89,10 @@ func (packet *Packet) unpackSystem(msgId int, chunk chunk7.Chunk, u *packer.Unpa
 		msg := &messages7.ConReady{ChunkHeader: &chunk.Header}
 		msg.Unpack(u)
 		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgSysSnapSingle {
+		msg := &messages7.SnapSingle{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
 	} else {
 		return false
 	}
@@ -98,7 +102,7 @@ func (packet *Packet) unpackSystem(msgId int, chunk chunk7.Chunk, u *packer.Unpa
 
 func (packet *Packet) unpackGame(msgId int, chunk chunk7.Chunk, u *packer.Unpacker) bool {
 	if msgId == network7.MsgGameReadyToEnter {
-		msg := &messages7.Ready{ChunkHeader: &chunk.Header}
+		msg := &messages7.ReadyToEnter{ChunkHeader: &chunk.Header}
 		msg.Unpack(u)
 		packet.Messages = append(packet.Messages, msg)
 	} else if msgId == network7.MsgGameSvMotd {
@@ -140,8 +144,9 @@ func (packet *Packet) unpackPayload(payload []byte) {
 	for _, c := range chunks {
 		if packet.unpackChunk(c) == false {
 			unknown := &messages7.Unknown{
-				Data: slices.Concat(c.Header.Pack(), c.Data),
-				Type: network7.TypeNet,
+				ChunkHeader: &c.Header,
+				Data:        slices.Concat(c.Header.Pack(), c.Data),
+				Type:        network7.TypeNet,
 			}
 			packet.Messages = append(packet.Messages, unknown)
 		}

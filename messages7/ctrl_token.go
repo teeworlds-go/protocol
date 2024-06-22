@@ -39,9 +39,8 @@ func (msg CtrlToken) Pack() []byte {
 	)
 }
 
-// TODO: no idea if this works
 func (msg *CtrlToken) Unpack(u *packer.Unpacker) {
-	msg.Token = [4]byte(u.Data())
+	msg.Token = [4]byte(u.Rest())
 }
 
 func (msg *CtrlToken) Header() *chunk7.ChunkHeader {

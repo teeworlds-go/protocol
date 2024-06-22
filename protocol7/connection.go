@@ -4,13 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"slices"
 
-	"github.com/teeworlds-go/huffman"
-	"github.com/teeworlds-go/teeworlds/chunk7"
 	"github.com/teeworlds-go/teeworlds/messages7"
 	"github.com/teeworlds-go/teeworlds/network7"
-	"github.com/teeworlds-go/teeworlds/packer"
 )
 
 type Player struct {
@@ -96,19 +92,20 @@ func byteSliceToString(s []byte) string {
 	return string(s)
 }
 
-func (connection *Connection) OnSystemMsg(msg int, chunk chunk7.Chunk, u *packer.Unpacker, result *PacketResult) bool {
-	if msg == network7.MsgSysMapChange {
+func (connection *Connection) OnSystemMsg(msg messages7.NetMessage, response *Packet) bool {
+	// TODO: is this shadow nasty?
+	switch msg := msg.(type) {
+	case *messages7.MapChange:
 		fmt.Println("got map change")
-		result.Response.Messages = append(result.Response.Messages, &messages7.Ready{})
-	} else if msg == network7.MsgSysConReady {
+		response.Messages = append(response.Messages, &messages7.Ready{})
+	case *messages7.ConReady:
 		fmt.Println("got ready")
-		result.Response.Messages = append(result.Response.Messages, connection.MsgStartInfo())
-	} else if msg == network7.MsgSysSnapSingle {
-		// tick := u.GetInt()
-		// fmt.Printf("got snap single tick=%d\n", tick)
-		result.Response.Messages = append(result.Response.Messages, &messages7.CtrlKeepAlive{})
-	} else {
-		fmt.Printf("unknown system message id=%d data=%x\n", msg, chunk.Data)
+		response.Messages = append(response.Messages, connection.MsgStartInfo())
+	case *messages7.SnapSingle:
+		// fmt.Printf("got snap single tick=%d\n", msg.GameTick)
+		response.Messages = append(response.Messages, &messages7.CtrlKeepAlive{})
+	default:
+		fmt.Printf("unknown system message id=%d payload=%x\n", msg.MsgId(), msg.Pack())
 		return false
 	}
 	return true
@@ -123,155 +120,78 @@ func (client *Connection) OnChatMessage(msg *messages7.SvChat) {
 	fmt.Printf("[chat] <%s> %s\n", name, msg.Message)
 }
 
-func (client *Connection) OnMotd(motd string) {
-	fmt.Printf("[motd] %s\n", motd)
-}
-
-func (client *Connection) OnGameMsg(msg int, chunk chunk7.Chunk, u *packer.Unpacker, result *PacketResult) bool {
-	if msg == network7.MsgGameReadyToEnter {
+func (connection *Connection) OnGameMsg(msg messages7.NetMessage, response *Packet) bool {
+	// TODO: is this shadow nasty?
+	switch msg := msg.(type) {
+	case *messages7.ReadyToEnter:
 		fmt.Println("got ready to enter")
-		result.Packet.Messages = append(result.Packet.Messages, &messages7.Ready{ChunkHeader: &chunk.Header})
-		result.Response.Messages = append(result.Response.Messages, &messages7.EnterGame{})
-	} else if msg == network7.MsgGameSvMotd {
-		motd := u.GetString()
-		if motd != "" {
-			client.OnMotd(motd)
-		}
-	} else if msg == network7.MsgGameSvChat {
-		chat := &messages7.SvChat{ChunkHeader: &chunk.Header}
-		chat.Unpack(u)
-		client.OnChatMessage(chat)
-		result.Packet.Messages = append(result.Packet.Messages, chat)
-	} else if msg == network7.MsgGameSvClientInfo {
-		clientId := packer.UnpackInt(chunk.Data[1:])
-		client.Players[clientId].Info.Unpack(u)
-
-		fmt.Printf("got client info id=%d name=%s\n", clientId, client.Players[clientId].Info.Name)
-	} else {
-		fmt.Printf("unknown game message id=%d data=%x\n", msg, chunk.Data)
+		response.Messages = append(response.Messages, &messages7.EnterGame{})
+	case *messages7.SvMotd:
+		fmt.Printf("[motd] %s\n", msg.Message)
+	case *messages7.SvChat:
+		connection.OnChatMessage(msg)
+	case *messages7.SvClientInfo:
+		connection.Players[msg.ClientId].Info = *msg
+		fmt.Printf("got client info id=%d name=%s\n", msg.ClientId, msg.Name)
+	default:
+		fmt.Printf("unknown game message id=%d payload=%x\n", msg.MsgId(), msg.Pack())
 		return false
 	}
 	return true
 }
 
-func (client *Connection) OnMessage(chunk chunk7.Chunk, result *PacketResult) bool {
-	// fmt.Printf("got chunk size=%d data=%v\n", chunk.Header.Size, chunk.Data)
-
-	if chunk.Header.Flags.Vital {
-		client.Ack++
+func (connection *Connection) OnMessage(msg messages7.NetMessage, response *Packet) bool {
+	if msg.Header() == nil {
+		// this is probably an unknown message
+		fmt.Printf("warning ignoring msgId=%d because header is nil\n", msg.MsgId())
+		return false
+	}
+	if msg.Header().Flags.Vital {
+		connection.Ack++
 	}
 
-	u := packer.Unpacker{}
-	u.Reset(chunk.Data)
-
-	msg := u.GetInt()
-
-	sys := msg&1 != 0
-	msg >>= 1
-
-	if sys {
-		return client.OnSystemMsg(msg, chunk, &u, result)
+	if msg.System() {
+		return connection.OnSystemMsg(msg, response)
 	}
-	return client.OnGameMsg(msg, chunk, &u, result)
+	return connection.OnGameMsg(msg, response)
 }
 
-func (connection *Connection) OnPacketPayload(data []byte, result *PacketResult) (*PacketResult, error) {
-	chunks := chunk7.UnpackChunks(data)
+// Takes a full teeworlds packet as argument
+// And returns the response packet from the clients perspective
+func (connection *Connection) OnPacket(packet *Packet) *Packet {
+	response := connection.BuildResponse()
 
-	for _, c := range chunks {
-		if connection.OnMessage(c, result) == false {
-			unknown := &messages7.Unknown{
-				Data: slices.Concat(c.Header.Pack(), c.Data),
-				Type: network7.TypeNet,
-			}
-			result.Packet.Messages = append(result.Packet.Messages, unknown)
-		}
-	}
-	return result, nil
-
-}
-
-type PacketResult struct {
-	// Suggested response that should be sent to the server
-	// Will be *nil* if no response should be sent
-	Response *Packet
-
-	// Incoming traffic from the server parsed into a Packet struct
-	Packet *Packet
-}
-
-// TODO: there should be a Packet.Unpack()
-//
-//	and it should only do the parsing no state handling or responses
-//	and Connection.OnPack() should take a Packet instance as parameter
-//	not raw data
-//	So ideally it would look like this:
-//
-//	packet := Packet{}
-//	packet.Unpack(data)
-//	conn := Connection{}
-//	result, err := conn.OnPacket(packet)
-func (connection *Connection) OnPacket(data []byte) (*PacketResult, error) {
-	result := &PacketResult{
-		Response: connection.BuildResponse(),
-		Packet:   &Packet{},
-	}
-	result.Packet.Header.Unpack(data[:7])
-	payload := data[7:]
-
-	if result.Packet.Header.Flags.Control {
-		ctrlMsg := int(payload[0])
-		fmt.Printf("got ctrl msg %d\n", ctrlMsg)
-		if ctrlMsg == network7.MsgCtrlToken {
-			copy(connection.ServerToken[:], payload[1:5])
-			result.Response.Header.Token = connection.ServerToken
-			fmt.Printf("got server token %x\n", connection.ServerToken)
-			result.Packet.Messages = append(result.Packet.Messages, &messages7.CtrlToken{Token: connection.ServerToken})
-			result.Response.Messages = append(
-				result.Response.Messages,
+	if packet.Header.Flags.Control {
+		msg := packet.Messages[0]
+		fmt.Printf("got ctrl msg %d\n", msg.MsgId())
+		// TODO: is this shadow nasty?
+		switch msg := msg.(type) {
+		case *messages7.CtrlToken:
+			fmt.Printf("got server token %x\n", msg.Token)
+			connection.ServerToken = msg.Token
+			response.Header.Token = msg.Token
+			response.Messages = append(
+				response.Messages,
 				&messages7.CtrlConnect{
 					Token: connection.ClientToken,
 				},
 			)
-		} else if ctrlMsg == network7.MsgCtrlAccept {
+		case *messages7.CtrlAccept:
 			fmt.Println("got accept")
-			result.Packet.Messages = append(result.Packet.Messages, &messages7.CtrlAccept{})
 			// TODO: don't hardcode info
-			result.Response.Messages = append(result.Response.Messages, &messages7.Info{})
-		} else if ctrlMsg == network7.MsgCtrlClose {
-			// TODO: get length from packet header to determine if a reason is set or not
-			// len(data) -> is 1400 (maxPacketLen)
-
-			reason := byteSliceToString(payload)
-			fmt.Printf("disconnected (%s)\n", reason)
-
+			response.Messages = append(response.Messages, &messages7.Info{})
+		case *messages7.CtrlClose:
+			fmt.Printf("disconnected (%s)\n", msg.Reason)
 			os.Exit(0)
-		} else {
-			unknown := &messages7.Unknown{
-				Data: payload,
-				Type: network7.TypeControl,
-			}
-			result.Packet.Messages = append(result.Packet.Messages, unknown)
-			fmt.Printf("unknown control message: %x\n", data)
+		default:
+			fmt.Printf("unknown control message: %d\n", msg.MsgId())
 		}
-
-		if len(result.Response.Messages) == 0 {
-			return nil, nil
-		}
-
-		return result, nil
+		return response
 	}
 
-	if result.Packet.Header.Flags.Compression {
-		huff := huffman.Huffman{}
-		var err error
-		payload, err = huff.Decompress(payload)
-		if err != nil {
-			fmt.Printf("huffman error: %v\n", err)
-			return nil, nil
-		}
+	for _, msg := range packet.Messages {
+		connection.OnMessage(msg, response)
 	}
 
-	result, err := connection.OnPacketPayload(payload, result)
-	return result, err
+	return response
 }
