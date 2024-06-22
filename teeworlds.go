@@ -93,28 +93,27 @@ func main() {
 			}
 			response := client.OnPacket(packet)
 			if response != nil {
-
 				// example of inspecting incoming trafic
-				for i, _ := range packet.Messages {
-					var chat *messages7.SvChat
-					var ok bool
-					if chat, ok = packet.Messages[i].(*messages7.SvChat); ok {
-						fmt.Printf("got chat msg: %s\n", chat.Message)
-
-						// modify chat if this was a proxy
-						packet.Messages[i] = chat
+				for _, msg := range packet.Messages {
+					switch msg := msg.(type) {
+					case *messages7.SvChat:
+						// inspect incoming traffic
+						fmt.Printf("got incoming chat msg: %s\n", msg.Message)
+					default:
 					}
 				}
 
 				// example of modifying outgoing traffic
 				for i, msg := range response.Messages {
-					if msg.MsgId() == network7.MsgCtrlConnect {
-						var connect *messages7.CtrlConnect
-						var ok bool
-						if connect, ok = response.Messages[i].(*messages7.CtrlConnect); ok {
-							connect.Token = [4]byte{0xaa, 0xaa, 0xaa, 0xaa}
-							response.Messages[i] = connect
-						}
+					switch msg := msg.(type) {
+					case *messages7.SvChat:
+						// inspect outgoing traffic
+						fmt.Printf("got outgoing chat msg: %s\n", msg.Message)
+
+						// change outgoing traffic
+						msg.Message += " (edited by go)"
+						packet.Messages[i] = msg
+					default:
 					}
 				}
 
