@@ -12,10 +12,6 @@ The package **teeworlds7** implements a high level client library. Designed for 
 package main
 
 import (
-	"fmt"
-	"os"
-	"time"
-
 	"github.com/teeworlds-go/go-teeworlds-protocol/messages7"
 	"github.com/teeworlds-go/go-teeworlds-protocol/teeworlds7"
 )
