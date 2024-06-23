@@ -19,6 +19,9 @@ const (
 	MsgCtrlToken     = 0x05
 	MsgCtrlClose     = 0x04
 
+	// TODO: these should preferrably all be devide dinto different type dintegers
+	// same as ChatMode, etc. so that the user can easily see which integer to pass
+	// to which function as which parameter
 	MsgSysInfo            = 1
 	MsgSysMapChange       = 2
 	MsgSysMapData         = 3

@@ -15,32 +15,33 @@ type InputTiming struct {
 	TimeLeft         int
 }
 
-func (msg InputTiming) MsgId() int {
+func (msg *InputTiming) MsgId() int {
 	return network7.MsgSysInputTiming
 }
 
-func (msg InputTiming) MsgType() network7.MsgType {
+func (msg *InputTiming) MsgType() network7.MsgType {
 	return network7.TypeNet
 }
 
-func (msg InputTiming) System() bool {
+func (msg *InputTiming) System() bool {
 	return true
 }
 
-func (msg InputTiming) Vital() bool {
+func (msg *InputTiming) Vital() bool {
 	return false
 }
 
-func (msg InputTiming) Pack() []byte {
+func (msg *InputTiming) Pack() []byte {
 	return slices.Concat(
 		packer.PackInt(msg.IntendedPredTick),
 		packer.PackInt(msg.TimeLeft),
 	)
 }
 
-func (msg *InputTiming) Unpack(u *packer.Unpacker) {
+func (msg *InputTiming) Unpack(u *packer.Unpacker) error {
 	msg.IntendedPredTick = u.GetInt()
 	msg.TimeLeft = u.GetInt()
+	return nil
 }
 
 func (msg *InputTiming) Header() *chunk7.ChunkHeader {

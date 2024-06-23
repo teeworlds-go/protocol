@@ -16,23 +16,23 @@ type RconCmdAdd struct {
 	Params string
 }
 
-func (msg RconCmdAdd) MsgId() int {
+func (msg *RconCmdAdd) MsgId() int {
 	return network7.MsgSysRconCmdAdd
 }
 
-func (msg RconCmdAdd) MsgType() network7.MsgType {
+func (msg *RconCmdAdd) MsgType() network7.MsgType {
 	return network7.TypeNet
 }
 
-func (msg RconCmdAdd) System() bool {
+func (msg *RconCmdAdd) System() bool {
 	return true
 }
 
-func (msg RconCmdAdd) Vital() bool {
+func (msg *RconCmdAdd) Vital() bool {
 	return true
 }
 
-func (msg RconCmdAdd) Pack() []byte {
+func (msg *RconCmdAdd) Pack() []byte {
 	return slices.Concat(
 		packer.PackStr(msg.Name),
 		packer.PackStr(msg.Help),
@@ -40,10 +40,11 @@ func (msg RconCmdAdd) Pack() []byte {
 	)
 }
 
-func (msg *RconCmdAdd) Unpack(u *packer.Unpacker) {
+func (msg *RconCmdAdd) Unpack(u *packer.Unpacker) error {
 	msg.Name = u.GetString()
 	msg.Help = u.GetString()
 	msg.Params = u.GetString()
+	return nil
 }
 
 func (msg *RconCmdAdd) Header() *chunk7.ChunkHeader {

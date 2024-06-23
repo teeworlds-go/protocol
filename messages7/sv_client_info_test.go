@@ -1,9 +1,9 @@
 package messages7
 
 import (
-	"reflect"
 	"testing"
 
+	"github.com/teeworlds-go/go-teeworlds-protocol/internal/testutils/require"
 	"github.com/teeworlds-go/go-teeworlds-protocol/packer"
 )
 
@@ -21,26 +21,21 @@ func TestUnpackClientInfo(t *testing.T) {
 	})
 
 	info := SvClientInfo{}
-	info.Unpack(&u)
+	err := info.Unpack(&u)
+	require.NoError(t, err)
 
 	{
-		got := info.Eyes
 		want := "standard"
-		if got != want {
-			t.Errorf("got %v, wanted %v", got, want)
-		}
+		got := info.Eyes
+		require.Equal(t, want, got)
 
-		got = info.Decoration
 		want = ""
-		if got != want {
-			t.Errorf("got %v, wanted %v", got, want)
-		}
+		got = info.Decoration
+		require.Equal(t, want, got)
 
-		got = info.Marking
 		want = "duodonny"
-		if got != want {
-			t.Errorf("got %v, wanted %v", got, want)
-		}
+		got = info.Marking
+		require.Equal(t, want, got)
 	}
 
 	wantedInfo := SvClientInfo{
@@ -69,8 +64,5 @@ func TestUnpackClientInfo(t *testing.T) {
 		ColorEyes:             65408,
 		Silent:                true,
 	}
-
-	if !reflect.DeepEqual(info, wantedInfo) {
-		t.Errorf("got %v, wanted %v", info, wantedInfo)
-	}
+	require.Equal(t, wantedInfo, info)
 }

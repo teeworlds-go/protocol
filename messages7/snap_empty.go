@@ -15,32 +15,33 @@ type SnapEmpty struct {
 	DeltaTick int
 }
 
-func (msg SnapEmpty) MsgId() int {
+func (msg *SnapEmpty) MsgId() int {
 	return network7.MsgSysSnapEmpty
 }
 
-func (msg SnapEmpty) MsgType() network7.MsgType {
+func (msg *SnapEmpty) MsgType() network7.MsgType {
 	return network7.TypeNet
 }
 
-func (msg SnapEmpty) System() bool {
+func (msg *SnapEmpty) System() bool {
 	return true
 }
 
-func (msg SnapEmpty) Vital() bool {
+func (msg *SnapEmpty) Vital() bool {
 	return false
 }
 
-func (msg SnapEmpty) Pack() []byte {
+func (msg *SnapEmpty) Pack() []byte {
 	return slices.Concat(
 		packer.PackInt(msg.GameTick),
 		packer.PackInt(msg.DeltaTick),
 	)
 }
 
-func (msg *SnapEmpty) Unpack(u *packer.Unpacker) {
+func (msg *SnapEmpty) Unpack(u *packer.Unpacker) error {
 	msg.GameTick = u.GetInt()
 	msg.DeltaTick = u.GetInt()
+	return nil
 }
 
 func (msg *SnapEmpty) Header() *chunk7.ChunkHeader {

@@ -14,30 +14,31 @@ type RconAuth struct {
 	Password string
 }
 
-func (msg RconAuth) MsgId() int {
+func (msg *RconAuth) MsgId() int {
 	return network7.MsgSysRconAuth
 }
 
-func (msg RconAuth) MsgType() network7.MsgType {
+func (msg *RconAuth) MsgType() network7.MsgType {
 	return network7.TypeNet
 }
 
-func (msg RconAuth) System() bool {
+func (msg *RconAuth) System() bool {
 	return true
 }
 
-func (msg RconAuth) Vital() bool {
+func (msg *RconAuth) Vital() bool {
 	return true
 }
 
-func (msg RconAuth) Pack() []byte {
+func (msg *RconAuth) Pack() []byte {
 	return slices.Concat(
 		packer.PackStr(msg.Password),
 	)
 }
 
-func (msg *RconAuth) Unpack(u *packer.Unpacker) {
+func (msg *RconAuth) Unpack(u *packer.Unpacker) error {
 	msg.Password = u.GetString()
+	return nil
 }
 
 func (msg *RconAuth) Header() *chunk7.ChunkHeader {

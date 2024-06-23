@@ -34,7 +34,7 @@ type Info struct {
 	ClientVersion int
 }
 
-func (msg Info) MsgId() int {
+func (msg *Info) MsgId() int {
 	return network7.MsgSysInfo
 }
 
@@ -42,15 +42,15 @@ func (info Info) MsgType() network7.MsgType {
 	return network7.TypeNet
 }
 
-func (msg Info) System() bool {
+func (msg *Info) System() bool {
 	return true
 }
 
-func (msg Info) Vital() bool {
+func (msg *Info) Vital() bool {
 	return true
 }
 
-func (msg Info) Pack() []byte {
+func (msg *Info) Pack() []byte {
 	return slices.Concat(
 		packer.PackStr(msg.Version),
 		packer.PackStr(msg.Password),
@@ -58,10 +58,11 @@ func (msg Info) Pack() []byte {
 	)
 }
 
-func (msg *Info) Unpack(u *packer.Unpacker) {
+func (msg *Info) Unpack(u *packer.Unpacker) error {
 	msg.Version = u.GetString()
 	msg.Password = u.GetString()
 	msg.ClientVersion = u.GetInt()
+	return nil
 }
 
 func (msg *Info) Header() *chunk7.ChunkHeader {

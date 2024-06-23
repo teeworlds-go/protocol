@@ -14,40 +14,42 @@ type Unknown struct {
 	// can either be a control message or a game/system message
 	Data []byte
 	Type network7.MsgType
+
+	msgId int // TODO: is that supposed to be exported?
 }
 
-func (msg Unknown) MsgId() int {
-	msgId := packer.UnpackInt(msg.Data)
+func (msg *Unknown) MsgId() int {
 	if msg.Type == network7.TypeControl {
-		return msgId
+		return msg.msgId
 	}
-	msgId >>= 1
-	return msgId
+	return msg.msgId >> 1
 }
 
-func (msg Unknown) MsgType() network7.MsgType {
+func (msg *Unknown) MsgType() network7.MsgType {
 	return msg.Type
 }
 
-func (msg Unknown) System() bool {
-	msgId := packer.UnpackInt(msg.Data)
+func (msg *Unknown) System() bool {
 	if msg.Type == network7.TypeControl {
 		return false
 	}
-	sys := msgId&1 != 0
+	sys := msg.msgId&1 != 0
 	return sys
 }
 
-func (msg Unknown) Vital() bool {
+func (msg *Unknown) Vital() bool {
 	panic("You are not mean't to pack unknown messages. Use msg.Header().Vital instead.")
 }
 
-func (msg Unknown) Pack() []byte {
+func (msg *Unknown) Pack() []byte {
 	return msg.Data
 }
 
-func (msg *Unknown) Unpack(u *packer.Unpacker) {
+func (msg *Unknown) Unpack(u *packer.Unpacker) error {
 	msg.Data = u.Rest()
+	msgId := packer.UnpackInt(msg.Data)
+	msg.msgId = msgId
+	return nil
 }
 
 func (msg *Unknown) Header() *chunk7.ChunkHeader {

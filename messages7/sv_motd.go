@@ -12,28 +12,29 @@ type SvMotd struct {
 	Message string
 }
 
-func (msg SvMotd) MsgId() int {
+func (msg *SvMotd) MsgId() int {
 	return network7.MsgGameSvMotd
 }
 
-func (msg SvMotd) MsgType() network7.MsgType {
+func (msg *SvMotd) MsgType() network7.MsgType {
 	return network7.TypeNet
 }
 
-func (msg SvMotd) System() bool {
+func (msg *SvMotd) System() bool {
 	return false
 }
 
-func (msg SvMotd) Vital() bool {
+func (msg *SvMotd) Vital() bool {
 	return true
 }
 
-func (msg SvMotd) Pack() []byte {
+func (msg *SvMotd) Pack() []byte {
 	return packer.PackStr(msg.Message)
 }
 
-func (msg *SvMotd) Unpack(u *packer.Unpacker) {
+func (msg *SvMotd) Unpack(u *packer.Unpacker) error {
 	msg.Message = u.GetString()
+	return nil
 }
 
 func (msg *SvMotd) Header() *chunk7.ChunkHeader {

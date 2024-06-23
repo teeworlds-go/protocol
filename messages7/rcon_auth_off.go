@@ -10,27 +10,28 @@ type RconAuthOff struct {
 	ChunkHeader *chunk7.ChunkHeader
 }
 
-func (msg RconAuthOff) MsgId() int {
+func (msg *RconAuthOff) MsgId() int {
 	return network7.MsgSysRconAuthOff
 }
 
-func (msg RconAuthOff) MsgType() network7.MsgType {
+func (msg *RconAuthOff) MsgType() network7.MsgType {
 	return network7.TypeNet
 }
 
-func (msg RconAuthOff) System() bool {
+func (msg *RconAuthOff) System() bool {
 	return true
 }
 
-func (msg RconAuthOff) Vital() bool {
+func (msg *RconAuthOff) Vital() bool {
 	return true
 }
 
-func (msg RconAuthOff) Pack() []byte {
+func (msg *RconAuthOff) Pack() []byte {
 	return []byte{}
 }
 
-func (msg *RconAuthOff) Unpack(u *packer.Unpacker) {
+func (msg *RconAuthOff) Unpack(u *packer.Unpacker) error {
+	return nil
 }
 
 func (msg *RconAuthOff) Header() *chunk7.ChunkHeader {

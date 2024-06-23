@@ -14,30 +14,31 @@ type RconCmdRem struct {
 	Name string
 }
 
-func (msg RconCmdRem) MsgId() int {
+func (msg *RconCmdRem) MsgId() int {
 	return network7.MsgSysRconCmdRem
 }
 
-func (msg RconCmdRem) MsgType() network7.MsgType {
+func (msg *RconCmdRem) MsgType() network7.MsgType {
 	return network7.TypeNet
 }
 
-func (msg RconCmdRem) System() bool {
+func (msg *RconCmdRem) System() bool {
 	return true
 }
 
-func (msg RconCmdRem) Vital() bool {
+func (msg *RconCmdRem) Vital() bool {
 	return true
 }
 
-func (msg RconCmdRem) Pack() []byte {
+func (msg *RconCmdRem) Pack() []byte {
 	return slices.Concat(
 		packer.PackStr(msg.Name),
 	)
 }
 
-func (msg *RconCmdRem) Unpack(u *packer.Unpacker) {
+func (msg *RconCmdRem) Unpack(u *packer.Unpacker) error {
 	msg.Name = u.GetString()
+	return nil
 }
 
 func (msg *RconCmdRem) Header() *chunk7.ChunkHeader {

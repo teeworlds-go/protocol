@@ -1,8 +1,9 @@
 package packer
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/teeworlds-go/go-teeworlds-protocol/internal/testutils/require"
 )
 
 // rest
@@ -12,21 +13,15 @@ func TestUnpackRest(t *testing.T) {
 	u.Reset([]byte{0x01, 0xff, 0xaa})
 
 	{
-		got := u.GetInt()
 		want := 1
-
-		if got != want {
-			t.Errorf("got %v, wanted %v", got, want)
-		}
+		got := u.GetInt()
+		require.Equal(t, want, got)
 	}
 
 	{
-		got := u.Rest()
 		want := []byte{0xff, 0xaa}
-
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("got %v, wanted %v", got, want)
-		}
+		got := u.Rest()
+		require.Equal(t, want, got)
 	}
 }
 
@@ -47,20 +42,14 @@ func TestUnpackClientInfo(t *testing.T) {
 
 	{
 		// message id
-		got := u.GetInt()
 		want := 36
-
-		if got != want {
-			t.Errorf("got %v, wanted %v", got, want)
-		}
+		got := u.GetInt()
+		require.Equal(t, want, got)
 
 		// client id
-		got = u.GetInt()
 		want = 0
-
-		if got != want {
-			t.Errorf("got %v, wanted %v", got, want)
-		}
+		got = u.GetInt()
+		require.Equal(t, want, got)
 
 		u.GetInt() // Local bool
 		u.GetInt() // Team int
@@ -68,40 +57,28 @@ func TestUnpackClientInfo(t *testing.T) {
 
 	{
 		// name
-		got := u.GetString()
 		want := "gopher"
-
-		if got != want {
-			t.Errorf("got %v, wanted %v", got, want)
-		}
+		got := u.GetString()
+		require.Equal(t, want, got)
 
 		// clan
-		got = u.GetString()
 		want = ""
-
-		if got != want {
-			t.Errorf("got %v, wanted %v", got, want)
-		}
+		got = u.GetString()
+		require.Equal(t, want, got)
 	}
 
 	{
 		// country
-		got := u.GetInt()
 		want := -1
-
-		if got != want {
-			t.Errorf("got %v, wanted %v", got, want)
-		}
+		got := u.GetInt()
+		require.Equal(t, want, got)
 	}
 
 	{
 		// body
-		got := u.GetString()
 		want := "greensward"
-
-		if got != want {
-			t.Errorf("got %v, wanted %v", got, want)
-		}
+		got := u.GetString()
+		require.Equal(t, want, got)
 	}
 }
 
@@ -111,64 +88,44 @@ func TestUnpackSimpleInts(t *testing.T) {
 	u := Unpacker{}
 	u.Reset([]byte{0x01, 0x02, 0x03, 0x0f})
 
-	got := u.GetInt()
 	want := 1
+	got := u.GetInt()
+	require.Equal(t, want, got)
 
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
-
-	got = u.GetInt()
 	want = 2
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
-
 	got = u.GetInt()
+	require.Equal(t, want, got)
+
 	want = 3
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
-
 	got = u.GetInt()
-	want = 15
+	require.Equal(t, want, got)
 
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
+	want = 15
+	got = u.GetInt()
+	require.Equal(t, want, got)
 }
 
 func TestUnpackString(t *testing.T) {
 	u := Unpacker{}
 	u.Reset([]byte{'f', 'o', 'o', 0x00})
 
-	got := u.GetString()
 	want := "foo"
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
+	got := u.GetString()
+	require.Equal(t, want, got)
 }
 
 func TestUnpackTwoStrings(t *testing.T) {
 	u := Unpacker{}
 	u.Reset([]byte{'f', 'o', 'o', 0x00, 'b', 'a', 'r', 0x00})
 
-	got := u.GetString()
 	want := "foo"
+	got := u.GetString()
+	require.Equal(t, want, got)
 
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
-
-	got = u.GetString()
 	want = "bar"
+	got = u.GetString()
+	require.Equal(t, want, got)
 
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
 }
 
 func TestUnpackMixed(t *testing.T) {
@@ -177,45 +134,30 @@ func TestUnpackMixed(t *testing.T) {
 
 	// ints
 	{
-		got := u.GetInt()
 		want := 15
+		got := u.GetInt()
+		require.Equal(t, want, got)
 
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("got %v, wanted %v", got, want)
-		}
-
-		got = u.GetInt()
 		want = 15
-
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("got %v, wanted %v", got, want)
-		}
+		got = u.GetInt()
+		require.Equal(t, want, got)
 	}
 
 	// strings
 	{
-		got := u.GetString()
 		want := "foo"
+		got := u.GetString()
+		require.Equal(t, want, got)
 
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("got %v, wanted %v", got, want)
-		}
-
-		got = u.GetString()
 		want = "bar"
-
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("got %v, wanted %v", got, want)
-		}
+		got = u.GetString()
+		require.Equal(t, want, got)
 	}
 
 	// ints
 	{
-		got := u.GetInt()
 		want := 1
-
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("got %v, wanted %v", got, want)
-		}
+		got := u.GetInt()
+		require.Equal(t, want, got)
 	}
 }

@@ -20,23 +20,23 @@ type Snap struct {
 	Data      []byte
 }
 
-func (msg Snap) MsgId() int {
+func (msg *Snap) MsgId() int {
 	return network7.MsgSysSnap
 }
 
-func (msg Snap) MsgType() network7.MsgType {
+func (msg *Snap) MsgType() network7.MsgType {
 	return network7.TypeNet
 }
 
-func (msg Snap) System() bool {
+func (msg *Snap) System() bool {
 	return true
 }
 
-func (msg Snap) Vital() bool {
+func (msg *Snap) Vital() bool {
 	return false
 }
 
-func (msg Snap) Pack() []byte {
+func (msg *Snap) Pack() []byte {
 	return slices.Concat(
 		packer.PackInt(msg.GameTick),
 		packer.PackInt(msg.DeltaTick),
@@ -44,11 +44,11 @@ func (msg Snap) Pack() []byte {
 		packer.PackInt(msg.Part),
 		packer.PackInt(msg.Crc),
 		packer.PackInt(msg.PartSize),
-		msg.Data[:],
+		msg.Data,
 	)
 }
 
-func (msg *Snap) Unpack(u *packer.Unpacker) {
+func (msg *Snap) Unpack(u *packer.Unpacker) error {
 	msg.GameTick = u.GetInt()
 	msg.DeltaTick = u.GetInt()
 	msg.NumParts = u.GetInt()
@@ -56,6 +56,7 @@ func (msg *Snap) Unpack(u *packer.Unpacker) {
 	msg.Crc = u.GetInt()
 	msg.PartSize = u.GetInt()
 	msg.Data = u.Rest()
+	return nil
 }
 
 func (msg *Snap) Header() *chunk7.ChunkHeader {

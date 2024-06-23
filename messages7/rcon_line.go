@@ -14,30 +14,31 @@ type RconLine struct {
 	Line string
 }
 
-func (msg RconLine) MsgId() int {
+func (msg *RconLine) MsgId() int {
 	return network7.MsgSysRconLine
 }
 
-func (msg RconLine) MsgType() network7.MsgType {
+func (msg *RconLine) MsgType() network7.MsgType {
 	return network7.TypeNet
 }
 
-func (msg RconLine) System() bool {
+func (msg *RconLine) System() bool {
 	return true
 }
 
-func (msg RconLine) Vital() bool {
+func (msg *RconLine) Vital() bool {
 	return true
 }
 
-func (msg RconLine) Pack() []byte {
+func (msg *RconLine) Pack() []byte {
 	return slices.Concat(
 		packer.PackStr(msg.Line),
 	)
 }
 
-func (msg *RconLine) Unpack(u *packer.Unpacker) {
+func (msg *RconLine) Unpack(u *packer.Unpacker) error {
 	msg.Line = u.GetString()
+	return nil
 }
 
 func (msg *RconLine) Header() *chunk7.ChunkHeader {

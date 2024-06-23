@@ -17,23 +17,23 @@ type SvChat struct {
 	Message  string
 }
 
-func (msg SvChat) MsgId() int {
+func (msg *SvChat) MsgId() int {
 	return network7.MsgGameSvChat
 }
 
-func (msg SvChat) MsgType() network7.MsgType {
+func (msg *SvChat) MsgType() network7.MsgType {
 	return network7.TypeNet
 }
 
-func (msg SvChat) System() bool {
+func (msg *SvChat) System() bool {
 	return false
 }
 
-func (msg SvChat) Vital() bool {
+func (msg *SvChat) Vital() bool {
 	return true
 }
 
-func (msg SvChat) Pack() []byte {
+func (msg *SvChat) Pack() []byte {
 	return slices.Concat(
 		packer.PackInt(int(msg.Mode)),
 		packer.PackInt(msg.ClientId),
@@ -42,11 +42,13 @@ func (msg SvChat) Pack() []byte {
 	)
 }
 
-func (msg *SvChat) Unpack(u *packer.Unpacker) {
+func (msg *SvChat) Unpack(u *packer.Unpacker) error {
 	msg.Mode = network7.ChatMode(u.GetInt())
 	msg.ClientId = u.GetInt()
 	msg.TargetId = u.GetInt()
 	msg.Message = u.GetString()
+
+	return nil
 }
 
 func (msg *SvChat) Header() *chunk7.ChunkHeader {

@@ -12,28 +12,29 @@ type SvBroadcast struct {
 	Message string
 }
 
-func (msg SvBroadcast) MsgId() int {
+func (msg *SvBroadcast) MsgId() int {
 	return network7.MsgGameSvBroadcast
 }
 
-func (msg SvBroadcast) MsgType() network7.MsgType {
+func (msg *SvBroadcast) MsgType() network7.MsgType {
 	return network7.TypeNet
 }
 
-func (msg SvBroadcast) System() bool {
+func (msg *SvBroadcast) System() bool {
 	return false
 }
 
-func (msg SvBroadcast) Vital() bool {
+func (msg *SvBroadcast) Vital() bool {
 	return true
 }
 
-func (msg SvBroadcast) Pack() []byte {
+func (msg *SvBroadcast) Pack() []byte {
 	return packer.PackStr(msg.Message)
 }
 
-func (msg *SvBroadcast) Unpack(u *packer.Unpacker) {
+func (msg *SvBroadcast) Unpack(u *packer.Unpacker) error {
 	msg.Message = u.GetString()
+	return nil
 }
 
 func (msg *SvBroadcast) Header() *chunk7.ChunkHeader {

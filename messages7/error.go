@@ -11,27 +11,28 @@ type Error struct {
 	ChunkHeader *chunk7.ChunkHeader
 }
 
-func (msg Error) MsgId() int {
+func (msg *Error) MsgId() int {
 	return network7.MsgSysError
 }
 
-func (msg Error) MsgType() network7.MsgType {
+func (msg *Error) MsgType() network7.MsgType {
 	return network7.TypeNet
 }
 
-func (msg Error) System() bool {
+func (msg *Error) System() bool {
 	return true
 }
 
-func (msg Error) Vital() bool {
+func (msg *Error) Vital() bool {
 	return true
 }
 
-func (msg Error) Pack() []byte {
+func (msg *Error) Pack() []byte {
 	return []byte{}
 }
 
-func (msg *Error) Unpack(u *packer.Unpacker) {
+func (msg *Error) Unpack(u *packer.Unpacker) error {
+	return nil
 }
 
 func (msg *Error) Header() *chunk7.ChunkHeader {
