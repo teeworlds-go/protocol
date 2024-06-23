@@ -44,7 +44,7 @@ func TestPackStartInfo(t *testing.T) {
 	}
 
 	got := info.Pack()
-	require.Equal(t, got, want)
+	require.Equal(t, want, got)
 }
 
 func TestUnpackStartInfo(t *testing.T) {
@@ -67,7 +67,7 @@ func TestUnpackStartInfo(t *testing.T) {
 	{
 		want := "standard"
 		got := info.Eyes
-		require.Equal(t, got, want)
+		require.Equal(t, want, got)
 
 		want = ""
 		got = info.Decoration
@@ -77,13 +77,13 @@ func TestUnpackStartInfo(t *testing.T) {
 
 		want = "duodonny"
 		got = info.Marking
-		require.Equal(t, got, want)
+		require.Equal(t, want, got)
 	}
 
 	{
 		want := 65408
 		got := info.ColorDecoration
-		require.Equal(t, got, want)
+		require.Equal(t, want, got)
 	}
 
 	wantedInfo := ClStartInfo{
