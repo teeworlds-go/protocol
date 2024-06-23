@@ -111,16 +111,34 @@ func (connection *Connection) OnSystemMsg(msg messages7.NetMessage, response *Pa
 	case *messages7.MapChange:
 		fmt.Println("got map change")
 		response.Messages = append(response.Messages, &messages7.Ready{})
+	case *messages7.MapData:
+		fmt.Printf("got map chunk %x\n", msg.Data)
+	case *messages7.ServerInfo:
+		fmt.Printf("connected to server with name '%s'\n", msg.Name)
 	case *messages7.ConReady:
 		fmt.Println("got ready")
 		response.Messages = append(response.Messages, connection.MsgStartInfo())
+	case *messages7.Snap:
+		// fmt.Printf("got snap tick=%d\n", msg.GameTick)
+		response.Messages = append(response.Messages, &messages7.CtrlKeepAlive{})
 	case *messages7.SnapSingle:
 		// fmt.Printf("got snap single tick=%d\n", msg.GameTick)
 		response.Messages = append(response.Messages, &messages7.CtrlKeepAlive{})
 	case *messages7.SnapEmpty:
 		// fmt.Printf("got snap empty tick=%d\n", msg.GameTick)
+		response.Messages = append(response.Messages, &messages7.CtrlKeepAlive{})
 	case *messages7.InputTiming:
 		// fmt.Printf("timing time left=%d\n", msg.TimeLeft)
+	case *messages7.RconAuthOn:
+		fmt.Println("you are now authenticated in rcon")
+	case *messages7.RconAuthOff:
+		fmt.Println("you are no longer authenticated in rcon")
+	case *messages7.RconLine:
+		fmt.Printf("[rcon] %s\n", msg.Line)
+	case *messages7.RconCmdAdd:
+		// fmt.Printf("got rcon cmd=%s %s %s\n", msg.Name, msg.Params, msg.Help)
+	case *messages7.RconCmdRem:
+		// fmt.Printf("removed cmd=%s\n", msg.Name)
 	case *messages7.Unknown:
 		// TODO: msg id of unknown messages should not be -1
 		fmt.Println("TODO: why is the msg id -1???")
@@ -203,8 +221,14 @@ func (connection *Connection) OnPacket(packet *Packet) *Packet {
 			)
 		case *messages7.CtrlAccept:
 			fmt.Println("got accept")
-			// TODO: don't hardcode info
-			response.Messages = append(response.Messages, &messages7.Info{})
+			response.Messages = append(
+				response.Messages,
+				&messages7.Info{
+					Version:       network7.NetVersion,
+					Password:      "",
+					ClientVersion: network7.ClientVersion,
+				},
+			)
 		case *messages7.CtrlClose:
 			fmt.Printf("disconnected (%s)\n", msg.Reason)
 			os.Exit(0)

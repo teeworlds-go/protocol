@@ -81,24 +81,124 @@ func PackChunk(msg messages7.NetMessage, connection *Connection) []byte {
 }
 
 func (packet *Packet) unpackSystem(msgId int, chunk chunk7.Chunk, u *packer.Unpacker) bool {
-	if msgId == network7.MsgSysMapChange {
+	if msgId == network7.MsgSysInfo {
+		msg := &messages7.Info{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgSysMapChange {
 		msg := &messages7.MapChange{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgSysMapData {
+		msg := &messages7.MapData{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgSysServerInfo {
+		msg := &messages7.ServerInfo{ChunkHeader: &chunk.Header}
 		msg.Unpack(u)
 		packet.Messages = append(packet.Messages, msg)
 	} else if msgId == network7.MsgSysConReady {
 		msg := &messages7.ConReady{ChunkHeader: &chunk.Header}
 		msg.Unpack(u)
 		packet.Messages = append(packet.Messages, msg)
-	} else if msgId == network7.MsgSysSnapSingle {
-		msg := &messages7.SnapSingle{ChunkHeader: &chunk.Header}
+	} else if msgId == network7.MsgSysSnap {
+		msg := &messages7.Snap{ChunkHeader: &chunk.Header}
 		msg.Unpack(u)
 		packet.Messages = append(packet.Messages, msg)
 	} else if msgId == network7.MsgSysSnapEmpty {
 		msg := &messages7.SnapEmpty{ChunkHeader: &chunk.Header}
 		msg.Unpack(u)
 		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgSysSnapSingle {
+		msg := &messages7.SnapSingle{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgSysSnapSmall {
+		msg := &messages7.SnapSmall{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
 	} else if msgId == network7.MsgSysInputTiming {
 		msg := &messages7.InputTiming{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgSysRconAuthOn {
+		msg := &messages7.RconAuthOn{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgSysRconAuthOff {
+		msg := &messages7.RconAuthOff{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgSysRconLine {
+		msg := &messages7.RconLine{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgSysRconCmdAdd {
+		msg := &messages7.RconCmdAdd{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgSysRconCmdRem {
+		msg := &messages7.RconCmdRem{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgSysAuthChallenge {
+		msg := &messages7.AuthChallenge{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgSysAuthResult {
+		msg := &messages7.AuthResult{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgSysReady {
+		msg := &messages7.Ready{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgSysEnterGame {
+		msg := &messages7.EnterGame{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgSysInput {
+		msg := &messages7.Input{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgSysRconCmd {
+		msg := &messages7.RconCmd{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgSysRconAuth {
+		msg := &messages7.RconAuth{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgSysRequestMapData {
+		msg := &messages7.RequestMapData{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgSysAuthStart {
+		msg := &messages7.AuthStart{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgSysAuthResponse {
+		msg := &messages7.AuthResponse{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgSysPing {
+		msg := &messages7.Ping{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgSysPingReply {
+		msg := &messages7.PingReply{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgSysError {
+		msg := &messages7.Error{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgSysMaplistEntryAdd {
+		msg := &messages7.MaplistEntryAdd{ChunkHeader: &chunk.Header}
+		msg.Unpack(u)
+		packet.Messages = append(packet.Messages, msg)
+	} else if msgId == network7.MsgSysMaplistEntryRem {
+		msg := &messages7.MaplistEntryRem{ChunkHeader: &chunk.Header}
 		msg.Unpack(u)
 		packet.Messages = append(packet.Messages, msg)
 	} else {

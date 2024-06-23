@@ -1,6 +1,8 @@
 package messages7
 
 import (
+	"slices"
+
 	"github.com/teeworlds-go/go-teeworlds-protocol/chunk7"
 	"github.com/teeworlds-go/go-teeworlds-protocol/network7"
 	"github.com/teeworlds-go/go-teeworlds-protocol/packer"
@@ -8,6 +10,28 @@ import (
 
 type Info struct {
 	ChunkHeader *chunk7.ChunkHeader
+
+	// The official name is "NetVersion" but a more fitting name in my opinion would be "Protocol Version".
+	// The variable C++ implementations GAME_NETVERSION always expands to "0.7 802f1be60a05665f"
+	// If the server gets another string it actually rejects the connection. This is what prohibits 0.6 clients to join 0.7 servers.
+	//
+	// Recommended value is network7.NetVersion
+	Version string
+
+	// Password to enter password protected servers
+	// If the server does not require a password it will ignore this string
+	//
+	// Recommended value is ""
+	Password string
+
+	// Another version field which does not have to match the servers version to establish a connection.
+	// The first version field makes sure that client and server use the same major protocol and are compatible.
+	// This "Client Version" field then informs the server about the clients minor version.
+	// The server can use it to activate some non protocol breaking features that were introduced in minor releases.
+	//
+	// The official teeworlds 0.7.5 client sends the value 0x0705
+	// So the recommended value is network7.ClientVersion
+	ClientVersion int
 }
 
 func (msg Info) MsgId() int {
@@ -27,17 +51,17 @@ func (msg Info) Vital() bool {
 }
 
 func (msg Info) Pack() []byte {
-	return []byte{
-		0x30, 0x2E, 0x37, 0x20, 0x38, 0x30, 0x32, 0x66,
-		0x31, 0x62, 0x65, 0x36, 0x30, 0x61, 0x30, 0x35, 0x36, 0x36, 0x35, 0x66,
-		0x00, 0x6D, 0x79, 0x5F, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6F, 0x72, 0x64,
-		0x5F, 0x31, 0x32, 0x33, 0x00, 0x85, 0x1C, 0x00,
-	}
+	return slices.Concat(
+		packer.PackStr(msg.Version),
+		packer.PackStr(msg.Password),
+		packer.PackInt(msg.ClientVersion),
+	)
 }
 
 func (msg *Info) Unpack(u *packer.Unpacker) {
-	// TODO: implement
-	panic("not implemented")
+	msg.Version = u.GetString()
+	msg.Password = u.GetString()
+	msg.ClientVersion = u.GetInt()
 }
 
 func (msg *Info) Header() *chunk7.ChunkHeader {
