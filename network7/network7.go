@@ -5,6 +5,14 @@ const (
 	NetVersion    = "0.7 802f1be60a05665f"
 	ClientVersion = 0x0705
 
+	ChatAll     ChatMode = 1
+	ChatTeam    ChatMode = 2
+	ChatWhisper ChatMode = 3
+
+	TeamSpectators GameTeam = -1
+	TeamRed        GameTeam = 0
+	TeamBlue       GameTeam = 1
+
 	MsgCtrlKeepAlive = 0x00
 	MsgCtrlConnect   = 0x01
 	MsgCtrlAccept    = 0x02
@@ -42,11 +50,45 @@ const (
 	MsgSysMaplistEntryAdd = 29
 	MsgSysMaplistEntryRem = 30
 
-	MsgGameSvMotd       = 1
-	MsgGameSvChat       = 3
-	MsgGameReadyToEnter = 8
-	MsgGameSvClientInfo = 18
-	MsgGameClStartInfo  = 27
+	MsgGameSvMotd              = 1
+	MsgGameSvBroadcast         = 2
+	MsgGameSvChat              = 3
+	MsgGameSvTeam              = 4
+	MsgGameSvKillMsg           = 5
+	MsgGameSvTuneParams        = 6
+	MsgGameSvExtraProjectile   = 7
+	MsgGameReadyToEnter        = 8
+	MsgGameWeaponPickup        = 9
+	MsgGameEmoticon            = 10
+	MsgGameSvVoteClearoptions  = 11
+	MsgGameSvVoteOptionlistadd = 12
+	MsgGameSvVotePptionadd     = 13
+	MsgGameSvVoteOptionremove  = 14
+	MsgGameSvVoteSet           = 15
+	MsgGameSvVoteStatus        = 16
+	MsgGameSvServerSettings    = 17
+	MsgGameSvClientInfo        = 18
+	MsgGameSvGameInfo          = 19
+	MsgGameSvClientDrop        = 20
+	MsgGameSvGameMsg           = 21
+	MsgGameDeClientEnter       = 22
+	MsgGameDeClientLeave       = 23
+	MsgGameClSay               = 24
+	MsgGameClSetTeam           = 25
+	MsgGameClSetSpectatorMode  = 26
+	MsgGameClStartInfo         = 27
+	MsgGameClKill              = 28
+	MsgGameClReadyChange       = 29
+	MsgGameClEmoticon          = 30
+	MsgGameClVote              = 31
+	MsgGameClCallVote          = 32
+	MsgGameSvSkinChange        = 33
+	MsgGameClSkinChange        = 34
+	MsgGameSvRaceFinish        = 35
+	MsgGameSvCheckpoint        = 36
+	MsgGameSvCommandInfo       = 37
+	MsgGameSvCommandInfoRemove = 38
+	MsgGameClCommand           = 39
 
 	TypeControl  MsgType = 1
 	TypeNet      MsgType = 2
@@ -61,5 +103,7 @@ const (
 	NumWeapons    Weapon = 6
 )
 
+type ChatMode int
+type GameTeam int
 type MsgType int
 type Weapon int

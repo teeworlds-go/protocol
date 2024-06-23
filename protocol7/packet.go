@@ -39,7 +39,7 @@ type Packet struct {
 	Messages []messages7.NetMessage
 }
 
-func PackChunk(msg messages7.NetMessage, connection *Connection) []byte {
+func PackChunk(msg messages7.NetMessage, connection *Session) []byte {
 	if _, ok := msg.(*messages7.Unknown); ok {
 		return msg.Pack()
 	}
@@ -305,7 +305,7 @@ func (packet *Packet) Unpack(data []byte) error {
 	return nil
 }
 
-func (packet *Packet) Pack(connection *Connection) []byte {
+func (packet *Packet) Pack(connection *Session) []byte {
 	payload := []byte{}
 	control := false
 

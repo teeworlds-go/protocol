@@ -134,7 +134,7 @@ func TestRepackUnknownMessages(t *testing.T) {
 		0x00,
 	}
 
-	conn := Connection{}
+	conn := Session{}
 
 	packet := Packet{}
 	packet.Unpack(dump)
@@ -162,7 +162,7 @@ func TestPackUpdateChunkHeaders(t *testing.T) {
 
 	// When packing the chunk header will be set automatically
 	// Based on the current context
-	conn := &Connection{Sequence: 1}
+	conn := &Session{Sequence: 1}
 	packet.Pack(conn)
 
 	{

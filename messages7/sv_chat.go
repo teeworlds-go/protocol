@@ -11,7 +11,7 @@ import (
 type SvChat struct {
 	ChunkHeader *chunk7.ChunkHeader
 
-	Mode     int
+	Mode     network7.ChatMode
 	ClientId int
 	TargetId int
 	Message  string
@@ -35,7 +35,7 @@ func (msg SvChat) Vital() bool {
 
 func (msg SvChat) Pack() []byte {
 	return slices.Concat(
-		packer.PackInt(msg.Mode),
+		packer.PackInt(int(msg.Mode)),
 		packer.PackInt(msg.ClientId),
 		packer.PackInt(msg.TargetId),
 		packer.PackStr(msg.Message),
@@ -43,7 +43,7 @@ func (msg SvChat) Pack() []byte {
 }
 
 func (msg *SvChat) Unpack(u *packer.Unpacker) {
-	msg.Mode = u.GetInt()
+	msg.Mode = network7.ChatMode(u.GetInt())
 	msg.ClientId = u.GetInt()
 	msg.TargetId = u.GetInt()
 	msg.Message = u.GetString()
