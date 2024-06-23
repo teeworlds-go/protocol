@@ -230,6 +230,7 @@ func (packet *Packet) unpackPayload(payload []byte) {
 				ChunkHeader: &header,
 				Data:        slices.Concat(c.Header.Pack(), c.Data),
 			}
+			// INFO: no Unpack called here!
 			packet.Messages = append(packet.Messages, unknown)
 		}
 	}
