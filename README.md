@@ -1,14 +1,8 @@
 # go-teeworlds-protocol
 
-## Early and active development! Still undergoing major refactors!
-## WARNING! NOT READY TO BE USED YET!
-## Apis might change. Packages and repository might be renamed!
+# WARNING! NOT READY TO BE USED YET! Apis might change. Packages and repository might be renamed!
 
 A client side network protocol implementation of the game teeworlds.
-
-## low level api for power users
-
-The packages **chunk7, messages7, network7, packer, protocol7** Implement the low level 0.7 teeworlds protocol. Use them if you want to build something advanced such as a custom proxy.
 
 ## high level api for ease of use
 
@@ -51,11 +45,9 @@ func main() {
 Example usages:
 - [client_verbose](./examples/client_verbose/) a verbose client show casing the easy to use high level api
 
-## tests
+## low level api for power users
 
-```
-go test ./...
-```
+The packages **chunk7, messages7, network7, packer, protocol7** Implement the low level 0.7 teeworlds protocol. Use them if you want to build something advanced such as a custom proxy.
 
 ## projects using go-teeworlds-protocol
 
