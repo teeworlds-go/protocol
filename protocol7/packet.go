@@ -171,8 +171,8 @@ func (packet *Packet) unpackGame(msgId int, chunk chunk7.Chunk, u *packer.Unpack
 	var msg messages7.NetMessage
 
 	switch msgId {
-	case network7.MsgGameReadyToEnter:
-		msg = &messages7.ReadyToEnter{}
+	case network7.MsgGameSvReadyToEnter:
+		msg = &messages7.SvReadyToEnter{}
 	case network7.MsgGameSvMotd:
 		msg = &messages7.SvMotd{}
 	case network7.MsgGameSvChat:

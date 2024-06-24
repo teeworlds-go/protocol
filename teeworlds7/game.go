@@ -54,7 +54,7 @@ func (client *Client) processGame(netMsg messages7.NetMessage, response *protoco
 		} else {
 			client.Callbacks.GameSvClientInfo(msg, defaultAction)
 		}
-	case *messages7.ReadyToEnter:
+	case *messages7.SvReadyToEnter:
 		defaultAction := func() {
 			fmt.Println("got ready to enter")
 			response.Messages = append(response.Messages, &messages7.EnterGame{})

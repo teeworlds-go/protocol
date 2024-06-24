@@ -13,6 +13,40 @@ const (
 	TeamRed        GameTeam = 0
 	TeamBlue       GameTeam = 1
 
+	VoteUnknown   Vote = 0
+	VoteStartOp   Vote = 1
+	VoteStartKick Vote = 2
+	VoteStartSpec Vote = 3
+	VoteEndAbort  Vote = 4
+	VoteEndPass   Vote = 5
+	VoteEndFail   Vote = 6
+
+	// oop!
+	EmoteOop Emote = 0
+	// !
+	EmoteExclamation Emote = 1
+	EmoteHearts      Emote = 2
+	// tear
+	EmoteDrop Emote = 3
+	// ...
+	EmoteDotdot Emote = 4
+	EmoteMusic  Emote = 5
+	EmoteSorry  Emote = 6
+	EmoteGhost  Emote = 7
+	// annoyed
+	EmoteSushi Emote = 8
+	// angry
+	EmoteSplattee Emote = 9
+	EmoteDeviltee Emote = 10
+	// swearing
+	EmoteZomg Emote = 11
+	EmoteZzz  Emote = 12
+	EmoteWtf  Emote = 13
+	// happy
+	EmoteEyes Emote = 14
+	// ??
+	EmoteQuestion Emote = 15
+
 	MsgCtrlKeepAlive = 0x00
 	MsgCtrlConnect   = 0x01
 	MsgCtrlAccept    = 0x02
@@ -59,14 +93,14 @@ const (
 	MsgGameSvTeam              = 4
 	MsgGameSvKillMsg           = 5
 	MsgGameSvTuneParams        = 6
-	MsgGameSvExtraProjectile   = 7
-	MsgGameReadyToEnter        = 8
-	MsgGameWeaponPickup        = 9
-	MsgGameEmoticon            = 10
-	MsgGameSvVoteClearoptions  = 11
-	MsgGameSvVoteOptionlistadd = 12
-	MsgGameSvVotePptionadd     = 13
-	MsgGameSvVoteOptionremove  = 14
+	MsgGameSvExtraProjectile   = 7 // unused
+	MsgGameSvReadyToEnter      = 8
+	MsgGameSvWeaponPickup      = 9
+	MsgGameSvEmoticon          = 10
+	MsgGameSvVoteClearOptions  = 11
+	MsgGameSvVoteOptionListAdd = 12
+	MsgGameSvVoteOptionAdd     = 13
+	MsgGameSvVoteOptionRemove  = 14
 	MsgGameSvVoteSet           = 15
 	MsgGameSvVoteStatus        = 16
 	MsgGameSvServerSettings    = 17
@@ -97,6 +131,13 @@ const (
 	TypeNet      MsgType = 2
 	TypeConnless MsgType = 3
 
+	// can be sent by the server in kill messages
+	WeaponGame  Weapon = -3
+	WeaponSelf  Weapon = -2
+	WeaponWorld Weapon = -1
+
+	// can be sent by the client when requesting weapon switch
+	// or by the server in kill messages
 	WeaponHammer  Weapon = 0
 	WeaponGun     Weapon = 1
 	WeaponShotgun Weapon = 2
@@ -106,7 +147,10 @@ const (
 	NumWeapons    Weapon = 6
 )
 
+type Vote int
+type Emote int
 type ChatMode int
 type GameTeam int
-type MsgType int
 type Weapon int
+
+type MsgType int
