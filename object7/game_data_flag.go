@@ -33,7 +33,7 @@ func (o *GameDataFlag) Id() int {
 	return o.ItemId
 }
 
-func (o *GameDataFlag) Type() int {
+func (o *GameDataFlag) TypeId() int {
 	return network7.ObjGameDataFlag
 }
 
@@ -43,7 +43,7 @@ func (o *GameDataFlag) Size() int {
 
 func (o *GameDataFlag) Pack() []byte {
 	return slices.Concat(
-		packer.PackInt(o.Type()),
+		packer.PackInt(o.TypeId()),
 		packer.PackInt(o.Id()),
 
 		packer.PackInt(o.FlagCarrierRed),

@@ -21,7 +21,7 @@ func (o *PlayerInfo) Id() int {
 	return o.ItemId
 }
 
-func (o *PlayerInfo) Type() int {
+func (o *PlayerInfo) TypeId() int {
 	return network7.ObjPlayerInfo
 }
 
@@ -31,7 +31,7 @@ func (o *PlayerInfo) Size() int {
 
 func (o *PlayerInfo) Pack() []byte {
 	return slices.Concat(
-		packer.PackInt(o.Type()),
+		packer.PackInt(o.TypeId()),
 		packer.PackInt(o.Id()),
 
 		packer.PackInt(o.PlayerFlags),

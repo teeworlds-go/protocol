@@ -25,7 +25,7 @@ func (o *GameData) Id() int {
 	return o.ItemId
 }
 
-func (o *GameData) Type() int {
+func (o *GameData) TypeId() int {
 	return network7.ObjGameData
 }
 
@@ -35,7 +35,7 @@ func (o *GameData) Size() int {
 
 func (o *GameData) Pack() []byte {
 	return slices.Concat(
-		packer.PackInt(o.Type()),
+		packer.PackInt(o.TypeId()),
 		packer.PackInt(o.Id()),
 
 		packer.PackInt(o.GameStartTick),

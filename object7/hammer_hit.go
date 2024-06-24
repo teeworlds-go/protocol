@@ -8,41 +8,38 @@ import (
 	"github.com/teeworlds-go/go-teeworlds-protocol/packer"
 )
 
-type Flag struct {
+type HammerHit struct {
 	ItemId int
 
-	X    int
-	Y    int
-	Team network7.GameTeam
+	X int
+	Y int
 }
 
-func (o *Flag) Id() int {
+func (o *HammerHit) Id() int {
 	return o.ItemId
 }
 
-func (o *Flag) TypeId() int {
-	return network7.ObjFlag
+func (o *HammerHit) TypeId() int {
+	return network7.ObjHammerHit
 }
 
-func (o *Flag) Size() int {
-	return reflect.TypeOf(Flag{}).NumField() - 1
+func (o *HammerHit) Size() int {
+	return reflect.TypeOf(HammerHit{}).NumField() - 1
 }
 
-func (o *Flag) Pack() []byte {
+func (o *HammerHit) Pack() []byte {
 	return slices.Concat(
 		packer.PackInt(o.TypeId()),
 		packer.PackInt(o.Id()),
 
 		packer.PackInt(o.X),
 		packer.PackInt(o.Y),
-		packer.PackInt(int(o.Team)),
 	)
 }
 
-func (o *Flag) Unpack(u *packer.Unpacker) error {
+func (o *HammerHit) Unpack(u *packer.Unpacker) error {
 	o.X = u.GetInt()
 	o.Y = u.GetInt()
-	o.Team = network7.GameTeam(u.GetInt())
 
 	return nil
 }

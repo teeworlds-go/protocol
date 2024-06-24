@@ -11,16 +11,16 @@ import (
 type Pickup struct {
 	ItemId int
 
-	X          int
-	Y          int
-	PickupType network7.Pickup
+	X    int
+	Y    int
+	Type network7.Pickup
 }
 
 func (o *Pickup) Id() int {
 	return o.ItemId
 }
 
-func (o *Pickup) Type() int {
+func (o *Pickup) TypeId() int {
 	return network7.ObjPickup
 }
 
@@ -30,19 +30,19 @@ func (o *Pickup) Size() int {
 
 func (o *Pickup) Pack() []byte {
 	return slices.Concat(
-		packer.PackInt(o.Type()),
+		packer.PackInt(o.TypeId()),
 		packer.PackInt(o.Id()),
 
 		packer.PackInt(o.X),
 		packer.PackInt(o.Y),
-		packer.PackInt(int(o.PickupType)),
+		packer.PackInt(int(o.Type)),
 	)
 }
 
 func (o *Pickup) Unpack(u *packer.Unpacker) error {
 	o.X = u.GetInt()
 	o.Y = u.GetInt()
-	o.PickupType = network7.Pickup(u.GetInt())
+	o.Type = network7.Pickup(u.GetInt())
 
 	return nil
 }

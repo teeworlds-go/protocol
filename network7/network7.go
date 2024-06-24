@@ -13,6 +13,11 @@ const (
 	TeamRed        GameTeam = 0
 	TeamBlue       GameTeam = 1
 
+	SpecFreeview Spec = 0
+	SpecPlayer   Spec = 1
+	SpecFlagred  Spec = 2
+	SpecFlagblue Spec = 3
+
 	VoteUnknown   Vote = 0
 	VoteStartOp   Vote = 1
 	VoteStartKick Vote = 2
@@ -191,6 +196,7 @@ const (
 )
 
 type GameStateFlag int
+type Spec int
 type Vote int
 type Pickup int
 type Emote int

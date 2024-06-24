@@ -23,7 +23,7 @@ func (o *Unknown) Id() int {
 	return o.ItemId
 }
 
-func (o *Unknown) Type() int {
+func (o *Unknown) TypeId() int {
 	return o.ItemType
 }
 
@@ -33,7 +33,7 @@ func (o *Unknown) Size() int {
 
 func (o *Unknown) Pack() []byte {
 	data := slices.Concat(
-		packer.PackInt(o.Type()),
+		packer.PackInt(o.TypeId()),
 		packer.PackInt(o.Id()),
 		packer.PackInt(o.Size()),
 	)

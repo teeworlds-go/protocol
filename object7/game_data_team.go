@@ -19,7 +19,7 @@ func (o *GameDataTeam) Id() int {
 	return o.ItemId
 }
 
-func (o *GameDataTeam) Type() int {
+func (o *GameDataTeam) TypeId() int {
 	return network7.ObjGameDataTeam
 }
 
@@ -29,7 +29,7 @@ func (o *GameDataTeam) Size() int {
 
 func (o *GameDataTeam) Pack() []byte {
 	return slices.Concat(
-		packer.PackInt(o.Type()),
+		packer.PackInt(o.TypeId()),
 		packer.PackInt(o.Id()),
 
 		packer.PackInt(o.TeamscoreRed),

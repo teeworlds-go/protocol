@@ -39,7 +39,7 @@ func (o *Character) Id() int {
 	return o.ItemId
 }
 
-func (o *Character) Type() int {
+func (o *Character) TypeId() int {
 	return network7.ObjCharacter
 }
 
@@ -49,7 +49,7 @@ func (o *Character) Size() int {
 
 func (o *Character) Pack() []byte {
 	return slices.Concat(
-		packer.PackInt(o.Type()),
+		packer.PackInt(o.TypeId()),
 		packer.PackInt(o.Id()),
 
 		packer.PackInt(o.Tick),
