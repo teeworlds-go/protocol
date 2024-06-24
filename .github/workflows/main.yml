@@ -20,6 +20,19 @@ jobs:
     - name: Build
       run: go build -v ./...
 
+  build-readme:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.22'
+
+    - name: Build go snippets in readme
+      run: ./scripts/compile_readme_snippets.sh
+
   test:
     runs-on: ubuntu-latest
     steps:
