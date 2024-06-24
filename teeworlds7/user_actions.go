@@ -12,20 +12,6 @@ import (
 // low level access for experts
 // ----------------------------
 
-// flish()boo  {
-//
-// 	ifhf lenesusue
-// 	packte:=}{}
-// SendPkacte8)
-//
-// }
-//
-// if now > lastsnend d+9191 {
-// 	if !flush() {
-// 		keepalive
-// 	}
-// }A
-
 func (client *Client) SendPacket(packet *protocol7.Packet) error {
 	if packet.Header.Flags.Resend == false && len(packet.Messages) == 0 && len(client.QueuedMessages) == 0 {
 		return fmt.Errorf("Failed to send packet: payload is empty.")
