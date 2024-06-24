@@ -305,6 +305,7 @@ func (packet *Packet) Pack(connection *Session) []byte {
 			Resend:      false,
 			Control:     true,
 		}
+		packet.Header.NumChunks = 0
 	}
 
 	if packet.Header.Flags.Compression {
