@@ -18,7 +18,7 @@ import (
 
 func main() {
 	client := teeworlds7.Client{Name: "nameless tee"}
-	
+
 	// Register your callback for incoming chat messages
 	// For a full list of all callbacks see: https://github.com/teeworlds-go/go-teeworlds-protocol/tree/master/teeworlds7/user_hooks.go
 	client.OnChat(func(msg *messages7.SvChat, defaultAction teeworlds7.DefaultAction) {
