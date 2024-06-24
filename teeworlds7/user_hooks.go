@@ -16,13 +16,17 @@ func (client *Client) OnError(callback func(err error)) {
 
 // inspect outgoing traffic
 // and alter it before it gets sent to the server
-func (client *Client) OnSend(callback func(packet *protocol7.Packet)) {
+//
+// return false to drop the packet
+func (client *Client) OnSend(callback func(packet *protocol7.Packet) bool) {
 	client.Callbacks.PacketOut = callback
 }
 
 // read incoming traffic
 // and alter it before it hits the internal state machine
-func (client *Client) OnPacket(callback func(packet *protocol7.Packet)) {
+//
+// return false to drop the packet
+func (client *Client) OnPacket(callback func(packet *protocol7.Packet) bool) {
 	client.Callbacks.PacketIn = callback
 }
 

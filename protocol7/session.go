@@ -17,6 +17,7 @@ type Session struct {
 	PeerAck int
 }
 
+// TODO: should this be removed? All of this could be set in Packet.Pack()
 func (connection *Session) BuildResponse() *Packet {
 	return &Packet{
 		Header: PacketHeader{
@@ -26,7 +27,7 @@ func (connection *Session) BuildResponse() *Packet {
 				Resend:      false,
 				Control:     false,
 			},
-			Ack:       connection.Ack,
+			Ack:       0, // will be set in Packet.Pack()
 			NumChunks: 0, // will be set in Packet.Pack()
 			Token:     connection.ServerToken,
 		},

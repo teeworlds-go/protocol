@@ -15,8 +15,8 @@ type DefaultAction func()
 // // key is the network7.MessageId
 // UserMsgCallbacks map[int]UserMsgCallback
 type UserMsgCallbacks struct {
-	PacketIn      func(*protocol7.Packet)
-	PacketOut     func(*protocol7.Packet)
+	PacketIn      func(*protocol7.Packet) bool
+	PacketOut     func(*protocol7.Packet) bool
 	MsgUnknown    func(*messages7.Unknown, DefaultAction)
 	InternalError func(error)
 

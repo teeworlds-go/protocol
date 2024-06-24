@@ -140,6 +140,7 @@ func TestRepackUnknownMessages(t *testing.T) {
 	err := packet.Unpack(dump)
 	require.NoError(t, err)
 
+	conn.Ack = packet.Header.Ack
 	repack := packet.Pack(&conn)
 	require.Equal(t, dump, repack)
 }

@@ -39,7 +39,9 @@ func (client *Client) processMessage(msg messages7.NetMessage, response *protoco
 
 func (client *Client) processPacket(packet *protocol7.Packet) error {
 	if client.Callbacks.PacketIn != nil {
-		client.Callbacks.PacketIn(packet)
+		if client.Callbacks.PacketIn(packet) == false {
+			return nil
+		}
 	}
 
 	response := client.Session.BuildResponse()

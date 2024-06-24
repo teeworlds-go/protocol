@@ -285,6 +285,7 @@ func (packet *Packet) Unpack(data []byte) (err error) {
 	return nil
 }
 
+// TODO: return error if maxium packet size is exceeded
 func (packet *Packet) Pack(connection *Session) []byte {
 	payload := []byte{}
 	control := false
@@ -297,6 +298,7 @@ func (packet *Packet) Pack(connection *Session) []byte {
 	}
 
 	packet.Header.NumChunks = len(packet.Messages)
+	packet.Header.Ack = connection.Ack
 
 	if control {
 		packet.Header.Flags = PacketFlags{

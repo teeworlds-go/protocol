@@ -28,14 +28,20 @@ func main() {
 
 	// read incoming traffic
 	// you can also alter packet here before it will be processed by the internal state machine
-	client.OnPacket(func(packet *protocol7.Packet) {
+	//
+	// return false to drop the packet
+	client.OnPacket(func(packet *protocol7.Packet) bool {
 		fmt.Printf("got packet with %d messages\n", len(packet.Messages))
+		return true
 	})
 
 	// inspect outgoing traffic
 	// you can also alter packet here before it will be sent to the server
-	client.OnSend(func(packet *protocol7.Packet) {
+	//
+	// return false to drop the packet
+	client.OnSend(func(packet *protocol7.Packet) bool {
 		fmt.Printf("sending packet with %d messages\n", len(packet.Messages))
+		return true
 	})
 
 	client.OnChat(func(msg *messages7.SvChat, defaultAction teeworlds7.DefaultAction) {
