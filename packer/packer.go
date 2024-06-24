@@ -31,7 +31,17 @@ func (u *Unpacker) Data() []byte {
 }
 
 func (u *Unpacker) Rest() []byte {
-	return u.data[u.idx:]
+	rest := u.data[u.idx:]
+	u.idx = u.Size()
+	return rest
+}
+
+func (u *Unpacker) Size() int {
+	return len(u.data)
+}
+
+func (u *Unpacker) RemainingSize() int {
+	return u.Size() - u.idx
 }
 
 const (

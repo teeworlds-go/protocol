@@ -6,7 +6,7 @@ import (
 	"github.com/teeworlds-go/go-teeworlds-protocol/internal/testutils/require"
 )
 
-// rest
+// rest and remaining size
 
 func TestUnpackRest(t *testing.T) {
 	u := Unpacker{}
@@ -16,11 +16,21 @@ func TestUnpackRest(t *testing.T) {
 		want := 1
 		got := u.GetInt()
 		require.Equal(t, want, got)
+
+		want = 2
+		got = u.RemainingSize()
+		require.Equal(t, want, got)
 	}
 
 	{
 		want := []byte{0xff, 0xaa}
 		got := u.Rest()
+		require.Equal(t, want, got)
+	}
+
+	{
+		want := 0
+		got := u.RemainingSize()
 		require.Equal(t, want, got)
 	}
 }

@@ -21,6 +21,22 @@ const (
 	VoteEndPass   Vote = 5
 	VoteEndFail   Vote = 6
 
+	PickupHealth  Pickup = 0
+	PickupArmor   Pickup = 1
+	PickupGrenade Pickup = 2
+	PickupShotgun Pickup = 3
+	PickupLaser   Pickup = 4
+	PickupNinja   Pickup = 5
+	PickupGun     Pickup = 6
+	PickupHammer  Pickup = 7
+
+	GamestateflagWarmup         GameStateFlag = 1
+	GamestateflagSuddendeath    GameStateFlag = 2
+	GamestateflagRoundover      GameStateFlag = 4
+	GamestateflagGameover       GameStateFlag = 8
+	GamestateflagPaused         GameStateFlag = 16
+	GamestateflagStartcountdown GameStateFlag = 32
+
 	// oop!
 	EmoteOop Emote = 0
 	// !
@@ -52,6 +68,33 @@ const (
 	MsgCtrlAccept    = 0x02
 	MsgCtrlToken     = 0x05
 	MsgCtrlClose     = 0x04
+
+	ObjInvalid        = 0
+	ObjPlayerInput    = 1
+	ObjProjectile     = 2
+	ObjLaser          = 3
+	ObjPickup         = 4
+	ObjFlag           = 5
+	ObjGameData       = 6
+	ObjGameDataTeam   = 7
+	ObjGameDataFlag   = 8
+	ObjCharacterCore  = 9
+	ObjCharacter      = 10
+	ObjPlayerInfo     = 11
+	ObjSpectatorInfo  = 12
+	ObjDeClientInfo   = 13
+	ObjDeGameInfo     = 14
+	ObjDeTuneParams   = 15
+	ObjCommon         = 16
+	ObjExplosion      = 17
+	ObjSpawn          = 18
+	ObjHammerHit      = 19
+	ObjDeath          = 20
+	ObjSoundWorld     = 21
+	ObjDamage         = 22
+	ObjPlayerInfoRace = 23
+	ObjGameDataRace   = 24
+	NumNetobjtypes    = 25
 
 	// TODO: these should preferrably all be devide dinto different type dintegers
 	// same as ChatMode, etc. so that the user can easily see which integer to pass
@@ -147,7 +190,9 @@ const (
 	NumWeapons    Weapon = 6
 )
 
+type GameStateFlag int
 type Vote int
+type Pickup int
 type Emote int
 type ChatMode int
 type GameTeam int

@@ -3,6 +3,7 @@ package teeworlds7
 import (
 	"github.com/teeworlds-go/go-teeworlds-protocol/messages7"
 	"github.com/teeworlds-go/go-teeworlds-protocol/protocol7"
+	"github.com/teeworlds-go/go-teeworlds-protocol/snapshot7"
 )
 
 // Processes the incoming packet
@@ -19,6 +20,7 @@ type UserMsgCallbacks struct {
 	PacketOut     func(*protocol7.Packet) bool
 	MsgUnknown    func(*messages7.Unknown, DefaultAction)
 	InternalError func(error)
+	Snapshot      func(*snapshot7.Snapshot, DefaultAction)
 
 	CtrlKeepAlive func(*messages7.CtrlKeepAlive, DefaultAction)
 	CtrlConnect   func(*messages7.CtrlConnect, DefaultAction)

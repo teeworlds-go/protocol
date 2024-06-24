@@ -3,6 +3,7 @@ package teeworlds7
 import (
 	"github.com/teeworlds-go/go-teeworlds-protocol/messages7"
 	"github.com/teeworlds-go/go-teeworlds-protocol/protocol7"
+	"github.com/teeworlds-go/go-teeworlds-protocol/snapshot7"
 )
 
 // --------------------------------
@@ -32,6 +33,12 @@ func (client *Client) OnPacket(callback func(packet *protocol7.Packet) bool) {
 
 func (client *Client) OnUnknown(callback func(msg *messages7.Unknown, defaultAction DefaultAction)) {
 	client.Callbacks.MsgUnknown = callback
+}
+
+// will be called when a snap, snap single or empty snapshot is received
+// if you want to know which type of snapshot was received look at OnMsgSnap(), OnMsgSnapEmpty(), OnMsgSnapSingle(), OnMsgSnapSmall()
+func (client *Client) OnSnapshot(callback func(snap *snapshot7.Snapshot, defaultAction DefaultAction)) {
+	client.Callbacks.Snapshot = callback
 }
 
 // --------------------------------
@@ -85,4 +92,24 @@ func (client *Client) OnTeam(callback func(msg *messages7.SvTeam, defaultAction 
 
 func (client *Client) OnMapChange(callback func(msg *messages7.MapChange, defaultAction DefaultAction)) {
 	client.Callbacks.SysMapChange = callback
+}
+
+// You probably want to use OnSnapshot() instead
+func (client *Client) OnMsgSnap(callback func(msg *messages7.Snap, defaultAction DefaultAction)) {
+	client.Callbacks.SysSnap = callback
+}
+
+// You probably want to use OnSnapshot() instead
+func (client *Client) OnMsgSnapEmpty(callback func(msg *messages7.SnapEmpty, defaultAction DefaultAction)) {
+	client.Callbacks.SysSnapEmpty = callback
+}
+
+// You probably want to use OnSnapshot() instead
+func (client *Client) OnMsgSnapSingle(callback func(msg *messages7.SnapSingle, defaultAction DefaultAction)) {
+	client.Callbacks.SysSnapSingle = callback
+}
+
+// You probably want to use OnSnapshot() instead
+func (client *Client) OnMsgSnapSmall(callback func(msg *messages7.SnapSmall, defaultAction DefaultAction)) {
+	client.Callbacks.SysSnapSmall = callback
 }

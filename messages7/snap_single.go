@@ -6,6 +6,7 @@ import (
 	"github.com/teeworlds-go/go-teeworlds-protocol/chunk7"
 	"github.com/teeworlds-go/go-teeworlds-protocol/network7"
 	"github.com/teeworlds-go/go-teeworlds-protocol/packer"
+	"github.com/teeworlds-go/go-teeworlds-protocol/snapshot7"
 )
 
 type SnapSingle struct {
@@ -15,7 +16,11 @@ type SnapSingle struct {
 	DeltaTick int
 	Crc       int
 	PartSize  int
-	Data      []byte
+
+	// TODO: remove data when snapshot packing works
+	//       as of right now Data and Snapshot are the same thing
+	Data     []byte
+	Snapshot snapshot7.Snapshot
 }
 
 func (msg *SnapSingle) MsgId() int {
@@ -50,6 +55,14 @@ func (msg *SnapSingle) Unpack(u *packer.Unpacker) error {
 	msg.Crc = u.GetInt()
 	msg.PartSize = u.GetInt()
 	msg.Data = u.Rest()
+
+	// genius
+	u.Reset(msg.Data)
+	err := msg.Snapshot.Unpack(u)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
