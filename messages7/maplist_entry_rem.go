@@ -14,30 +14,31 @@ type MaplistEntryRem struct {
 	MapName string
 }
 
-func (msg MaplistEntryRem) MsgId() int {
+func (msg *MaplistEntryRem) MsgId() int {
 	return network7.MsgSysMaplistEntryRem
 }
 
-func (msg MaplistEntryRem) MsgType() network7.MsgType {
+func (msg *MaplistEntryRem) MsgType() network7.MsgType {
 	return network7.TypeNet
 }
 
-func (msg MaplistEntryRem) System() bool {
+func (msg *MaplistEntryRem) System() bool {
 	return true
 }
 
-func (msg MaplistEntryRem) Vital() bool {
+func (msg *MaplistEntryRem) Vital() bool {
 	return true
 }
 
-func (msg MaplistEntryRem) Pack() []byte {
+func (msg *MaplistEntryRem) Pack() []byte {
 	return slices.Concat(
 		packer.PackStr(msg.MapName),
 	)
 }
 
-func (msg *MaplistEntryRem) Unpack(u *packer.Unpacker) {
+func (msg *MaplistEntryRem) Unpack(u *packer.Unpacker) error {
 	msg.MapName = u.GetString()
+	return nil
 }
 
 func (msg *MaplistEntryRem) Header() *chunk7.ChunkHeader {

@@ -27,23 +27,23 @@ type Input struct {
 	PrevWeapon   network7.Weapon
 }
 
-func (msg Input) MsgId() int {
+func (msg *Input) MsgId() int {
 	return network7.MsgSysInput
 }
 
-func (msg Input) MsgType() network7.MsgType {
+func (msg *Input) MsgType() network7.MsgType {
 	return network7.TypeNet
 }
 
-func (msg Input) System() bool {
+func (msg *Input) System() bool {
 	return true
 }
 
-func (msg Input) Vital() bool {
+func (msg *Input) Vital() bool {
 	return false
 }
 
-func (msg Input) Pack() []byte {
+func (msg *Input) Pack() []byte {
 	return slices.Concat(
 		packer.PackInt(msg.Direction),
 		packer.PackInt(msg.TargetX),
@@ -58,7 +58,7 @@ func (msg Input) Pack() []byte {
 	)
 }
 
-func (msg *Input) Unpack(u *packer.Unpacker) {
+func (msg *Input) Unpack(u *packer.Unpacker) error {
 	msg.Direction = u.GetInt()
 	msg.TargetX = u.GetInt()
 	msg.TargetY = u.GetInt()
@@ -69,6 +69,7 @@ func (msg *Input) Unpack(u *packer.Unpacker) {
 	msg.WantedWeapon = network7.Weapon(u.GetInt())
 	msg.NextWeapon = network7.Weapon(u.GetInt())
 	msg.PrevWeapon = network7.Weapon(u.GetInt())
+	return nil
 }
 
 func (msg *Input) Header() *chunk7.ChunkHeader {

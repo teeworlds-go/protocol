@@ -16,23 +16,23 @@ type SvTeam struct {
 	CooldownTick int
 }
 
-func (msg SvTeam) MsgId() int {
+func (msg *SvTeam) MsgId() int {
 	return network7.MsgGameSvTeam
 }
 
-func (msg SvTeam) MsgType() network7.MsgType {
+func (msg *SvTeam) MsgType() network7.MsgType {
 	return network7.TypeNet
 }
 
-func (msg SvTeam) System() bool {
+func (msg *SvTeam) System() bool {
 	return false
 }
 
-func (msg SvTeam) Vital() bool {
+func (msg *SvTeam) Vital() bool {
 	return true
 }
 
-func (msg SvTeam) Pack() []byte {
+func (msg *SvTeam) Pack() []byte {
 	return slices.Concat(
 		packer.PackInt(msg.ClientId),
 		packer.PackBool(msg.Silent),
@@ -40,10 +40,11 @@ func (msg SvTeam) Pack() []byte {
 	)
 }
 
-func (msg *SvTeam) Unpack(u *packer.Unpacker) {
+func (msg *SvTeam) Unpack(u *packer.Unpacker) error {
 	msg.ClientId = u.GetInt()
 	msg.Silent = u.GetInt() != 0
 	msg.CooldownTick = u.GetInt()
+	return nil
 }
 
 func (msg *SvTeam) Header() *chunk7.ChunkHeader {

@@ -1,9 +1,9 @@
 package messages7
 
 import (
-	"reflect"
 	"testing"
 
+	"github.com/teeworlds-go/go-teeworlds-protocol/internal/testutils/require"
 	"github.com/teeworlds-go/go-teeworlds-protocol/packer"
 )
 
@@ -44,10 +44,7 @@ func TestPackStartInfo(t *testing.T) {
 	}
 
 	got := info.Pack()
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
+	require.Equal(t, want, got)
 }
 
 func TestUnpackStartInfo(t *testing.T) {
@@ -64,34 +61,29 @@ func TestUnpackStartInfo(t *testing.T) {
 	})
 
 	info := ClStartInfo{}
-	info.Unpack(&u)
+	err := info.Unpack(&u)
+	require.NoError(t, err)
 
 	{
-		got := info.Eyes
 		want := "standard"
-		if got != want {
-			t.Errorf("got %v, wanted %v", got, want)
-		}
+		got := info.Eyes
+		require.Equal(t, want, got)
 
-		got = info.Decoration
 		want = ""
+		got = info.Decoration
 		if got != want {
 			t.Errorf("got %v, wanted %v", got, want)
 		}
 
-		got = info.Marking
 		want = "duodonny"
-		if got != want {
-			t.Errorf("got %v, wanted %v", got, want)
-		}
+		got = info.Marking
+		require.Equal(t, want, got)
 	}
 
 	{
-		got := info.ColorDecoration
 		want := 65408
-		if got != want {
-			t.Errorf("got %v, wanted %v", got, want)
-		}
+		got := info.ColorDecoration
+		require.Equal(t, want, got)
 	}
 
 	wantedInfo := ClStartInfo{
@@ -118,7 +110,5 @@ func TestUnpackStartInfo(t *testing.T) {
 		ColorEyes:             65408,
 	}
 
-	if !reflect.DeepEqual(info, wantedInfo) {
-		t.Errorf("got %v, wanted %v", info, wantedInfo)
-	}
+	require.Equal(t, wantedInfo, info)
 }

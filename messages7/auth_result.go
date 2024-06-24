@@ -11,27 +11,28 @@ type AuthResult struct {
 	ChunkHeader *chunk7.ChunkHeader
 }
 
-func (msg AuthResult) MsgId() int {
+func (msg *AuthResult) MsgId() int {
 	return network7.MsgSysAuthResult
 }
 
-func (msg AuthResult) MsgType() network7.MsgType {
+func (msg *AuthResult) MsgType() network7.MsgType {
 	return network7.TypeNet
 }
 
-func (msg AuthResult) System() bool {
+func (msg *AuthResult) System() bool {
 	return true
 }
 
-func (msg AuthResult) Vital() bool {
+func (msg *AuthResult) Vital() bool {
 	return true
 }
 
-func (msg AuthResult) Pack() []byte {
+func (msg *AuthResult) Pack() []byte {
 	return []byte{}
 }
 
-func (msg *AuthResult) Unpack(u *packer.Unpacker) {
+func (msg *AuthResult) Unpack(u *packer.Unpacker) error {
+	return nil
 }
 
 func (msg *AuthResult) Header() *chunk7.ChunkHeader {

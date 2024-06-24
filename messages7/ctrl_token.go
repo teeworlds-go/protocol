@@ -15,23 +15,23 @@ type CtrlToken struct {
 	Token [4]byte
 }
 
-func (msg CtrlToken) MsgId() int {
+func (msg *CtrlToken) MsgId() int {
 	return network7.MsgCtrlToken
 }
 
-func (msg CtrlToken) MsgType() network7.MsgType {
+func (msg *CtrlToken) MsgType() network7.MsgType {
 	return network7.TypeControl
 }
 
-func (msg CtrlToken) System() bool {
+func (msg *CtrlToken) System() bool {
 	return false
 }
 
-func (msg CtrlToken) Vital() bool {
+func (msg *CtrlToken) Vital() bool {
 	return false
 }
 
-func (msg CtrlToken) Pack() []byte {
+func (msg *CtrlToken) Pack() []byte {
 	return slices.Concat(
 		[]byte{network7.MsgCtrlToken},
 		msg.Token[:],
@@ -39,8 +39,9 @@ func (msg CtrlToken) Pack() []byte {
 	)
 }
 
-func (msg *CtrlToken) Unpack(u *packer.Unpacker) {
+func (msg *CtrlToken) Unpack(u *packer.Unpacker) error {
 	msg.Token = [4]byte(u.Rest())
+	return nil
 }
 
 func (msg *CtrlToken) Header() *chunk7.ChunkHeader {

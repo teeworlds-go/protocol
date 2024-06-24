@@ -12,23 +12,23 @@ type CtrlAccept struct {
 	Token [4]byte
 }
 
-func (msg CtrlAccept) MsgId() int {
+func (msg *CtrlAccept) MsgId() int {
 	return network7.MsgCtrlAccept
 }
 
-func (msg CtrlAccept) MsgType() network7.MsgType {
+func (msg *CtrlAccept) MsgType() network7.MsgType {
 	return network7.TypeControl
 }
 
-func (msg CtrlAccept) System() bool {
+func (msg *CtrlAccept) System() bool {
 	return false
 }
 
-func (msg CtrlAccept) Vital() bool {
+func (msg *CtrlAccept) Vital() bool {
 	return false
 }
 
-func (msg CtrlAccept) Pack() []byte {
+func (msg *CtrlAccept) Pack() []byte {
 	return slices.Concat(
 		[]byte{network7.MsgCtrlAccept},
 		msg.Token[:],
@@ -36,7 +36,8 @@ func (msg CtrlAccept) Pack() []byte {
 	)
 }
 
-func (msg *CtrlAccept) Unpack(u *packer.Unpacker) {
+func (msg *CtrlAccept) Unpack(u *packer.Unpacker) error {
+	return nil
 }
 
 func (msg *CtrlAccept) Header() *chunk7.ChunkHeader {

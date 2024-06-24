@@ -19,23 +19,23 @@ type MapChange struct {
 	Sha256                      [32]byte
 }
 
-func (msg MapChange) MsgId() int {
+func (msg *MapChange) MsgId() int {
 	return network7.MsgSysMapChange
 }
 
-func (msg MapChange) MsgType() network7.MsgType {
+func (msg *MapChange) MsgType() network7.MsgType {
 	return network7.TypeNet
 }
 
-func (msg MapChange) System() bool {
+func (msg *MapChange) System() bool {
 	return true
 }
 
-func (msg MapChange) Vital() bool {
+func (msg *MapChange) Vital() bool {
 	return true
 }
 
-func (msg MapChange) Pack() []byte {
+func (msg *MapChange) Pack() []byte {
 	return slices.Concat(
 		packer.PackStr(msg.Name),
 		packer.PackInt(msg.Crc),
@@ -46,13 +46,14 @@ func (msg MapChange) Pack() []byte {
 	)
 }
 
-func (msg *MapChange) Unpack(u *packer.Unpacker) {
+func (msg *MapChange) Unpack(u *packer.Unpacker) error {
 	msg.Name = u.GetString()
 	msg.Crc = u.GetInt()
 	msg.Size = u.GetInt()
 	msg.NumResponseChunksPerRequest = u.GetInt()
 	msg.ChunkSize = u.GetInt()
 	msg.Sha256 = [32]byte(u.Rest())
+	return nil
 }
 
 func (msg *MapChange) Header() *chunk7.ChunkHeader {

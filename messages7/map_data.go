@@ -12,28 +12,29 @@ type MapData struct {
 	Data []byte
 }
 
-func (msg MapData) MsgId() int {
+func (msg *MapData) MsgId() int {
 	return network7.MsgSysMapData
 }
 
-func (msg MapData) MsgType() network7.MsgType {
+func (msg *MapData) MsgType() network7.MsgType {
 	return network7.TypeNet
 }
 
-func (msg MapData) System() bool {
+func (msg *MapData) System() bool {
 	return true
 }
 
-func (msg MapData) Vital() bool {
+func (msg *MapData) Vital() bool {
 	return true
 }
 
-func (msg MapData) Pack() []byte {
+func (msg *MapData) Pack() []byte {
 	return msg.Data
 }
 
-func (msg *MapData) Unpack(u *packer.Unpacker) {
+func (msg *MapData) Unpack(u *packer.Unpacker) error {
 	msg.Data = u.Rest()
+	return nil
 }
 
 func (msg *MapData) Header() *chunk7.ChunkHeader {

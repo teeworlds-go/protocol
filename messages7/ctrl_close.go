@@ -12,32 +12,33 @@ type CtrlClose struct {
 	Reason string
 }
 
-func (msg CtrlClose) MsgId() int {
+func (msg *CtrlClose) MsgId() int {
 	return network7.MsgCtrlClose
 }
 
-func (msg CtrlClose) MsgType() network7.MsgType {
+func (msg *CtrlClose) MsgType() network7.MsgType {
 	return network7.TypeControl
 }
 
-func (msg CtrlClose) System() bool {
+func (msg *CtrlClose) System() bool {
 	return false
 }
 
-func (msg CtrlClose) Vital() bool {
+func (msg *CtrlClose) Vital() bool {
 	return false
 }
 
-func (msg CtrlClose) Pack() []byte {
+func (msg *CtrlClose) Pack() []byte {
 	return slices.Concat(
 		[]byte{network7.MsgCtrlClose},
 		packer.PackStr(msg.Reason),
 	)
 }
 
-func (msg *CtrlClose) Unpack(u *packer.Unpacker) {
+func (msg *CtrlClose) Unpack(u *packer.Unpacker) error {
 	// TODO: sanitize
 	msg.Reason = u.GetString()
+	return nil
 }
 
 func (msg *CtrlClose) Header() *chunk7.ChunkHeader {

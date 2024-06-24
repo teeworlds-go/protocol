@@ -34,70 +34,71 @@ type ClStartInfo struct {
 	ColorEyes             int
 }
 
-func (info ClStartInfo) MsgId() int {
+func (msg *ClStartInfo) MsgId() int {
 	return network7.MsgGameClStartInfo
 }
 
-func (info ClStartInfo) MsgType() network7.MsgType {
+func (msg *ClStartInfo) MsgType() network7.MsgType {
 	return network7.TypeNet
 }
 
-func (info ClStartInfo) System() bool {
+func (msg *ClStartInfo) System() bool {
 	return false
 }
 
-func (info ClStartInfo) Vital() bool {
+func (msg *ClStartInfo) Vital() bool {
 	return true
 }
 
-func (info ClStartInfo) Pack() []byte {
+func (msg *ClStartInfo) Pack() []byte {
 	return slices.Concat(
-		packer.PackStr(info.Name),
-		packer.PackStr(info.Clan),
-		packer.PackInt(info.Country),
-		packer.PackStr(info.Body),
-		packer.PackStr(info.Marking),
-		packer.PackStr(info.Decoration),
-		packer.PackStr(info.Hands),
-		packer.PackStr(info.Feet),
-		packer.PackStr(info.Eyes),
-		packer.PackBool(info.CustomColorBody),
-		packer.PackBool(info.CustomColorMarking),
-		packer.PackBool(info.CustomColorDecoration),
-		packer.PackBool(info.CustomColorHands),
-		packer.PackBool(info.CustomColorFeet),
-		packer.PackBool(info.CustomColorEyes),
-		packer.PackInt(info.ColorBody),
-		packer.PackInt(info.ColorMarking),
-		packer.PackInt(info.ColorDecoration),
-		packer.PackInt(info.ColorHands),
-		packer.PackInt(info.ColorFeet),
-		packer.PackInt(info.ColorEyes),
+		packer.PackStr(msg.Name),
+		packer.PackStr(msg.Clan),
+		packer.PackInt(msg.Country),
+		packer.PackStr(msg.Body),
+		packer.PackStr(msg.Marking),
+		packer.PackStr(msg.Decoration),
+		packer.PackStr(msg.Hands),
+		packer.PackStr(msg.Feet),
+		packer.PackStr(msg.Eyes),
+		packer.PackBool(msg.CustomColorBody),
+		packer.PackBool(msg.CustomColorMarking),
+		packer.PackBool(msg.CustomColorDecoration),
+		packer.PackBool(msg.CustomColorHands),
+		packer.PackBool(msg.CustomColorFeet),
+		packer.PackBool(msg.CustomColorEyes),
+		packer.PackInt(msg.ColorBody),
+		packer.PackInt(msg.ColorMarking),
+		packer.PackInt(msg.ColorDecoration),
+		packer.PackInt(msg.ColorHands),
+		packer.PackInt(msg.ColorFeet),
+		packer.PackInt(msg.ColorEyes),
 	)
 }
 
-func (info *ClStartInfo) Unpack(u *packer.Unpacker) {
-	info.Name = u.GetString()
-	info.Clan = u.GetString()
-	info.Country = u.GetInt()
-	info.Body = u.GetString()
-	info.Marking = u.GetString()
-	info.Decoration = u.GetString()
-	info.Hands = u.GetString()
-	info.Feet = u.GetString()
-	info.Eyes = u.GetString()
-	info.CustomColorBody = u.GetInt() != 0
-	info.CustomColorMarking = u.GetInt() != 0
-	info.CustomColorDecoration = u.GetInt() != 0
-	info.CustomColorHands = u.GetInt() != 0
-	info.CustomColorFeet = u.GetInt() != 0
-	info.CustomColorEyes = u.GetInt() != 0
-	info.ColorBody = u.GetInt()
-	info.ColorMarking = u.GetInt()
-	info.ColorDecoration = u.GetInt()
-	info.ColorHands = u.GetInt()
-	info.ColorFeet = u.GetInt()
-	info.ColorEyes = u.GetInt()
+func (msg *ClStartInfo) Unpack(u *packer.Unpacker) error {
+	msg.Name = u.GetString()
+	msg.Clan = u.GetString()
+	msg.Country = u.GetInt()
+	msg.Body = u.GetString()
+	msg.Marking = u.GetString()
+	msg.Decoration = u.GetString()
+	msg.Hands = u.GetString()
+	msg.Feet = u.GetString()
+	msg.Eyes = u.GetString()
+	msg.CustomColorBody = u.GetInt() != 0
+	msg.CustomColorMarking = u.GetInt() != 0
+	msg.CustomColorDecoration = u.GetInt() != 0
+	msg.CustomColorHands = u.GetInt() != 0
+	msg.CustomColorFeet = u.GetInt() != 0
+	msg.CustomColorEyes = u.GetInt() != 0
+	msg.ColorBody = u.GetInt()
+	msg.ColorMarking = u.GetInt()
+	msg.ColorDecoration = u.GetInt()
+	msg.ColorHands = u.GetInt()
+	msg.ColorFeet = u.GetInt()
+	msg.ColorEyes = u.GetInt()
+	return nil
 }
 
 func (msg *ClStartInfo) Header() *chunk7.ChunkHeader {

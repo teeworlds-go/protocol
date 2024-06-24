@@ -1,145 +1,95 @@
 package packer
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/teeworlds-go/go-teeworlds-protocol/internal/testutils/require"
 )
 
 // pack
 
 func TestPackEmptyString(t *testing.T) {
-	got := PackStr("")
 	want := []byte{0x00}
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
+	got := PackStr("")
+	require.Equal(t, want, got)
 }
 
 func TestPackSimpleString(t *testing.T) {
-	got := PackStr("foo")
 	want := []byte{'f', 'o', 'o', 0x00}
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
+	got := PackStr("foo")
+	require.Equal(t, want, got)
 }
 
 func TestPackSmallPositiveInts(t *testing.T) {
-	got := PackInt(1)
 	want := []byte{0x01}
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
+	got := PackInt(1)
+	require.Equal(t, want, got)
 }
 
 func TestPackMultiBytePositiveInts(t *testing.T) {
-	got := PackInt(63)
 	want := []byte{0x3F}
+	got := PackInt(63)
+	require.Equal(t, want, got)
 
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
-
-	got = PackInt(64)
 	want = []byte{0x80, 0x01}
+	got = PackInt(64)
+	require.Equal(t, want, got)
 
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
-
-	got = PackInt(65)
 	want = []byte{0x81, 0x01}
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
+	got = PackInt(65)
+	require.Equal(t, want, got)
 }
 
 func TestPackSmallNegativeInts(t *testing.T) {
-	got := PackInt(-1)
 	want := []byte{0x40}
+	got := PackInt(-1)
+	require.Equal(t, want, got)
 
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
-
-	got = PackInt(-2)
 	want = []byte{0x41}
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
+	got = PackInt(-2)
+	require.Equal(t, want, got)
 }
 
 func TestPackMultiByteNegativeInts(t *testing.T) {
-	got := PackInt(-63)
 	want := []byte{0x7E}
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
+	got := PackInt(-63)
+	require.Equal(t, want, got)
 
 	got = PackInt(-64)
 	want = []byte{0x7F}
+	require.Equal(t, want, got)
 
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
-
-	got = PackInt(-65)
 	want = []byte{0xC0, 0x01}
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
+	got = PackInt(-65)
+	require.Equal(t, want, got)
 }
 
 // unpack
 
 func TestUnpackSmallPositiveInts(t *testing.T) {
-	got := UnpackInt([]byte{0x01})
 	want := 1
+	got := UnpackInt([]byte{0x01})
+	require.Equal(t, want, got)
 
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
-
-	got = UnpackInt([]byte{0x02})
 	want = 2
+	got = UnpackInt([]byte{0x02})
+	require.Equal(t, want, got)
 
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
-
-	got = UnpackInt([]byte{0x03})
 	want = 3
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
+	got = UnpackInt([]byte{0x03})
+	require.Equal(t, want, got)
 }
 
 func TestUnpackMultiBytePositiveInts(t *testing.T) {
-	got := UnpackInt([]byte{0x3f})
 	want := 63
+	got := UnpackInt([]byte{0x3f})
+	require.Equal(t, want, got)
 
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
-
-	got = UnpackInt([]byte{0x80, 0x01})
 	want = 64
+	got = UnpackInt([]byte{0x80, 0x01})
+	require.Equal(t, want, got)
 
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
-
-	got = UnpackInt([]byte{0x81, 0x01})
 	want = 65
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
+	got = UnpackInt([]byte{0x81, 0x01})
+	require.Equal(t, want, got)
 }

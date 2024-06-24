@@ -1,11 +1,11 @@
 package protocol7
 
 import (
-	"reflect"
 	"slices"
 	"testing"
 
 	"github.com/teeworlds-go/go-teeworlds-protocol/chunk7"
+	"github.com/teeworlds-go/go-teeworlds-protocol/internal/testutils/require"
 	"github.com/teeworlds-go/go-teeworlds-protocol/messages7"
 )
 
@@ -137,12 +137,11 @@ func TestRepackUnknownMessages(t *testing.T) {
 	conn := Session{}
 
 	packet := Packet{}
-	packet.Unpack(dump)
-	repack := packet.Pack(&conn)
+	err := packet.Unpack(dump)
+	require.NoError(t, err)
 
-	if !reflect.DeepEqual(repack, dump) {
-		t.Errorf("got %v, wanted %v", repack, dump)
-	}
+	repack := packet.Pack(&conn)
+	require.Equal(t, dump, repack)
 }
 
 // update chunk headers
@@ -154,16 +153,13 @@ func TestPackUpdateChunkHeaders(t *testing.T) {
 
 	{
 		got := packet.Messages[0].Header()
-
-		if got != nil {
-			t.Errorf("got %v, wanted %v", got, nil)
-		}
+		require.NotNil(t, got)
 	}
 
 	// When packing the chunk header will be set automatically
 	// Based on the current context
 	conn := &Session{Sequence: 1}
-	packet.Pack(conn)
+	_ = packet.Pack(conn)
 
 	{
 		got := packet.Messages[0].Header()
@@ -174,10 +170,7 @@ func TestPackUpdateChunkHeaders(t *testing.T) {
 			Size: 8,
 			Seq:  2,
 		}
-
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("got %v, wanted %v", got, want)
-		}
+		require.Equal(t, want, got)
 	}
 
 	// When the chunk header is already set
@@ -192,7 +185,7 @@ func TestPackUpdateChunkHeaders(t *testing.T) {
 		t.Fatal("failed to cast chat message")
 	}
 
-	packet.Pack(conn)
+	_ = packet.Pack(conn)
 
 	{
 		got := packet.Messages[0].Header()
@@ -203,10 +196,7 @@ func TestPackUpdateChunkHeaders(t *testing.T) {
 			Size: 16,
 			Seq:  2,
 		}
-
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("got %v, wanted %v", got, want)
-		}
+		require.Equal(t, want, got)
 	}
 }
 
@@ -224,12 +214,9 @@ func TestPackHeader(t *testing.T) {
 		NumChunks: 0,
 		Token:     [4]byte{0xcf, 0x2e, 0xde, 0x1d},
 	}
-	got := header.Pack()
 	want := []byte{0x04, 0x0a, 0x00, 0xcf, 0x2e, 0xde, 0x1d}
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
+	got := header.Pack()
+	require.Equal(t, want, got)
 }
 
 // pack flags
@@ -242,12 +229,9 @@ func TestPackFlagsUnset(t *testing.T) {
 		Control:     false,
 	}
 
-	got := flags.Pack()
 	want := []byte{0b0000}
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
+	got := flags.Pack()
+	require.Equal(t, want, got)
 }
 
 func TestPackFlagsCompressionSet(t *testing.T) {
@@ -258,12 +242,9 @@ func TestPackFlagsCompressionSet(t *testing.T) {
 		Control:     false,
 	}
 
-	got := flags.Pack()
 	want := []byte{0b0100}
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
+	got := flags.Pack()
+	require.Equal(t, want, got)
 }
 
 func TestPackFlagsAllSet(t *testing.T) {
@@ -274,50 +255,41 @@ func TestPackFlagsAllSet(t *testing.T) {
 		Control:     true,
 	}
 
-	got := flags.Pack()
 	want := []byte{0b1111}
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
+	got := flags.Pack()
+	require.Equal(t, want, got)
 }
 
 // unpack
 
 func TestUnpackFlagsAllSet(t *testing.T) {
-	got := PacketFlags{}
 	want := PacketFlags{
 		Connless:    true,
 		Compression: true,
 		Resend:      true,
 		Control:     true,
 	}
-
-	got.Unpack([]byte{0b00111100})
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
+	got := PacketFlags{}
+	err := got.Unpack([]byte{0b00111100})
+	require.NoError(t, err)
+	require.Equal(t, want, got)
 }
 
 func TestUnpackFlagsControlSet(t *testing.T) {
-	got := PacketFlags{}
 	want := PacketFlags{
 		Connless:    false,
 		Compression: false,
 		Resend:      false,
 		Control:     true,
 	}
+	got := PacketFlags{}
 
-	got.Unpack([]byte{0b00000100})
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
+	err := got.Unpack([]byte{0b00000100})
+	require.NoError(t, err)
+	require.Equal(t, want, got)
 }
 
 func TestUnpackFlagsUnset(t *testing.T) {
-	got := PacketFlags{}
 	want := PacketFlags{
 		Connless:    false,
 		Compression: false,
@@ -325,17 +297,15 @@ func TestUnpackFlagsUnset(t *testing.T) {
 		Control:     false,
 	}
 
-	got.Unpack([]byte{0b00000000})
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
+	got := PacketFlags{}
+	err := got.Unpack([]byte{0b00000000})
+	require.NoError(t, err)
+	require.Equal(t, want, got)
 }
 
 // packet header unpack
 
 func TestUnpackCloseWithReason(t *testing.T) {
-	got := PacketHeader{}
 	want := PacketHeader{
 		Flags: PacketFlags{
 			Connless:    false,
@@ -348,15 +318,17 @@ func TestUnpackCloseWithReason(t *testing.T) {
 		Token:     [4]byte{0xcf, 0x2e, 0xde, 0x1d},
 	}
 
-	got.Unpack(slices.Concat([]byte{0x04, 0x0a, 0x00, 0xcf, 0x2e, 0xde, 0x1d, 0x04}, []byte("shutdown"), []byte{0x00}))
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
+	got := PacketHeader{}
+	err := got.Unpack(slices.Concat(
+		[]byte{0x04, 0x0a, 0x00, 0xcf, 0x2e, 0xde, 0x1d, 0x04},
+		[]byte("shutdown"),
+		[]byte{0x00},
+	))
+	require.NoError(t, err)
+	require.Equal(t, want, got)
 }
 
 func TestUnpackHeaderFlagsControlSet(t *testing.T) {
-	got := PacketHeader{}
 	want := PacketHeader{
 		Flags: PacketFlags{
 			Connless:    false,
@@ -369,15 +341,13 @@ func TestUnpackHeaderFlagsControlSet(t *testing.T) {
 		Token:     [4]byte{0xff, 0xff, 0xff, 0xff},
 	}
 
-	got.Unpack([]byte{0b00000100, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff})
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
+	got := PacketHeader{}
+	err := got.Unpack([]byte{0b00000100, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff})
+	require.NoError(t, err)
+	require.Equal(t, want, got)
 }
 
 func TestUnpackHeaderFlagsAllSet(t *testing.T) {
-	got := PacketHeader{}
 	want := PacketHeader{
 		Flags: PacketFlags{
 			Connless:    true,
@@ -390,9 +360,8 @@ func TestUnpackHeaderFlagsAllSet(t *testing.T) {
 		Token:     [4]byte{0xff, 0xff, 0xff, 0xff},
 	}
 
-	got.Unpack([]byte{0b00111100, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff})
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v, wanted %v", got, want)
-	}
+	got := PacketHeader{}
+	err := got.Unpack([]byte{0b00111100, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff})
+	require.NoError(t, err)
+	require.Equal(t, want, got)
 }

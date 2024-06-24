@@ -53,7 +53,7 @@ func (info *SvClientInfo) Vital() bool {
 	return true
 }
 
-func (msg SvClientInfo) Pack() []byte {
+func (msg *SvClientInfo) Pack() []byte {
 	return slices.Concat(
 		packer.PackInt(msg.ClientId),
 		packer.PackBool(msg.Local),
@@ -82,7 +82,7 @@ func (msg SvClientInfo) Pack() []byte {
 	)
 }
 
-func (info *SvClientInfo) Unpack(u *packer.Unpacker) {
+func (info *SvClientInfo) Unpack(u *packer.Unpacker) error {
 	info.ClientId = u.GetInt()
 	info.Local = u.GetInt() != 0
 	info.Team = u.GetInt()
@@ -107,6 +107,8 @@ func (info *SvClientInfo) Unpack(u *packer.Unpacker) {
 	info.ColorFeet = u.GetInt()
 	info.ColorEyes = u.GetInt()
 	info.Silent = u.GetInt() != 0
+
+	return nil
 }
 
 func (msg *SvClientInfo) Header() *chunk7.ChunkHeader {

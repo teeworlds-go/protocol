@@ -10,27 +10,28 @@ type ConReady struct {
 	ChunkHeader *chunk7.ChunkHeader
 }
 
-func (msg ConReady) MsgId() int {
+func (msg *ConReady) MsgId() int {
 	return network7.MsgSysConReady
 }
 
-func (msg ConReady) MsgType() network7.MsgType {
+func (msg *ConReady) MsgType() network7.MsgType {
 	return network7.TypeNet
 }
 
-func (msg ConReady) System() bool {
+func (msg *ConReady) System() bool {
 	return true
 }
 
-func (msg ConReady) Vital() bool {
+func (msg *ConReady) Vital() bool {
 	return true
 }
 
-func (msg ConReady) Pack() []byte {
+func (msg *ConReady) Pack() []byte {
 	return []byte{}
 }
 
-func (msg *ConReady) Unpack(u *packer.Unpacker) {
+func (msg *ConReady) Unpack(u *packer.Unpacker) error {
+	return nil
 }
 
 func (msg *ConReady) Header() *chunk7.ChunkHeader {

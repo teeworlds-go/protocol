@@ -12,23 +12,23 @@ type CtrlConnect struct {
 	Token [4]byte
 }
 
-func (msg CtrlConnect) MsgId() int {
+func (msg *CtrlConnect) MsgId() int {
 	return network7.MsgCtrlConnect
 }
 
-func (msg CtrlConnect) MsgType() network7.MsgType {
+func (msg *CtrlConnect) MsgType() network7.MsgType {
 	return network7.TypeControl
 }
 
-func (msg CtrlConnect) System() bool {
+func (msg *CtrlConnect) System() bool {
 	return false
 }
 
-func (msg CtrlConnect) Vital() bool {
+func (msg *CtrlConnect) Vital() bool {
 	return false
 }
 
-func (msg CtrlConnect) Pack() []byte {
+func (msg *CtrlConnect) Pack() []byte {
 	return slices.Concat(
 		[]byte{network7.MsgCtrlConnect},
 		msg.Token[:],
@@ -36,8 +36,9 @@ func (msg CtrlConnect) Pack() []byte {
 	)
 }
 
-func (msg *CtrlConnect) Unpack(u *packer.Unpacker) {
+func (msg *CtrlConnect) Unpack(u *packer.Unpacker) error {
 	msg.Token = [4]byte(u.Rest())
+	return nil
 }
 
 func (msg *CtrlConnect) Header() *chunk7.ChunkHeader {
