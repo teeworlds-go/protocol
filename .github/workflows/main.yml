@@ -62,3 +62,20 @@ jobs:
 
     - name: Format
       run: diff -u <(echo -n) <(gofmt -d ./)
+
+
+  teeworlds:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Check game messages
+      run: |
+        errors="$(grep -FA1 'System()' $(grep MsgGame  -lr messages7/) | grep "return true")"
+        [ "$errors" = "" ] || { printf '%s\n' "$errors"; exit 1; }
+
+    - name: Check system messages
+      run: |
+        errors="$(grep -FA1 'System()' $(grep MsgSys  -lr messages7/) | grep "return false")"
+        [ "$errors" = "" ] || { printf '%s\n' "$errors"; exit 1; }
+
