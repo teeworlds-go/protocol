@@ -39,9 +39,11 @@ type Client struct {
 }
 
 func (client *Client) throwError(err error) {
-	if client.Callbacks.InternalError != nil {
-		client.Callbacks.InternalError(err)
-		return
+	for _, callback := range client.Callbacks.InternalError {
+		if callback(err) == false {
+			return
+		}
 	}
+
 	log.Fatal(err)
 }

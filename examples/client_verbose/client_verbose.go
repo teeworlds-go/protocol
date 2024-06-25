@@ -60,8 +60,12 @@ func main() {
 	})
 
 	// if you do not implement OnError it will throw on error
-	client.OnError(func(err error) {
+	client.OnError(func(err error) bool {
 		fmt.Print(err)
+
+		// return false to consume the error
+		// return true to pass it on to the next error handler (likely throws in the end)
+		return false
 	})
 
 	go func() {

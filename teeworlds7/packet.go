@@ -38,8 +38,8 @@ func (client *Client) processMessage(msg messages7.NetMessage, response *protoco
 }
 
 func (client *Client) processPacket(packet *protocol7.Packet) error {
-	if client.Callbacks.PacketIn != nil {
-		if client.Callbacks.PacketIn(packet) == false {
+	for _, callback := range client.Callbacks.PacketIn {
+		if callback(packet) == false {
 			return nil
 		}
 	}
@@ -55,26 +55,16 @@ func (client *Client) processPacket(packet *protocol7.Packet) error {
 		// TODO: is this shadow nasty?
 		switch msg := msg.(type) {
 		case *messages7.CtrlKeepAlive:
-			defaultAction := func() {
+			userMsgCallback(client.Callbacks.CtrlKeepAlive, msg, func() {
 				fmt.Println("got keep alive")
-			}
-			if client.Callbacks.CtrlKeepAlive == nil {
-				defaultAction()
-			} else {
-				client.Callbacks.CtrlKeepAlive(msg, defaultAction)
-			}
+			})
 		case *messages7.CtrlConnect:
-			defaultAction := func() {
+			userMsgCallback(client.Callbacks.CtrlConnect, msg, func() {
 				fmt.Println("we got connect as a client. this should never happen lol.")
 				fmt.Println("who is tryint to connect to us? We are not a server!")
-			}
-			if client.Callbacks.CtrlConnect == nil {
-				defaultAction()
-			} else {
-				client.Callbacks.CtrlConnect(msg, defaultAction)
-			}
+			})
 		case *messages7.CtrlAccept:
-			defaultAction := func() {
+			userMsgCallback(client.Callbacks.CtrlAccept, msg, func() {
 				fmt.Println("got accept")
 				response.Messages = append(
 					response.Messages,
@@ -85,23 +75,13 @@ func (client *Client) processPacket(packet *protocol7.Packet) error {
 					},
 				)
 				client.SendPacket(response)
-			}
-			if client.Callbacks.CtrlAccept == nil {
-				defaultAction()
-			} else {
-				client.Callbacks.CtrlAccept(msg, defaultAction)
-			}
+			})
 		case *messages7.CtrlClose:
-			defaultAction := func() {
+			userMsgCallback(client.Callbacks.CtrlClose, msg, func() {
 				fmt.Printf("disconnected (%s)\n", msg.Reason)
-			}
-			if client.Callbacks.CtrlClose == nil {
-				defaultAction()
-			} else {
-				client.Callbacks.CtrlClose(msg, defaultAction)
-			}
+			})
 		case *messages7.CtrlToken:
-			defaultAction := func() {
+			userMsgCallback(client.Callbacks.CtrlToken, msg, func() {
 				fmt.Printf("got server token %x\n", msg.Token)
 				client.Session.ServerToken = msg.Token
 				response.Header.Token = msg.Token
@@ -112,21 +92,11 @@ func (client *Client) processPacket(packet *protocol7.Packet) error {
 					},
 				)
 				client.SendPacket(response)
-			}
-			if client.Callbacks.CtrlToken == nil {
-				defaultAction()
-			} else {
-				client.Callbacks.CtrlToken(msg, defaultAction)
-			}
+			})
 		case *messages7.Unknown:
-			defaultAction := func() {
+			userMsgCallback(client.Callbacks.MsgUnknown, msg, func() {
 				printUnknownMessage(msg, "unknown control")
-			}
-			if client.Callbacks.MsgUnknown == nil {
-				defaultAction()
-			} else {
-				client.Callbacks.MsgUnknown(msg, defaultAction)
-			}
+			})
 			return fmt.Errorf("unknown control message: %d\n", msg.MsgId())
 		default:
 			return fmt.Errorf("unprocessed control message: %d\n", msg.MsgId())

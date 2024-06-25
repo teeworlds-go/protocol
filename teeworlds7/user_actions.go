@@ -62,11 +62,12 @@ func (client *Client) SendPacket(packet *protocol7.Packet) error {
 	}
 	client.QueuedMessages = nil
 
-	if client.Callbacks.PacketOut != nil {
-		if client.Callbacks.PacketOut(packet) == false {
+	for _, callback := range client.Callbacks.PacketOut {
+		if callback(packet) == false {
 			return nil
 		}
 	}
+
 	client.Conn.Write(packet.Pack(&client.Session))
 	return nil
 }
