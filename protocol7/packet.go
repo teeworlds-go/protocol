@@ -171,12 +171,30 @@ func (packet *Packet) unpackGame(msgId int, chunk chunk7.Chunk, u *packer.Unpack
 	var msg messages7.NetMessage
 
 	switch msgId {
-	case network7.MsgGameSvReadyToEnter:
-		msg = &messages7.SvReadyToEnter{}
 	case network7.MsgGameSvMotd:
 		msg = &messages7.SvMotd{}
+	case network7.MsgGameSvBroadcast:
+		msg = &messages7.SvBroadcast{}
 	case network7.MsgGameSvChat:
 		msg = &messages7.SvChat{}
+	case network7.MsgGameSvTeam:
+		msg = &messages7.SvTeam{}
+	case network7.MsgGameSvKillMsg:
+		msg = &messages7.SvKillMsg{}
+	case network7.MsgGameSvTuneParams:
+		msg = &messages7.SvTuneParams{}
+	case network7.MsgGameSvExtraProjectile:
+		msg = &messages7.SvExtraProjectile{}
+	case network7.MsgGameSvReadyToEnter:
+		msg = &messages7.SvReadyToEnter{}
+	case network7.MsgGameSvWeaponPickup:
+		msg = &messages7.SvWeaponPickup{}
+	case network7.MsgGameSvEmoticon:
+		msg = &messages7.SvEmoticon{}
+	case network7.MsgGameSvVoteClearOptions:
+		msg = &messages7.SvVoteClearOptions{}
+	case network7.MsgGameSvVoteOptionListAdd:
+		msg = &messages7.SvVoteOptionListAdd{}
 	case network7.MsgGameSvClientInfo:
 		msg = &messages7.SvClientInfo{}
 	default:
