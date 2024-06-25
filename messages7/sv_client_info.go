@@ -86,15 +86,15 @@ func (info *SvClientInfo) Unpack(u *packer.Unpacker) error {
 	info.ClientId = u.GetInt()
 	info.Local = u.GetInt() != 0
 	info.Team = u.GetInt()
-	info.Name = u.GetString()
-	info.Clan = u.GetString()
+	info.Name, _ = u.GetString()
+	info.Clan, _ = u.GetString()
 	info.Country = u.GetInt()
-	info.Body = u.GetString()
-	info.Marking = u.GetString()
-	info.Decoration = u.GetString()
-	info.Hands = u.GetString()
-	info.Feet = u.GetString()
-	info.Eyes = u.GetString()
+	info.Body, _ = u.GetString()
+	info.Marking, _ = u.GetString()
+	info.Decoration, _ = u.GetString()
+	info.Hands, _ = u.GetString()
+	info.Feet, _ = u.GetString()
+	info.Eyes, _ = u.GetString()
 	info.CustomColorBody = u.GetInt() != 0
 	info.CustomColorMarking = u.GetInt() != 0
 	info.CustomColorDecoration = u.GetInt() != 0

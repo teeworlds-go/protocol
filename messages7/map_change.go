@@ -47,7 +47,7 @@ func (msg *MapChange) Pack() []byte {
 }
 
 func (msg *MapChange) Unpack(u *packer.Unpacker) error {
-	msg.Name = u.GetString()
+	msg.Name, _ = u.GetString()
 	msg.Crc = u.GetInt()
 	msg.Size = u.GetInt()
 	msg.NumResponseChunksPerRequest = u.GetInt()

@@ -57,11 +57,11 @@ func (msg *ServerInfo) Pack() []byte {
 }
 
 func (msg *ServerInfo) Unpack(u *packer.Unpacker) error {
-	msg.Version = u.GetString()
-	msg.Name = u.GetString()
-	msg.Hostname = u.GetString()
-	msg.MapName = u.GetString()
-	msg.GameType = u.GetString()
+	msg.Version, _ = u.GetString()
+	msg.Name, _ = u.GetString()
+	msg.Hostname, _ = u.GetString()
+	msg.MapName, _ = u.GetString()
+	msg.GameType, _ = u.GetString()
 	msg.Flags = u.GetInt()
 	msg.SkillLevel = u.GetInt()
 	msg.PlayerCount = u.GetInt()

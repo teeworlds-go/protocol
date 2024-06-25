@@ -37,7 +37,7 @@ func (msg *RconAuth) Pack() []byte {
 }
 
 func (msg *RconAuth) Unpack(u *packer.Unpacker) error {
-	msg.Password = u.GetString()
+	msg.Password, _ = u.GetString()
 	return nil
 }
 

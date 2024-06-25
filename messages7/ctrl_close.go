@@ -37,7 +37,7 @@ func (msg *CtrlClose) Pack() []byte {
 
 func (msg *CtrlClose) Unpack(u *packer.Unpacker) error {
 	// TODO: sanitize
-	msg.Reason = u.GetString()
+	msg.Reason, _ = u.GetString()
 	return nil
 }
 

@@ -46,7 +46,7 @@ func (msg *SvChat) Unpack(u *packer.Unpacker) error {
 	msg.Mode = network7.ChatMode(u.GetInt())
 	msg.ClientId = u.GetInt()
 	msg.TargetId = u.GetInt()
-	msg.Message = u.GetString()
+	msg.Message, _ = u.GetString()
 
 	return nil
 }

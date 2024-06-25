@@ -37,7 +37,7 @@ func (msg *RconLine) Pack() []byte {
 }
 
 func (msg *RconLine) Unpack(u *packer.Unpacker) error {
-	msg.Line = u.GetString()
+	msg.Line, _ = u.GetString()
 	return nil
 }
 

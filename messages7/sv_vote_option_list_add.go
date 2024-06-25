@@ -52,7 +52,7 @@ func (msg *SvVoteOptionListAdd) Unpack(u *packer.Unpacker) error {
 	msg.NumOptions = u.GetInt()
 	msg.Descriptions = make([]string, msg.NumOptions)
 	for i := 0; i < msg.NumOptions; i++ {
-		msg.Descriptions[i] = u.GetString()
+		msg.Descriptions[i], _ = u.GetString()
 	}
 
 	return nil

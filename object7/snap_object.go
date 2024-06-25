@@ -1,8 +1,6 @@
 package object7
 
 import (
-	"log"
-
 	"github.com/teeworlds-go/go-teeworlds-protocol/network7"
 	"github.com/teeworlds-go/go-teeworlds-protocol/packer"
 )
@@ -61,8 +59,8 @@ func NewObject(typeId int, itemId int) SnapObject {
 		return &Damage{ItemId: itemId}
 	}
 
-	// TODO: remove this is just for debugging
-	log.Fatalf("unknown item type %d\n", typeId)
+	// TODO: add this panic and remove it again once all tests pass
+	// log.Panicf("unknown item type %d\n", typeId)
 
 	unknown := &Unknown{
 		ItemId:   itemId,

@@ -1,6 +1,8 @@
 package packer
 
 import (
+	"errors"
+	"fmt"
 	"slices"
 )
 
@@ -20,10 +22,33 @@ func (u *Unpacker) byte() byte {
 }
 
 // consume one byte
-func (u *Unpacker) getByte() byte {
+func (u *Unpacker) GetByte() (byte, error) {
+	if u.RemainingSize() < 1 {
+		return 0x00, errors.New("GetByte not enough data")
+	}
 	b := u.data[u.idx]
 	u.idx++
-	return b
+	return b, nil
+}
+
+func (u *Unpacker) GetMsgAndSys() (msgId int, system bool, err error) {
+	msg := u.GetInt()
+	sys := msg&1 != 0
+	msg >>= 1
+	return msg, sys, nil
+}
+
+func (u *Unpacker) GetRaw(size int) ([]byte, error) {
+	if size < 0 {
+		return nil, fmt.Errorf("GetRaw called with negative size %d", size)
+	}
+	end := u.idx + size
+	if end > u.Size() {
+		return nil, fmt.Errorf("GetRaw can not read size %d not enough data", size)
+	}
+	b := u.data[u.idx:end]
+	u.idx += size
+	return b, nil
 }
 
 func (u *Unpacker) Data() []byte {
@@ -50,13 +75,16 @@ const (
 	SanitizeSkipWhitespaces = 4
 )
 
-func (u *Unpacker) GetStringSanitized(sanitizeType int) string {
+func (u *Unpacker) GetStringSanitized(sanitizeType int) (string, error) {
 	bytes := []byte{}
 
 	skipping := sanitizeType&SanitizeSkipWhitespaces != 0
 
 	for {
-		b := u.getByte()
+		b, err := u.GetByte()
+		if err != nil {
+			return "", err
+		}
 		if b == 0x00 {
 			break
 		}
@@ -81,10 +109,10 @@ func (u *Unpacker) GetStringSanitized(sanitizeType int) string {
 		bytes = append(bytes, b)
 	}
 
-	return string(bytes)
+	return string(bytes), nil
 }
 
-func (u *Unpacker) GetString() string {
+func (u *Unpacker) GetString() (string, error) {
 	return u.GetStringSanitized(Sanitize)
 }
 
@@ -196,4 +224,11 @@ func UnpackInt(data []byte) int {
 
 	res ^= -sign
 	return res
+}
+
+func UnpackMsgAndSys(data []byte) (msgId int, system bool) {
+	msg := UnpackInt(data)
+	sys := msg&1 != 0
+	msg >>= 1
+	return msg, sys
 }

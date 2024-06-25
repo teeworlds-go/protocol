@@ -43,7 +43,7 @@ func (msg *ClSay) Pack() []byte {
 func (msg *ClSay) Unpack(u *packer.Unpacker) error {
 	msg.Mode = network7.ChatMode(u.GetInt())
 	msg.TargetId = u.GetInt()
-	msg.Message = u.GetString()
+	msg.Message, _ = u.GetString()
 
 	return nil
 }

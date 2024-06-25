@@ -37,7 +37,7 @@ func (msg *SvVoteOptionAdd) Pack() []byte {
 }
 
 func (msg *SvVoteOptionAdd) Unpack(u *packer.Unpacker) error {
-	msg.Description = u.GetString()
+	msg.Description, _ = u.GetString()
 	return nil
 }
 

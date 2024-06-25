@@ -68,12 +68,12 @@ func TestUnpackClientInfo(t *testing.T) {
 	{
 		// name
 		want := "gopher"
-		got := u.GetString()
+		got, _ := u.GetString()
 		require.Equal(t, want, got)
 
 		// clan
 		want = ""
-		got = u.GetString()
+		got, _ = u.GetString()
 		require.Equal(t, want, got)
 	}
 
@@ -87,7 +87,7 @@ func TestUnpackClientInfo(t *testing.T) {
 	{
 		// body
 		want := "greensward"
-		got := u.GetString()
+		got, _ := u.GetString()
 		require.Equal(t, want, got)
 	}
 }
@@ -120,7 +120,7 @@ func TestUnpackString(t *testing.T) {
 	u.Reset([]byte{'f', 'o', 'o', 0x00})
 
 	want := "foo"
-	got := u.GetString()
+	got, _ := u.GetString()
 	require.Equal(t, want, got)
 }
 
@@ -129,11 +129,11 @@ func TestUnpackTwoStrings(t *testing.T) {
 	u.Reset([]byte{'f', 'o', 'o', 0x00, 'b', 'a', 'r', 0x00})
 
 	want := "foo"
-	got := u.GetString()
+	got, _ := u.GetString()
 	require.Equal(t, want, got)
 
 	want = "bar"
-	got = u.GetString()
+	got, _ = u.GetString()
 	require.Equal(t, want, got)
 
 }
@@ -156,11 +156,11 @@ func TestUnpackMixed(t *testing.T) {
 	// strings
 	{
 		want := "foo"
-		got := u.GetString()
+		got, _ := u.GetString()
 		require.Equal(t, want, got)
 
 		want = "bar"
-		got = u.GetString()
+		got, _ = u.GetString()
 		require.Equal(t, want, got)
 	}
 

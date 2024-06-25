@@ -48,8 +48,8 @@ func (msg *SvVoteSet) Unpack(u *packer.Unpacker) error {
 	msg.ClientId = u.GetInt()
 	msg.Type = network7.Vote(u.GetInt())
 	msg.Timeout = u.GetInt()
-	msg.Description = u.GetString()
-	msg.Reason = u.GetString()
+	msg.Description, _ = u.GetString()
+	msg.Reason, _ = u.GetString()
 	return nil
 }
 

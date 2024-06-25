@@ -77,15 +77,15 @@ func (msg *ClStartInfo) Pack() []byte {
 }
 
 func (msg *ClStartInfo) Unpack(u *packer.Unpacker) error {
-	msg.Name = u.GetString()
-	msg.Clan = u.GetString()
+	msg.Name, _ = u.GetString()
+	msg.Clan, _ = u.GetString()
 	msg.Country = u.GetInt()
-	msg.Body = u.GetString()
-	msg.Marking = u.GetString()
-	msg.Decoration = u.GetString()
-	msg.Hands = u.GetString()
-	msg.Feet = u.GetString()
-	msg.Eyes = u.GetString()
+	msg.Body, _ = u.GetString()
+	msg.Marking, _ = u.GetString()
+	msg.Decoration, _ = u.GetString()
+	msg.Hands, _ = u.GetString()
+	msg.Feet, _ = u.GetString()
+	msg.Eyes, _ = u.GetString()
 	msg.CustomColorBody = u.GetInt() != 0
 	msg.CustomColorMarking = u.GetInt() != 0
 	msg.CustomColorDecoration = u.GetInt() != 0

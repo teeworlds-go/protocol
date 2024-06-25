@@ -33,7 +33,7 @@ func (msg *SvMotd) Pack() []byte {
 }
 
 func (msg *SvMotd) Unpack(u *packer.Unpacker) error {
-	msg.Message = u.GetString()
+	msg.Message, _ = u.GetString()
 	return nil
 }
 

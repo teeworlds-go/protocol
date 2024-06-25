@@ -11,6 +11,7 @@ import (
 type SvEmoticon struct {
 	ChunkHeader *chunk7.ChunkHeader
 
+	ClientId int
 	Emoticon network7.Emote
 }
 
@@ -32,11 +33,13 @@ func (msg *SvEmoticon) Vital() bool {
 
 func (msg *SvEmoticon) Pack() []byte {
 	return slices.Concat(
+		packer.PackInt(msg.ClientId),
 		packer.PackInt(int(msg.Emoticon)),
 	)
 }
 
 func (msg *SvEmoticon) Unpack(u *packer.Unpacker) error {
+	msg.ClientId = u.GetInt()
 	msg.Emoticon = network7.Emote(u.GetInt())
 
 	return nil

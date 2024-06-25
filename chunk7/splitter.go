@@ -11,7 +11,8 @@ func UnpackChunks(data []byte) []Chunk {
 
 	for i < payloadSize {
 		chunk := Chunk{}
-		chunk.Header.Unpack(data[i:])
+		// TODO: can we use ChunkHeader.Unpack(u) here to simplify the code?
+		chunk.Header.UnpackRaw(data[i:])
 		i += 2 // header
 		if chunk.Header.Flags.Vital {
 			i++

@@ -37,7 +37,7 @@ func (msg *MaplistEntryRem) Pack() []byte {
 }
 
 func (msg *MaplistEntryRem) Unpack(u *packer.Unpacker) error {
-	msg.MapName = u.GetString()
+	msg.MapName, _ = u.GetString()
 	return nil
 }
 

@@ -1,5 +1,11 @@
 package chunk7
 
+import (
+	"fmt"
+
+	"github.com/teeworlds-go/go-teeworlds-protocol/packer"
+)
+
 const (
 	chunkFlagVital  = 1
 	chunkFlagResend = 2
@@ -49,13 +55,49 @@ func (header *ChunkHeader) Pack() []byte {
 	return data
 }
 
-func (header *ChunkHeader) Unpack(data []byte) {
+func (header *ChunkHeader) Unpack(u *packer.Unpacker) error {
+	data, err := u.GetRaw(2)
+	if err != nil {
+		return err
+	}
 	flagBits := (data[0] >> 6) & 0x03
 	header.Flags.Vital = (flagBits & chunkFlagVital) != 0
 	header.Flags.Resend = (flagBits & chunkFlagResend) != 0
 	header.Size = (int(data[0]&0x3F) << 6) | (int(data[1]) & 0x3F)
 
 	if header.Flags.Vital {
+		thirdByte, err := u.GetByte()
+		if err != nil {
+			return err
+		}
+		header.Seq = int((data[1]&0xC0)<<2) | int(thirdByte)
+	}
+	return nil
+}
+
+// TODO: give this a better name
+//
+//	but it would be nice to have two unpack methods for all structs
+//
+//	Unpack(u *packer.Unpacker)
+//	UnpackTodoFindAGoodName(data []byte)
+//
+//	See https://github.com/teeworlds-go/go-teeworlds-protocol/issues/5
+func (header *ChunkHeader) UnpackRaw(data []byte) error {
+	if len(data) < 2 {
+		return fmt.Errorf("size=%d not enough data to read chunk header", len(data))
+	}
+
+	flagBits := (data[0] >> 6) & 0x03
+	header.Flags.Vital = (flagBits & chunkFlagVital) != 0
+	header.Flags.Resend = (flagBits & chunkFlagResend) != 0
+	header.Size = (int(data[0]&0x3F) << 6) | (int(data[1]) & 0x3F)
+
+	if header.Flags.Vital {
+		if len(data) < 3 {
+			return fmt.Errorf("size=%d not enough data to read vital chunk header", len(data))
+		}
 		header.Seq = int((data[1]&0xC0)<<2) | int(data[2])
 	}
+	return nil
 }

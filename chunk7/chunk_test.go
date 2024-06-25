@@ -12,7 +12,7 @@ func TestBrokenNonVitalHeader(t *testing.T) {
 
 	header := ChunkHeader{}
 	//            {0x40, 0x3a, 0x01}
-	header.Unpack([]byte{0x3a, 0x01})
+	header.UnpackRaw([]byte{0x3a, 0x01})
 
 	want := ChunkHeader{
 		Flags: ChunkFlags{
@@ -33,7 +33,7 @@ func TestVitalHeaderMapChange(t *testing.T) {
 	// verified with libtw2 wireshark dissector
 
 	header := ChunkHeader{}
-	header.Unpack([]byte{0x40, 0x3a, 0x01})
+	header.UnpackRaw([]byte{0x40, 0x3a, 0x01})
 
 	want := ChunkHeader{
 		Flags: ChunkFlags{
@@ -51,7 +51,7 @@ func TestVitalHeaderMapChange(t *testing.T) {
 
 func TestVitalHeader(t *testing.T) {
 	header := ChunkHeader{}
-	header.Unpack([]byte{0x40, 0x10, 0x0a})
+	header.UnpackRaw([]byte{0x40, 0x10, 0x0a})
 	want := ChunkHeader{
 		Flags: ChunkFlags{
 			Vital:  true,

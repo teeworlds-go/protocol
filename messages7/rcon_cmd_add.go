@@ -41,9 +41,9 @@ func (msg *RconCmdAdd) Pack() []byte {
 }
 
 func (msg *RconCmdAdd) Unpack(u *packer.Unpacker) error {
-	msg.Name = u.GetString()
-	msg.Help = u.GetString()
-	msg.Params = u.GetString()
+	msg.Name, _ = u.GetString()
+	msg.Help, _ = u.GetString()
+	msg.Params, _ = u.GetString()
 	return nil
 }
 

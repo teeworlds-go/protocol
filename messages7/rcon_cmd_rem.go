@@ -37,7 +37,7 @@ func (msg *RconCmdRem) Pack() []byte {
 }
 
 func (msg *RconCmdRem) Unpack(u *packer.Unpacker) error {
-	msg.Name = u.GetString()
+	msg.Name, _ = u.GetString()
 	return nil
 }
 

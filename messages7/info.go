@@ -59,8 +59,8 @@ func (msg *Info) Pack() []byte {
 }
 
 func (msg *Info) Unpack(u *packer.Unpacker) error {
-	msg.Version = u.GetString()
-	msg.Password = u.GetString()
+	msg.Version, _ = u.GetString()
+	msg.Password, _ = u.GetString()
 	msg.ClientVersion = u.GetInt()
 	return nil
 }
