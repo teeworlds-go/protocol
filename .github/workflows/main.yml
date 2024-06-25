@@ -71,11 +71,17 @@ jobs:
 
     - name: Check game messages
       run: |
-        errors="$(grep -FA1 'System()' $(grep MsgGame  -lr messages7/) | grep "return true")"
-        [ "$errors" = "" ] || { printf '%s\n' "$errors"; exit 1; }
+        if errors="$(grep -FA1 'System()' $(grep MsgGame  -lr messages7/) | grep "return true")"
+        then
+          printf '%s\n' "$errors"
+          exit 1
+        fi
 
     - name: Check system messages
       run: |
-        errors="$(grep -FA1 'System()' $(grep MsgSys  -lr messages7/) | grep "return false")"
-        [ "$errors" = "" ] || { printf '%s\n' "$errors"; exit 1; }
+        if errors="$(grep -FA1 'System()' $(grep MsgSys  -lr messages7/) | grep "return false")"
+        then
+          printf '%s\n' "$errors"
+          exit 1
+        fi
 
