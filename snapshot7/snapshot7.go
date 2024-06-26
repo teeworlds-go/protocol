@@ -47,6 +47,8 @@ func (snap *Snapshot) Unpack(u *packer.Unpacker) error {
 			return err
 		}
 
+		snap.Items = append(snap.Items, item)
+
 		// TODO: update old items
 	}
 

@@ -1,5 +1,8 @@
 package messages7
 
+// same connection as full_ddnet_server_multi_test.go
+// but NETMSG_SNAPSINGLE
+
 import (
 	"slices"
 
