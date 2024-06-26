@@ -217,6 +217,8 @@ func TestSvEmoticonAndSnapSingle(t *testing.T) {
 	require.Equal(t, 11271828, msg.GameTick)
 	require.Equal(t, 24, msg.DeltaTick)
 	require.Equal(t, 1021386082, msg.Crc)
+	// TODO: this should match
+	// require.Equal(t, 1021386082, msg.Snapshot.Crc)
 
 	// this is not verified
 	require.Equal(t, 8, msg.Snapshot.NumItemDeltas)

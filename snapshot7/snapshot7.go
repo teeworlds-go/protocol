@@ -17,8 +17,31 @@ const (
 type Snapshot struct {
 	NumRemovedItems int
 	NumItemDeltas   int
+	Crc             int
 
 	Items []object7.SnapObject
+}
+
+// TODO: this is wasting clock cycles for no reason
+//
+//	the crc is all snap item payload integers summed together
+//	it does not have to be perfectly optimized
+//	but repacking every item to get its payload summed is horrible
+//
+//	i also had another approach with reflect where every snap object would implement
+//	Crc() on them selfs
+//	but reflect is messy and especially the enum types got annoying to sum
+//	because they require specific casting
+func CrcItem(o object7.SnapObject) int {
+	u := &packer.Unpacker{}
+	u.Reset(o.Pack())
+	u.GetInt()
+	u.GetInt()
+	crc := 0
+	for i := 0; i < o.Size(); i++ {
+		crc += u.GetInt()
+	}
+	return crc
 }
 
 func (snap *Snapshot) Unpack(u *packer.Unpacker) error {
@@ -55,6 +78,12 @@ func (snap *Snapshot) Unpack(u *packer.Unpacker) error {
 	if u.RemainingSize() > 0 {
 		return fmt.Errorf("unexpected remaining size %d after snapshot unpack\n", u.RemainingSize())
 	}
+
+	crc := 0
+	for _, item := range snap.Items {
+		crc += CrcItem(item)
+	}
+	snap.Crc = crc
 
 	return nil
 }
