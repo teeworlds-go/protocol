@@ -18,6 +18,17 @@ type SvVoteOptionListAdd struct {
 
 	NumOptions   int
 	Descriptions []string
+
+	// this is used for compatibility with the
+	// ddnet server 0.7 bridge implementation
+	// to ensure if a ddnet message is unpacked and packed again
+	// it matches it exactly
+	//
+	// TODO: should this be a boolean instead?
+	//       instead of counting on unpack
+	//       it could always fill it up to 14 descriptions on pack
+	//       if some Compat06 bool is set
+	NumUnusedOptions int
 }
 
 func (msg *SvVoteOptionListAdd) MsgId() int {
@@ -41,6 +52,10 @@ func (msg *SvVoteOptionListAdd) Pack() []byte {
 	for _, option := range msg.Descriptions {
 		options = append(options, packer.PackStr(option)...)
 	}
+	if msg.NumUnusedOptions > 0 {
+		unused := make([]byte, msg.NumUnusedOptions)
+		options = append(options, unused...)
+	}
 
 	return slices.Concat(
 		packer.PackInt(msg.NumOptions),
@@ -49,10 +64,22 @@ func (msg *SvVoteOptionListAdd) Pack() []byte {
 }
 
 func (msg *SvVoteOptionListAdd) Unpack(u *packer.Unpacker) error {
+	startRemainingSize := u.RemainingSize()
+
 	msg.NumOptions = u.GetInt()
 	msg.Descriptions = make([]string, msg.NumOptions)
 	for i := 0; i < msg.NumOptions; i++ {
 		msg.Descriptions[i], _ = u.GetString()
+	}
+
+	finishRemainingSize := u.RemainingSize()
+
+	if msg.Header() != nil {
+		consumedSize := startRemainingSize - finishRemainingSize
+		numUnused := (msg.Header().Size - 1) - consumedSize
+		if numUnused > 0 {
+			msg.NumUnusedOptions = numUnused
+		}
 	}
 
 	return nil
