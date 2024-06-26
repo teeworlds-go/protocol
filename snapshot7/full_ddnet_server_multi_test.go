@@ -3,10 +3,14 @@ package snapshot7_test
 // same connection as full_ddnet_server_single_test.go
 // but NETMSG_SNAP
 
-// --------------------------------
-// multi part snaps
-// --------------------------------
-
+// import (
+// 	"fmt"
+// 	"testing"
+//
+// 	"github.com/teeworlds-go/go-teeworlds-protocol/internal/testutils/require"
+// 	"github.com/teeworlds-go/go-teeworlds-protocol/protocol7"
+// )
+//
 // func TestVoteOptionListAddPlusTwoSnaps(t *testing.T) {
 // 	// vanilla client connected to almost full ddnet rus server
 // 	// dumped with tcpdump

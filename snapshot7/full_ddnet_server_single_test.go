@@ -1,5 +1,8 @@
 package snapshot7_test
 
+// same connection as full_ddnet_server_multi_test.go
+// but NETMSG_SNAPSINGLE
+
 import (
 	"fmt"
 	"testing"
@@ -57,6 +60,7 @@ func TestDDNetFullServerSnapSingle(t *testing.T) {
 	// content
 	require.Equal(t, 1, len(packet.Messages))
 
+	require.Equal(t, network7.MsgSysSnapSingle, packet.Messages[0].MsgId())
 	msg, ok := packet.Messages[0].(*messages7.SnapSingle)
 	require.Equal(t, true, ok)
 
@@ -70,24 +74,24 @@ func TestDDNetFullServerSnapSingle(t *testing.T) {
 	// this is not verified
 	item := msg.Snapshot.Items[0]
 	require.Equal(t, network7.ObjPlayerInfo, item.TypeId())
-	player_info, ok := item.(*object7.PlayerInfo)
+	playerInfo, ok := item.(*object7.PlayerInfo)
 	require.Equal(t, true, ok)
-	require.Equal(t, 4, player_info.PlayerFlags)
+	require.Equal(t, 4, playerInfo.PlayerFlags)
 	// this is odd the score in ddnet should not be 0
 	// if a player has no score shouldnt it be -99999? or did that change?
-	require.Equal(t, 0, player_info.Score)
+	require.Equal(t, 0, playerInfo.Score)
 	// this is highly suspicious. why is there 0 latency for some player on a ddnet rus server?
-	require.Equal(t, 0, player_info.Latency)
+	require.Equal(t, 0, playerInfo.Latency)
 
 	// this is not verified
 	item = msg.Snapshot.Items[1]
 	require.Equal(t, network7.ObjPlayerInfo, item.TypeId())
-	player_info, ok = item.(*object7.PlayerInfo)
+	playerInfo, ok = item.(*object7.PlayerInfo)
 	require.Equal(t, true, ok)
-	require.Equal(t, 0, player_info.PlayerFlags)
-	require.Equal(t, 758141, player_info.Score)
+	require.Equal(t, 0, playerInfo.PlayerFlags)
+	require.Equal(t, 758141, playerInfo.Score)
 	// this is highly suspicious. why is there 0 latency for some player on a ddnet rus server?
-	require.Equal(t, 0, player_info.Latency)
+	require.Equal(t, 0, playerInfo.Latency)
 
 	// this is not verified
 	item = msg.Snapshot.Items[2]
@@ -202,4 +206,34 @@ func TestSvEmoticonAndSnapSingle(t *testing.T) {
 	fmt.Printf("dump:   %x\n", dump)
 
 	require.Equal(t, dump, repack)
+
+	// content
+	require.Equal(t, 2, len(packet.Messages))
+
+	require.Equal(t, network7.MsgSysSnapSingle, packet.Messages[1].MsgId())
+	msg, ok := packet.Messages[1].(*messages7.SnapSingle)
+	require.Equal(t, true, ok)
+
+	require.Equal(t, 11271828, msg.GameTick)
+	require.Equal(t, 24, msg.DeltaTick)
+	require.Equal(t, 1021386082, msg.Crc)
+
+	// this is not verified
+	require.Equal(t, 8, msg.Snapshot.NumItemDeltas)
+	require.Equal(t, 1, msg.Snapshot.NumRemovedItems)
+
+	// this is not verified
+	require.Equal(t, 8, len(msg.Snapshot.Items))
+
+	// this is not verified
+	item := msg.Snapshot.Items[0]
+	require.Equal(t, network7.ObjPlayerInfo, item.TypeId())
+	playerInfo, ok := item.(*object7.PlayerInfo)
+	require.Equal(t, true, ok)
+	require.Equal(t, 2, playerInfo.PlayerFlags)
+	require.Equal(t, 0, playerInfo.Score)
+	require.Equal(t, 0, playerInfo.Latency)
+
+	item = msg.Snapshot.Items[1]
+	require.Equal(t, network7.ObjCharacter, item.TypeId())
 }
