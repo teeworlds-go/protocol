@@ -218,6 +218,10 @@ func TestSvEmoticonAndSnapSingle(t *testing.T) {
 	require.Equal(t, 24, msg.DeltaTick)
 	require.Equal(t, 1021386082, msg.Crc)
 	// TODO: this should match
+	//       not sure if this can ever match if we do not have the old delta snapshots
+	//       to diff against
+	//       we are always potentially missing items from previous snapshots that were not
+	//       removed or changed
 	// require.Equal(t, 1021386082, msg.Snapshot.Crc)
 
 	// this is not verified
