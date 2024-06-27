@@ -10,6 +10,7 @@ import (
 )
 
 func TestLaserStandalone(t *testing.T) {
+	t.Parallel()
 	// simple pack
 	laser := &object7.Laser{
 		ItemId:    1,
@@ -45,6 +46,7 @@ func TestLaserStandalone(t *testing.T) {
 }
 
 func TestLaserStandaloneAllZeros(t *testing.T) {
+	t.Parallel()
 	// simple pack
 	laser := &object7.Laser{
 		ItemId:    0,

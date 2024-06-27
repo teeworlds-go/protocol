@@ -13,6 +13,7 @@ import (
 )
 
 func TestKeepDDNetServerTranslationTrailingNullbytes(t *testing.T) {
+	t.Parallel()
 	// the sv vote option list add is similiar in 0.6 and 0.7 but not exactly the same
 	// https://chillerdragon.github.io/teeworlds-protocol/06/game_messages.html#NETMSGTYPE_SV_VOTEOPTIONLISTADD
 	// https://chillerdragon.github.io/teeworlds-protocol/07/game_messages.html#NETMSGTYPE_SV_VOTEOPTIONLISTADD
@@ -82,6 +83,7 @@ func TestKeepDDNetServerTranslationTrailingNullbytes(t *testing.T) {
 }
 
 func TestVoteListAdd(t *testing.T) {
+	t.Parallel()
 	// unpack
 	fullChunk := []byte{0x40, 0x06, 0x06, 0x18, 0x01, 0x66, 0x6f, 0x6f, 0x00}
 	u := &packer.Unpacker{}

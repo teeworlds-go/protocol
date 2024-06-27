@@ -9,24 +9,28 @@ import (
 // pack
 
 func TestPackEmptyString(t *testing.T) {
+	t.Parallel()
 	want := []byte{0x00}
 	got := PackStr("")
 	require.Equal(t, want, got)
 }
 
 func TestPackSimpleString(t *testing.T) {
+	t.Parallel()
 	want := []byte{'f', 'o', 'o', 0x00}
 	got := PackStr("foo")
 	require.Equal(t, want, got)
 }
 
 func TestPackSmallPositiveInts(t *testing.T) {
+	t.Parallel()
 	want := []byte{0x01}
 	got := PackInt(1)
 	require.Equal(t, want, got)
 }
 
 func TestPackMultiBytePositiveInts(t *testing.T) {
+	t.Parallel()
 	want := []byte{0x3F}
 	got := PackInt(63)
 	require.Equal(t, want, got)
@@ -41,6 +45,7 @@ func TestPackMultiBytePositiveInts(t *testing.T) {
 }
 
 func TestPackSmallNegativeInts(t *testing.T) {
+	t.Parallel()
 	want := []byte{0x40}
 	got := PackInt(-1)
 	require.Equal(t, want, got)
@@ -51,6 +56,7 @@ func TestPackSmallNegativeInts(t *testing.T) {
 }
 
 func TestPackMultiByteNegativeInts(t *testing.T) {
+	t.Parallel()
 	want := []byte{0x7E}
 	got := PackInt(-63)
 	require.Equal(t, want, got)
@@ -67,6 +73,7 @@ func TestPackMultiByteNegativeInts(t *testing.T) {
 // unpack
 
 func TestUnpackSmallPositiveInts(t *testing.T) {
+	t.Parallel()
 	want := 1
 	got := UnpackInt([]byte{0x01})
 	require.Equal(t, want, got)
@@ -81,6 +88,7 @@ func TestUnpackSmallPositiveInts(t *testing.T) {
 }
 
 func TestUnpackMultiBytePositiveInts(t *testing.T) {
+	t.Parallel()
 	want := 63
 	got := UnpackInt([]byte{0x3f})
 	require.Equal(t, want, got)

@@ -9,6 +9,7 @@ import (
 )
 
 func TestLaserCrc(t *testing.T) {
+	t.Parallel()
 	laser := &object7.Laser{
 		ItemId: 9999,
 
@@ -23,6 +24,7 @@ func TestLaserCrc(t *testing.T) {
 }
 
 func TestFlagCrc(t *testing.T) {
+	t.Parallel()
 	flag := &object7.Flag{
 		ItemId: 9999,
 

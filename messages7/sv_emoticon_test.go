@@ -11,6 +11,7 @@ import (
 )
 
 func TestFullPacket(t *testing.T) {
+	t.Parallel()
 	packet := protocol7.Packet{}
 	packet.Messages = append(
 		packet.Messages,
@@ -36,6 +37,7 @@ func TestFullPacket(t *testing.T) {
 }
 
 func TestSvEmoticonStandalone(t *testing.T) {
+	t.Parallel()
 	// simple pack
 	emoticon := &messages7.SvEmoticon{
 		ClientId: 0,
@@ -62,6 +64,7 @@ func TestSvEmoticonStandalone(t *testing.T) {
 }
 
 func TestSvEmoticonStandaloneCrazyGirlEdition(t *testing.T) {
+	t.Parallel()
 	// simple pack
 	emoticon := &messages7.SvEmoticon{
 		ClientId: -99999,
