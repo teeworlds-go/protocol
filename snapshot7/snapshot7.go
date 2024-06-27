@@ -76,7 +76,10 @@ func (snap *Snapshot) Unpack(u *packer.Unpacker) error {
 	}
 
 	if u.RemainingSize() > 0 {
-		return fmt.Errorf("unexpected remaining size %d after snapshot unpack\n", u.RemainingSize())
+		// TODO: this should not panic but return an error
+		//       once the returned error actually shows up somewhere and can be checked in the tests
+		//       https://github.com/teeworlds-go/go-teeworlds-protocol/issues/6
+		panic(fmt.Sprintf("unexpected remaining size %d after snapshot unpack\n", u.RemainingSize()))
 	}
 
 	crc := 0
