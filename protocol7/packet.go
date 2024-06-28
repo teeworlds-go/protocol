@@ -197,6 +197,42 @@ func (packet *Packet) unpackGame(msgId int, chunk chunk7.Chunk, u *packer.Unpack
 		msg = &messages7.SvVoteOptionListAdd{}
 	case network7.MsgGameSvClientInfo:
 		msg = &messages7.SvClientInfo{}
+	case network7.MsgGameSvGameInfo:
+		msg = &messages7.SvGameInfo{}
+	case network7.MsgGameSvGameMsg:
+		msg = &messages7.SvGameMsg{}
+	case network7.MsgGameClSay:
+		msg = &messages7.ClSay{}
+	case network7.MsgGameClSetTeam:
+		msg = &messages7.ClSetTeam{}
+	case network7.MsgGameClSetSpectatorMode:
+		msg = &messages7.ClSetSpectatorMode{}
+	case network7.MsgGameClStartInfo:
+		msg = &messages7.ClStartInfo{}
+	case network7.MsgGameClKill:
+		msg = &messages7.ClKill{}
+	case network7.MsgGameClReadyChange:
+		msg = &messages7.ClReadyChange{}
+	case network7.MsgGameClEmoticon:
+		msg = &messages7.ClEmoticon{}
+	case network7.MsgGameClVote:
+		msg = &messages7.ClVote{}
+	case network7.MsgGameClCallVote:
+		msg = &messages7.ClCallVote{}
+	case network7.MsgGameSvSkinChange:
+		msg = &messages7.SvSkinChange{}
+	case network7.MsgGameClSkinChange:
+		msg = &messages7.ClSkinChange{}
+	case network7.MsgGameSvRaceFinish:
+		msg = &messages7.SvRaceFinish{}
+	case network7.MsgGameSvCheckpoint:
+		msg = &messages7.SvCheckpoint{}
+	case network7.MsgGameSvCommandInfo:
+		msg = &messages7.SvCommandInfo{}
+	case network7.MsgGameSvCommandInfoRemove:
+		msg = &messages7.SvCommandInfoRemove{}
+	case network7.MsgGameClCommand:
+		msg = &messages7.ClCommand{}
 	default:
 		return false, nil
 	}

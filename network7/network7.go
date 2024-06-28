@@ -13,10 +13,13 @@ const (
 	TeamRed        GameTeam = 0
 	TeamBlue       GameTeam = 1
 
-	SpecFreeview Spec = 0
+	SpecFreeView Spec = 0
 	SpecPlayer   Spec = 1
-	SpecFlagred  Spec = 2
-	SpecFlagblue Spec = 3
+	SpecFlagRed  Spec = 2
+	SpecFlagBlue Spec = 3
+
+	VoteChoiceNo  VoteChoice = -1
+	VoteChoiceYes VoteChoice = 1
 
 	VoteUnknown   Vote = 0
 	VoteStartOp   Vote = 1
@@ -42,31 +45,51 @@ const (
 	GamestateflagPaused         GameStateFlag = 16
 	GamestateflagStartcountdown GameStateFlag = 32
 
+	GameMsgTeamSwap          GameMsg = 0
+	GameMsgSpecInvalidId     GameMsg = 1
+	GameMsgTeamShuffle       GameMsg = 2
+	GameMsgTeamBalance       GameMsg = 3
+	GameMsgCtfDrop           GameMsg = 4
+	GameMsgCtfReturn         GameMsg = 5
+	GameMsgTeamAll           GameMsg = 6
+	GameMsgTeamBalanceVictim GameMsg = 7
+	GameMsgCtfGrab           GameMsg = 8
+	GameMsgCtfCapture        GameMsg = 9
+	GameMsgGamePaused        GameMsg = 10
+
+	EyeEmoteNormal   EyeEmote = 0
+	EyeEmotePain     EyeEmote = 1
+	EyeEmoteHappy    EyeEmote = 2
+	EyeEmoteSurprise EyeEmote = 3
+	EyeEmoteAngry    EyeEmote = 4
+	EyeEmoteBlink    EyeEmote = 5
+	NumEyeEmotes     EyeEmote = 6
+
 	// oop!
-	EmoteOop Emote = 0
+	EmoticonOop Emoticon = 0
 	// !
-	EmoteExclamation Emote = 1
-	EmoteHearts      Emote = 2
+	EmoticonExclamation Emoticon = 1
+	EmoticonHearts      Emoticon = 2
 	// tear
-	EmoteDrop Emote = 3
+	EmoticonDrop Emoticon = 3
 	// ...
-	EmoteDotdot Emote = 4
-	EmoteMusic  Emote = 5
-	EmoteSorry  Emote = 6
-	EmoteGhost  Emote = 7
+	EmoticonDotdot Emoticon = 4
+	EmoticonMusic  Emoticon = 5
+	EmoticonSorry  Emoticon = 6
+	EmoticonGhost  Emoticon = 7
 	// annoyed
-	EmoteSushi Emote = 8
+	EmoticonSushi Emoticon = 8
 	// angry
-	EmoteSplattee Emote = 9
-	EmoteDeviltee Emote = 10
+	EmoticonSplattee Emoticon = 9
+	EmoticonDeviltee Emoticon = 10
 	// swearing
-	EmoteZomg Emote = 11
-	EmoteZzz  Emote = 12
-	EmoteWtf  Emote = 13
+	EmoticonZomg Emoticon = 11
+	EmoticonZzz  Emoticon = 12
+	EmoticonWtf  Emoticon = 13
 	// happy
-	EmoteEyes Emote = 14
+	EmoticonEyes Emoticon = 14
 	// ??
-	EmoteQuestion Emote = 15
+	EmoticonQuestion Emoticon = 15
 
 	MsgCtrlKeepAlive = 0x00
 	MsgCtrlConnect   = 0x01
@@ -195,11 +218,14 @@ const (
 	NumWeapons    Weapon = 6
 )
 
+type GameMsg int
 type GameStateFlag int
 type Spec int
+type VoteChoice int
 type Vote int
 type Pickup int
-type Emote int
+type EyeEmote int
+type Emoticon int
 type ChatMode int
 type GameTeam int
 type Weapon int

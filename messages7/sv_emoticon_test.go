@@ -17,7 +17,7 @@ func TestFullPacket(t *testing.T) {
 		packet.Messages,
 		&messages7.SvEmoticon{
 			ClientId: 0,
-			Emoticon: network7.EmoteGhost,
+			Emoticon: network7.EmoticonGhost,
 		},
 	)
 
@@ -41,7 +41,7 @@ func TestSvEmoticonStandalone(t *testing.T) {
 	// simple pack
 	emoticon := &messages7.SvEmoticon{
 		ClientId: 0,
-		Emoticon: network7.EmoteExclamation,
+		Emoticon: network7.EmoticonExclamation,
 	}
 
 	{
@@ -57,7 +57,7 @@ func TestSvEmoticonStandalone(t *testing.T) {
 	emoticon.Unpack(u)
 
 	{
-		want := network7.EmoteExclamation
+		want := network7.EmoticonExclamation
 		got := emoticon.Emoticon
 		require.Equal(t, want, got)
 	}
@@ -84,7 +84,7 @@ func TestSvEmoticonStandaloneCrazyGirlEdition(t *testing.T) {
 	emoticon.Unpack(u)
 
 	{
-		want := network7.Emote(999)
+		want := network7.Emoticon(999)
 		got := emoticon.Emoticon
 		require.Equal(t, want, got)
 	}

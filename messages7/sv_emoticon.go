@@ -12,7 +12,7 @@ type SvEmoticon struct {
 	ChunkHeader *chunk7.ChunkHeader
 
 	ClientId int
-	Emoticon network7.Emote
+	Emoticon network7.Emoticon
 }
 
 func (msg *SvEmoticon) MsgId() int {
@@ -40,7 +40,7 @@ func (msg *SvEmoticon) Pack() []byte {
 
 func (msg *SvEmoticon) Unpack(u *packer.Unpacker) error {
 	msg.ClientId = u.GetInt()
-	msg.Emoticon = network7.Emote(u.GetInt())
+	msg.Emoticon = network7.Emoticon(u.GetInt())
 
 	return nil
 }
