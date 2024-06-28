@@ -120,7 +120,7 @@ func TestDDNetFullServerSnapSingle(t *testing.T) {
 	require.Equal(t, 0, character.Armor)
 	require.Equal(t, 0, character.AmmoCount)
 	require.Equal(t, 0, character.Weapon)
-	require.Equal(t, 0, character.Emote)
+	require.Equal(t, network7.EyeEmoteNormal, character.Emote)
 	require.Equal(t, 0, character.AttackTick)
 	require.Equal(t, 0, character.TriggeredEvents)
 
@@ -156,7 +156,7 @@ func TestDDNetFullServerSnapSingle(t *testing.T) {
 	// this for sure is wrong???
 	require.Equal(t, 11271786, character.AmmoCount)
 	require.Equal(t, 4, character.Weapon)
-	require.Equal(t, 5, character.Emote)
+	require.Equal(t, network7.EyeEmoteBlink, character.Emote)
 	require.Equal(t, 0, character.AttackTick)
 	require.Equal(t, 0, character.TriggeredEvents)
 }
