@@ -12,6 +12,7 @@ import (
 // repack packet with unknown messages should not lose data
 
 func TestRepackUnknownMessages(t *testing.T) {
+	t.Parallel()
 	// TODO: once 9e220138-d393-3cb0-90f1-e587c00ab1d0
 	//       is supported this test makes no sense anymore
 	//       because if the entire ddnet protocol is implemeted this dump does
@@ -148,6 +149,7 @@ func TestRepackUnknownMessages(t *testing.T) {
 // update chunk headers
 
 func TestPackUpdateChunkHeaders(t *testing.T) {
+	t.Parallel()
 	// The chunk header is nil by default
 	packet := Packet{}
 	packet.Messages = append(packet.Messages, &messages7.SvChat{Message: "foo"})
@@ -204,6 +206,7 @@ func TestPackUpdateChunkHeaders(t *testing.T) {
 // pack header
 
 func TestPackHeader(t *testing.T) {
+	t.Parallel()
 	header := PacketHeader{
 		Flags: PacketFlags{
 			Connless:    false,
@@ -223,6 +226,7 @@ func TestPackHeader(t *testing.T) {
 // pack flags
 
 func TestPackFlagsUnset(t *testing.T) {
+	t.Parallel()
 	flags := PacketFlags{
 		Connless:    false,
 		Compression: false,
@@ -236,6 +240,7 @@ func TestPackFlagsUnset(t *testing.T) {
 }
 
 func TestPackFlagsCompressionSet(t *testing.T) {
+	t.Parallel()
 	flags := PacketFlags{
 		Connless:    false,
 		Compression: true,
@@ -249,6 +254,7 @@ func TestPackFlagsCompressionSet(t *testing.T) {
 }
 
 func TestPackFlagsAllSet(t *testing.T) {
+	t.Parallel()
 	flags := PacketFlags{
 		Connless:    true,
 		Compression: true,
@@ -264,6 +270,7 @@ func TestPackFlagsAllSet(t *testing.T) {
 // unpack
 
 func TestUnpackFlagsAllSet(t *testing.T) {
+	t.Parallel()
 	want := PacketFlags{
 		Connless:    true,
 		Compression: true,
@@ -277,6 +284,7 @@ func TestUnpackFlagsAllSet(t *testing.T) {
 }
 
 func TestUnpackFlagsControlSet(t *testing.T) {
+	t.Parallel()
 	want := PacketFlags{
 		Connless:    false,
 		Compression: false,
@@ -291,6 +299,7 @@ func TestUnpackFlagsControlSet(t *testing.T) {
 }
 
 func TestUnpackFlagsUnset(t *testing.T) {
+	t.Parallel()
 	want := PacketFlags{
 		Connless:    false,
 		Compression: false,
@@ -307,6 +316,7 @@ func TestUnpackFlagsUnset(t *testing.T) {
 // packet header unpack
 
 func TestUnpackCloseWithReason(t *testing.T) {
+	t.Parallel()
 	want := PacketHeader{
 		Flags: PacketFlags{
 			Connless:    false,
@@ -330,6 +340,7 @@ func TestUnpackCloseWithReason(t *testing.T) {
 }
 
 func TestUnpackHeaderFlagsControlSet(t *testing.T) {
+	t.Parallel()
 	want := PacketHeader{
 		Flags: PacketFlags{
 			Connless:    false,
@@ -349,6 +360,7 @@ func TestUnpackHeaderFlagsControlSet(t *testing.T) {
 }
 
 func TestUnpackHeaderFlagsAllSet(t *testing.T) {
+	t.Parallel()
 	want := PacketHeader{
 		Flags: PacketFlags{
 			Connless:    true,

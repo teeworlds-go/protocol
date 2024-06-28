@@ -12,6 +12,7 @@ package snapshot7_test
 // )
 //
 // func TestVoteOptionListAddPlusTwoSnaps(t *testing.T) {
+//     t.Parallel()
 // 	// vanilla client connected to almost full ddnet rus server
 // 	// dumped with tcpdump
 // 	// map: Multeasymap

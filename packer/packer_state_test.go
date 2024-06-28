@@ -9,6 +9,7 @@ import (
 // rest and remaining size
 
 func TestUnpackRest(t *testing.T) {
+	t.Parallel()
 	u := Unpacker{}
 	u.Reset([]byte{0x01, 0xff, 0xaa})
 
@@ -38,6 +39,7 @@ func TestUnpackRest(t *testing.T) {
 // client info
 
 func TestUnpackClientInfo(t *testing.T) {
+	t.Parallel()
 	u := Unpacker{}
 	u.Reset([]byte{
 		0x24, 0x00, 0x01, 0x00, 0x67, 0x6f, 0x70, 0x68, 0x65, 0x72, 0x00,
@@ -95,6 +97,7 @@ func TestUnpackClientInfo(t *testing.T) {
 // unpack with state
 
 func TestUnpackSimpleInts(t *testing.T) {
+	t.Parallel()
 	u := Unpacker{}
 	u.Reset([]byte{0x01, 0x02, 0x03, 0x0f})
 
@@ -125,6 +128,7 @@ func TestUnpackString(t *testing.T) {
 }
 
 func TestUnpackTwoStrings(t *testing.T) {
+	t.Parallel()
 	u := Unpacker{}
 	u.Reset([]byte{'f', 'o', 'o', 0x00, 'b', 'a', 'r', 0x00})
 
@@ -139,6 +143,7 @@ func TestUnpackTwoStrings(t *testing.T) {
 }
 
 func TestUnpackMixed(t *testing.T) {
+	t.Parallel()
 	u := Unpacker{}
 	u.Reset([]byte{0x0F, 0x0F, 'f', 'o', 'o', 0x00, 'b', 'a', 'r', 0x00, 0x01})
 

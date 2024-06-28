@@ -19,6 +19,7 @@ import (
 // --------------------------------
 
 func TestDDNetFullServerSnapSingle(t *testing.T) {
+	t.Parallel()
 	// vanilla client connected to almost full ddnet rus server
 	// map: Multeasymap
 	// dumped with tcpdump
@@ -165,6 +166,7 @@ func TestDDNetFullServerSnapSingle(t *testing.T) {
 // --------------------------------
 
 func TestSvEmoticonAndSnapSingle(t *testing.T) {
+	t.Parallel()
 	// Teeworlds 0.7 Protocol packet
 	// Teeworlds 0.7 Protocol chunk: game.sv_emoticon
 	//     Header (vital: 234)

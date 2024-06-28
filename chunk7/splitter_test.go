@@ -7,6 +7,7 @@ import (
 )
 
 func TestSplitterMotdSettingsReady(t *testing.T) {
+	t.Parallel()
 	// real map change packet from a vanilla teeworlds 0.7 server
 	// dumped with the go client
 	payload := []byte{
@@ -26,6 +27,7 @@ func TestSplitterMotdSettingsReady(t *testing.T) {
 }
 
 func TestSplitterMapChange(t *testing.T) {
+	t.Parallel()
 	// real map change packet from a vanilla teeworlds 0.7 server
 	// dumped with the go client
 
@@ -53,6 +55,7 @@ func TestSplitterMapChange(t *testing.T) {
 }
 
 func TestSplitter(t *testing.T) {
+	t.Parallel()
 	// packet payload of real traffic
 	//
 	// Teeworlds 0.7 Protocol packet
