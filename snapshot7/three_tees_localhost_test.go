@@ -13,7 +13,7 @@ import (
 )
 
 // localhost first connection
-// 2 players already connected
+// 2 players already connected (id 0, id 1)
 // map bridge_pickups
 
 func TestFirstFewSnaps(t *testing.T) {
@@ -599,4 +599,349 @@ func TestFirstFewSnaps(t *testing.T) {
 	require.Equal(t, 8, playerInfo.PlayerFlags)
 	require.Equal(t, 0, playerInfo.Score)
 	require.Equal(t, 0, playerInfo.Latency)
+
+	// libtw2 dissector details
+	// Teeworlds 0.7 Protocol packet
+	//     Flags: compressed (..01 00..)
+	//     Acknowledged sequence number: 4 (.... ..00 0000 0100)
+	//     Number of chunks: 1
+	//     Token: 57d3edf3
+	//     Compressed payload (109 bytes)
+	// Teeworlds 0.7 Protocol chunk: sys.snap_single
+	//     Header (non-vital)
+	//     Message: sys.snap_single
+	//     Tick: 1040
+	//     Delta tick: 1041
+	//     Crc: 18420
+	//     Data (149 bytes)
+	dump = []byte{
+		0x10, 0x04, 0x01, 0x57, 0xd3, 0xed, 0xf3,
+		0xc2, 0x25, 0x53, 0x26, 0xd5, 0x7e, 0x50, 0x43, 0xe5, 0x54, 0x28,
+		0x26, 0xca, 0x7b, 0x08, 0xeb, 0x9b, 0x49, 0x0f, 0x3d, 0x61, 0x92, 0x86, 0x49, 0xaf, 0x67, 0x61,
+		0x92, 0x8f, 0x49, 0x4f, 0x78, 0x9e, 0x49, 0x88, 0x49, 0xcf, 0xc2, 0xb3, 0x9b, 0xe4, 0x69, 0xd2,
+		0xf3, 0x6c, 0x42, 0x75, 0x5b, 0x9f, 0x31, 0xb5, 0x49, 0xb9, 0x1f, 0xec, 0xa1, 0x47, 0x1f, 0x89,
+		0x95, 0x36, 0x29, 0xf7, 0x83, 0xfd, 0xe3, 0xf5, 0x68, 0xb8, 0x33, 0xe9, 0xf8, 0xc1, 0xfe, 0x95,
+		0x36, 0xe9, 0xf8, 0xc1, 0xfe, 0xf1, 0x7a, 0xc1, 0x98, 0xda, 0xa4, 0x9c, 0x7a, 0x2f, 0xdf, 0xab,
+		0xaf, 0xb4, 0x49, 0xb9, 0xef, 0xbc, 0xf5, 0xf5, 0x78, 0xff, 0x64, 0x7f, 0x24, 0xfb, 0x0b, 0xb2,
+		0xe2, 0x06,
+	}
+
+	packet = protocol7.Packet{}
+	err = packet.Unpack(dump)
+	require.NoError(t, err)
+
+	// TODO: not working yet
+	// conn := protocol7.Session{}
+	// conn.Ack = packet.Header.Ack
+	// repack := packet.Pack(&conn)
+	// require.Equal(t, dump, repack)
+
+	// content
+	require.Equal(t, 1, len(packet.Messages))
+	require.Equal(t, network7.MsgSysSnapSingle, packet.Messages[0].MsgId())
+	msg, ok = packet.Messages[0].(*messages7.SnapSingle)
+	require.Equal(t, true, ok)
+	require.Equal(t, 1040, msg.GameTick)
+	require.Equal(t, 1041, msg.DeltaTick)
+	require.Equal(t, 18420, msg.Crc)
+
+	// verified with hacking on protocol print
+	//
+	//            No. Time      Source Destination Protocol Length  Info
+	//            12  0.060259  8303   42069       TW7      119     sys.server_info
+	//            13  0.113440  8303   42069       TW7      538     game.sv_game_info, game.sv_client_info, game.sv_client_info, game.sv_client_info, sys.snap_single
+	//            14  0.313050  8303   42069       TW7      180     sys.snap_single
+	//  ------->  15  0.513597  8303   42069       TW7      178     sys.snap_single
+	//            16  0.528518  42069  8303        TW7      81      sys.input
+	require.Equal(t, 12, msg.Snapshot.NumItemDeltas)
+	require.Equal(t, 0, msg.Snapshot.NumRemovedItems)
+	require.Equal(t, 12, len(msg.Snapshot.Items))
+
+	require.Equal(t, 18420, msg.Snapshot.Crc)
+
+	// verified with hacking on protocol
+	item = msg.Snapshot.Items[0]
+	require.Equal(t, network7.ObjPickup, item.TypeId())
+	pickup, ok = item.(*object7.Pickup)
+	require.Equal(t, true, ok)
+	require.Equal(t, 1, pickup.Id())
+	require.Equal(t, 1392, pickup.X)
+	require.Equal(t, 272, pickup.Y)
+	require.Equal(t, network7.PickupArmor, pickup.Type)
+
+	item = msg.Snapshot.Items[1]
+	require.Equal(t, network7.ObjPickup, item.TypeId())
+	pickup, ok = item.(*object7.Pickup)
+	require.Equal(t, true, ok)
+	require.Equal(t, 2, pickup.Id())
+	require.Equal(t, 1424, pickup.X)
+	require.Equal(t, 272, pickup.Y)
+	require.Equal(t, network7.PickupHealth, pickup.Type)
+
+	item = msg.Snapshot.Items[2]
+	require.Equal(t, network7.ObjPickup, item.TypeId())
+	pickup, ok = item.(*object7.Pickup)
+	require.Equal(t, true, ok)
+	require.Equal(t, 3, pickup.Id())
+	require.Equal(t, 1488, pickup.X)
+	require.Equal(t, 272, pickup.Y)
+	require.Equal(t, network7.PickupGrenade, pickup.Type)
+
+	item = msg.Snapshot.Items[3]
+	require.Equal(t, network7.ObjPickup, item.TypeId())
+	pickup, ok = item.(*object7.Pickup)
+	require.Equal(t, true, ok)
+	require.Equal(t, 4, pickup.Id())
+	require.Equal(t, 1552, pickup.X)
+	require.Equal(t, 272, pickup.Y)
+	require.Equal(t, network7.PickupShotgun, pickup.Type)
+
+	item = msg.Snapshot.Items[4]
+	require.Equal(t, network7.ObjPickup, item.TypeId())
+	pickup, ok = item.(*object7.Pickup)
+	require.Equal(t, true, ok)
+	require.Equal(t, 5, pickup.Id())
+	require.Equal(t, 1616, pickup.X)
+	require.Equal(t, 272, pickup.Y)
+	require.Equal(t, network7.PickupLaser, pickup.Type)
+
+	item = msg.Snapshot.Items[5]
+	require.Equal(t, network7.ObjGameData, item.TypeId())
+	gameData, ok = item.(*object7.GameData)
+	require.Equal(t, true, ok)
+	require.Equal(t, 0, gameData.Id())
+	require.Equal(t, 500, gameData.GameStartTick)
+	require.Equal(t, 0, gameData.FlagsRaw)
+	require.Equal(t, 0, gameData.GameStateEndTick)
+
+	item = msg.Snapshot.Items[6]
+	require.Equal(t, network7.ObjCharacter, item.TypeId())
+	character, ok = item.(*object7.Character)
+	require.Equal(t, true, ok)
+	require.Equal(t, 0, character.Id())
+	require.Equal(t, 1039, character.Tick)
+	require.Equal(t, 784, character.X)
+	require.Equal(t, 337, character.Y)
+	require.Equal(t, 0, character.VelX)
+	require.Equal(t, 109, character.VelY)
+	require.Equal(t, 137, character.Angle)
+	require.Equal(t, 0, character.Direction)
+	require.Equal(t, 0, character.Jumped)
+	require.Equal(t, -1, character.HookedPlayer)
+	require.Equal(t, 0, character.HookState)
+	require.Equal(t, 0, character.HookTick)
+	require.Equal(t, 784, character.HookX)
+	require.Equal(t, 337, character.HookY)
+	require.Equal(t, 0, character.HookDx)
+	require.Equal(t, 0, character.HookDy)
+	require.Equal(t, 0, character.Health)
+	require.Equal(t, 0, character.Armor)
+	require.Equal(t, 0, character.AmmoCount)
+	require.Equal(t, network7.WeaponGun, character.Weapon)
+	require.Equal(t, network7.EyeEmoteNormal, character.Emote)
+	require.Equal(t, 0, character.AttackTick)
+	require.Equal(t, 0, character.TriggeredEvents)
+
+	// verified with hacking on protocol
+	item = msg.Snapshot.Items[7]
+	require.Equal(t, network7.ObjCharacter, item.TypeId())
+	character, ok = item.(*object7.Character)
+	require.Equal(t, true, ok)
+	require.Equal(t, 1, character.Id())
+	require.Equal(t, 980, character.Tick)
+	require.Equal(t, 848, character.X)
+	require.Equal(t, 337, character.Y)
+	require.Equal(t, 0, character.VelX)
+	require.Equal(t, 0, character.VelY)
+	require.Equal(t, 0, character.Angle)
+	require.Equal(t, 0, character.Direction)
+	require.Equal(t, 0, character.Jumped)
+	require.Equal(t, -1, character.HookedPlayer)
+	require.Equal(t, 0, character.HookState)
+	require.Equal(t, 0, character.HookTick)
+	require.Equal(t, 848, character.HookX)
+	require.Equal(t, 337, character.HookY)
+	require.Equal(t, 0, character.HookDx)
+	require.Equal(t, 0, character.HookDy)
+	require.Equal(t, 0, character.Health)
+	require.Equal(t, 0, character.Armor)
+	require.Equal(t, 0, character.AmmoCount)
+	require.Equal(t, network7.WeaponGun, character.Weapon)
+	require.Equal(t, network7.EyeEmoteNormal, character.Emote)
+	require.Equal(t, 0, character.AttackTick)
+	require.Equal(t, 0, character.TriggeredEvents)
+
+	// verified with hacking on protocol
+	item = msg.Snapshot.Items[8]
+	require.Equal(t, network7.ObjCharacter, item.TypeId())
+	character, ok = item.(*object7.Character)
+	require.Equal(t, true, ok)
+	require.Equal(t, 2, character.Id())
+	require.Equal(t, 1039, character.Tick)
+	require.Equal(t, 784, character.X)
+	require.Equal(t, 299, character.Y)
+	require.Equal(t, 0, character.VelX)
+	require.Equal(t, -1052, character.VelY)
+	require.Equal(t, 0, character.Angle)
+	require.Equal(t, 0, character.Direction)
+	require.Equal(t, 0, character.Jumped)
+	require.Equal(t, -1, character.HookedPlayer)
+	require.Equal(t, 0, character.HookState)
+	require.Equal(t, 0, character.HookTick)
+	require.Equal(t, 784, character.HookX)
+	require.Equal(t, 303, character.HookY)
+	require.Equal(t, 0, character.HookDx)
+	require.Equal(t, 0, character.HookDy)
+	require.Equal(t, 10, character.Health)
+	require.Equal(t, 0, character.Armor)
+	require.Equal(t, 10, character.AmmoCount)
+	require.Equal(t, network7.WeaponGun, character.Weapon)
+	require.Equal(t, network7.EyeEmoteNormal, character.Emote)
+	require.Equal(t, 0, character.AttackTick)
+	require.Equal(t, 0, character.TriggeredEvents)
+
+	// verified with hacking on protocol
+	item = msg.Snapshot.Items[9]
+	require.Equal(t, network7.ObjPlayerInfo, item.TypeId())
+	playerInfo, ok = item.(*object7.PlayerInfo)
+	require.Equal(t, true, ok)
+	require.Equal(t, 0, playerInfo.Id())
+	require.Equal(t, 8, playerInfo.PlayerFlags)
+	require.Equal(t, 0, playerInfo.Score)
+	require.Equal(t, 0, playerInfo.Latency)
+
+	// verified with hacking on protocol
+	item = msg.Snapshot.Items[10]
+	require.Equal(t, network7.ObjPlayerInfo, item.TypeId())
+	playerInfo, ok = item.(*object7.PlayerInfo)
+	require.Equal(t, true, ok)
+	require.Equal(t, 1, playerInfo.Id())
+	require.Equal(t, 8, playerInfo.PlayerFlags)
+	require.Equal(t, 0, playerInfo.Score)
+	require.Equal(t, 0, playerInfo.Latency)
+
+	// verified with hacking on protocol
+	item = msg.Snapshot.Items[11]
+	require.Equal(t, network7.ObjPlayerInfo, item.TypeId())
+	playerInfo, ok = item.(*object7.PlayerInfo)
+	require.Equal(t, true, ok)
+	require.Equal(t, 2, playerInfo.Id())
+	require.Equal(t, 8, playerInfo.PlayerFlags)
+	require.Equal(t, 0, playerInfo.Score)
+	require.Equal(t, 0, playerInfo.Latency)
+
+	// --------------------------------------------
+	// first delta snapshot
+	// --------------------------------------------
+
+	// libtw2 dissector details
+	// Teeworlds 0.7 Protocol packet
+	//     Flags: compressed (..01 00..)
+	//     Acknowledged sequence number: 4 (.... ..00 0000 0100)
+	//     Number of chunks: 2
+	//     Token: 57d3edf3
+	//     Compressed payload (31 bytes)
+	// Teeworlds 0.7 Protocol chunk: sys.input_timing
+	//     Header (non-vital)
+	//     Message: sys.input_timing
+	//     Input pred tick: 1056
+	//     Time left: 21
+	// Teeworlds 0.7 Protocol chunk: sys.snap_single
+	//     Header (non-vital)
+	//     Message: sys.snap_single
+	//     Tick: 1056
+	//     Delta tick: 2
+	//     Crc: 20704
+	//     Data (30 bytes)
+	//
+	//              No. Time      Source Destination Protocol Length  Info
+	//              12  0.060259  8303   42069       TW7      119     sys.server_info
+	//              13  0.113440  8303   42069       TW7      538     game.sv_game_info, game.sv_client_info, game.sv_client_info, game.sv_client_info, sys.snap_single
+	//              14  0.313050  8303   42069       TW7      180     sys.snap_single
+	//              15  0.513597  8303   42069       TW7      178     sys.snap_single
+	//              16  0.528518  42069  8303        TW7      81      sys.input
+	// ...
+	//              30  0.811001  42069  8303        TW7      84      sys.input
+	// 1st delta -> 31  0.833344  8303   42069       TW7      100     sys.input_timing, sys.snap_single
+	//              32  0.852673  42069  8303        TW7      85      sys.input
+	//
+	dump = []byte{
+		0x10, 0x04, 0x02, 0x57, 0xd3, 0xed, 0xf3,
+		0x3d, 0xdf, 0xf8, 0xa9, 0x7d, 0xab, 0xdd, 0x14, 0x3f, 0xb5, 0xe0,
+		0x67, 0xcb, 0x42, 0x39, 0xd6, 0x0b, 0x53, 0xe8, 0x01, 0x1b, 0xa0, 0xdb, 0xd7, 0x3d, 0xfc, 0x8c,
+		0xff, 0x57, 0xdc, 0x00,
+	}
+
+	packet = protocol7.Packet{}
+	err = packet.Unpack(dump)
+	require.NoError(t, err)
+
+	// TODO: not working yet
+	// conn := protocol7.Session{}
+	// conn.Ack = packet.Header.Ack
+	// repack := packet.Pack(&conn)
+	// require.Equal(t, dump, repack)
+
+	// content
+	require.Equal(t, 2, len(packet.Messages))
+	require.Equal(t, network7.MsgSysInputTiming, packet.Messages[0].MsgId())
+	inputTiming, ok := packet.Messages[0].(*messages7.InputTiming)
+	require.Equal(t, true, ok)
+	require.Equal(t, 1056, inputTiming.IntendedPredTick)
+	require.Equal(t, 21, inputTiming.TimeLeft)
+
+	require.Equal(t, network7.MsgSysSnapSingle, packet.Messages[1].MsgId())
+	msg, ok = packet.Messages[1].(*messages7.SnapSingle)
+	require.Equal(t, true, ok)
+	require.Equal(t, 1056, msg.GameTick)
+	require.Equal(t, 2, msg.DeltaTick)
+	require.Equal(t, 20704, msg.Crc)
+
+	require.Equal(t, 1, msg.Snapshot.NumItemDeltas)
+	require.Equal(t, 0, msg.Snapshot.NumRemovedItems)
+	require.Equal(t, 1, len(msg.Snapshot.Items))
+
+	// TODO: delta against the previous one to get the correct crc
+	// require.Equal(t, 20704, msg.Snapshot.Crc)
+
+	// verified with hacking on protocol
+	item = msg.Snapshot.Items[0]
+	require.Equal(t, network7.ObjCharacter, item.TypeId())
+	character, ok = item.(*object7.Character)
+	require.Equal(t, true, ok)
+	require.Equal(t, 2, character.Id())
+	require.Equal(t, 17, character.Tick)
+	require.Equal(t, 1, character.X)
+	require.Equal(t, 4, character.Y)
+	require.Equal(t, 384, character.VelX)
+	require.Equal(t, 2176, character.VelY)
+	require.Equal(t, -295, character.Angle)
+	require.Equal(t, 1, character.Direction)
+	require.Equal(t, 0, character.Jumped)
+	require.Equal(t, 0, character.HookedPlayer)
+	require.Equal(t, 0, character.HookState)
+	require.Equal(t, 0, character.HookTick)
+	require.Equal(t, 0, character.HookX)
+	require.Equal(t, -4, character.HookY)
+	require.Equal(t, 0, character.HookDx)
+	require.Equal(t, 0, character.HookDy)
+	// health 0 is verified with hacking on protocol
+	// but the value is still odd
+	// because in the non delta snapshots the health was 10
+	// its character with id 2 so that has be us
+	// there were two characters (id 0 and id 1) already on the server
+	// so when we connect with the hacking on protocol client
+	// we get id 2 ( see also Local: true in the details further up )
+	// and we should be able to see our own health to display it in the hud
+	// and we also did in the first 3 non delta snapshots
+	// but the delta then claims that we have a health of 0
+	// iirc i did not die in the first second after joining
+	// so what is going on here?
+	require.Equal(t, 0, character.Health)
+	require.Equal(t, 0, character.Armor)
+	require.Equal(t, 0, character.AmmoCount)
+	require.Equal(t, network7.WeaponHammer, character.Weapon)
+	require.Equal(t, network7.EyeEmoteNormal, character.Emote)
+	require.Equal(t, 0, character.AttackTick)
+	require.Equal(t, 0, character.TriggeredEvents)
 }
