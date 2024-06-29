@@ -30,7 +30,7 @@ type SvKillMsg struct {
 	//  3 network7.WeaponGrenade
 	//  4 network7.WeaponLase
 	//  5 network7.WeaponNinja
-	Weapon network7.Weapon
+	Weapon network7.WeaponAll
 
 	// For CTF, if the guy is carrying a flag for example.
 	// Only when the sv_gametype is ctf this mode is non zero.
@@ -66,7 +66,7 @@ func (msg *SvKillMsg) Pack() []byte {
 func (msg *SvKillMsg) Unpack(u *packer.Unpacker) error {
 	msg.KillerId = u.GetInt()
 	msg.VictimId = u.GetInt()
-	msg.Weapon = network7.Weapon(u.GetInt())
+	msg.Weapon = network7.WeaponAll(u.GetInt())
 	msg.ModeSpecial = u.GetInt()
 
 	return nil

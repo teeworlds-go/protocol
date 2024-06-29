@@ -203,9 +203,16 @@ const (
 	TypeConnless MsgType = 3
 
 	// can be sent by the server in kill messages
-	WeaponGame  Weapon = -3
-	WeaponSelf  Weapon = -2
-	WeaponWorld Weapon = -1
+	WeaponAllGame    WeaponAll = -3
+	WeaponAllSelf    WeaponAll = -2
+	WeaponAllWorld   WeaponAll = -1
+	WeaponAllHammer  WeaponAll = 0
+	WeaponAllGun     WeaponAll = 1
+	WeaponAllShotgun WeaponAll = 2
+	WeaponAllGrenade WeaponAll = 3
+	WeaponAllLaser   WeaponAll = 4
+	WeaponAllNinja   WeaponAll = 5
+	NumAllWeapons    WeaponAll = 6
 
 	// can be sent by the client when requesting weapon switch
 	// or by the server in kill messages
@@ -228,6 +235,7 @@ type EyeEmote int
 type Emoticon int
 type ChatMode int
 type GameTeam int
+type WeaponAll int
 type Weapon int
 
 type MsgType int

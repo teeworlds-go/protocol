@@ -29,7 +29,7 @@ type Character struct {
 	Health          int
 	Armor           int
 	AmmoCount       int
-	Weapon          int
+	Weapon          network7.Weapon
 	Emote           network7.EyeEmote
 	AttackTick      int
 	TriggeredEvents int
@@ -70,7 +70,7 @@ func (o *Character) Pack() []byte {
 		packer.PackInt(o.Health),
 		packer.PackInt(o.Armor),
 		packer.PackInt(o.AmmoCount),
-		packer.PackInt(o.Weapon),
+		packer.PackInt(int(o.Weapon)),
 		packer.PackInt(int(o.Emote)),
 		packer.PackInt(o.AttackTick),
 		packer.PackInt(o.TriggeredEvents),
@@ -96,7 +96,7 @@ func (o *Character) Unpack(u *packer.Unpacker) error {
 	o.Health = u.GetInt()
 	o.Armor = u.GetInt()
 	o.AmmoCount = u.GetInt()
-	o.Weapon = u.GetInt()
+	o.Weapon = network7.Weapon(u.GetInt())
 	o.Emote = network7.EyeEmote(u.GetInt())
 	o.AttackTick = u.GetInt()
 	o.TriggeredEvents = u.GetInt()
