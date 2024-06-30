@@ -2,6 +2,7 @@ package snapshot7
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/teeworlds-go/go-teeworlds-protocol/object7"
 	"github.com/teeworlds-go/go-teeworlds-protocol/packer"
@@ -64,7 +65,9 @@ func (snap *Snapshot) Unpack(u *packer.Unpacker) error {
 		itemType := u.GetInt()
 		itemId := u.GetInt()
 
-		item := object7.NewObject(itemType, itemId)
+		slog.Debug("unpack item snap item ", "num", i, "total", snap.NumItemDeltas, "type", itemType, "id", itemId)
+
+		item := object7.NewObject(itemType, itemId, u)
 		err := item.Unpack(u)
 		if err != nil {
 			return err

@@ -1,6 +1,7 @@
 package object7
 
 import (
+	"log/slog"
 	"slices"
 
 	"github.com/teeworlds-go/go-teeworlds-protocol/packer"
@@ -48,6 +49,7 @@ func (o *Unknown) Unpack(u *packer.Unpacker) error {
 	o.Fields = make([]int, o.Size())
 
 	for i := 0; i < o.Size(); i++ {
+		slog.Debug("unknown unpack", "type", o.TypeId(), "i", i, "size", o.Size())
 		o.Fields[i] = u.GetInt()
 	}
 
