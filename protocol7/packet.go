@@ -195,12 +195,20 @@ func (packet *Packet) unpackGame(msgId int, chunk chunk7.Chunk, u *packer.Unpack
 		msg = &messages7.SvVoteClearOptions{}
 	case network7.MsgGameSvVoteOptionListAdd:
 		msg = &messages7.SvVoteOptionListAdd{}
+	case network7.MsgGameSvVoteOptionAdd:
+		msg = &messages7.SvVoteOptionAdd{}
+	case network7.MsgGameSvVoteOptionRemove:
+		msg = &messages7.SvVoteOptionRemove{}
 	case network7.MsgGameSvClientInfo:
 		msg = &messages7.SvClientInfo{}
 	case network7.MsgGameSvGameInfo:
 		msg = &messages7.SvGameInfo{}
 	case network7.MsgGameSvGameMsg:
 		msg = &messages7.SvGameMsg{}
+	case network7.MsgGameDeClientEnter:
+		msg = &messages7.DeClientEnter{}
+	case network7.MsgGameDeClientLeave:
+		msg = &messages7.DeClientLeave{}
 	case network7.MsgGameClSay:
 		msg = &messages7.ClSay{}
 	case network7.MsgGameClSetTeam:

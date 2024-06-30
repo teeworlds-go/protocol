@@ -25,14 +25,16 @@ type SnapObject interface {
 // Comes without payload
 // you have to call item.Unpack(u) manually after getting it
 func NewObject(typeId int, itemId int) SnapObject {
-	if typeId == network7.ObjProjectile {
+	if typeId == network7.ObjPlayerInput {
+		return &PlayerInput{ItemId: itemId}
+	} else if typeId == network7.ObjProjectile {
 		return &Projectile{ItemId: itemId}
 	} else if typeId == network7.ObjLaser {
 		return &Laser{ItemId: itemId}
-	} else if typeId == network7.ObjFlag {
-		return &Flag{ItemId: itemId}
 	} else if typeId == network7.ObjPickup {
 		return &Pickup{ItemId: itemId}
+	} else if typeId == network7.ObjFlag {
+		return &Flag{ItemId: itemId}
 	} else if typeId == network7.ObjGameData {
 		return &GameData{ItemId: itemId}
 	} else if typeId == network7.ObjGameDataTeam {
@@ -45,6 +47,12 @@ func NewObject(typeId int, itemId int) SnapObject {
 		return &PlayerInfo{ItemId: itemId}
 	} else if typeId == network7.ObjSpectatorInfo {
 		return &SpectatorInfo{ItemId: itemId}
+	} else if typeId == network7.ObjDeClientInfo {
+		return &DeClientInfo{ItemId: itemId}
+	} else if typeId == network7.ObjDeGameInfo {
+		return &DeGameInfo{ItemId: itemId}
+	} else if typeId == network7.ObjDeTuneParams {
+		return &DeTuneParams{ItemId: itemId}
 	} else if typeId == network7.ObjExplosion {
 		return &Explosion{ItemId: itemId}
 	} else if typeId == network7.ObjSpawn {
@@ -57,6 +65,10 @@ func NewObject(typeId int, itemId int) SnapObject {
 		return &SoundWorld{ItemId: itemId}
 	} else if typeId == network7.ObjDamage {
 		return &Damage{ItemId: itemId}
+	} else if typeId == network7.ObjPlayerInfoRace {
+		return &PlayerInfoRace{ItemId: itemId}
+	} else if typeId == network7.ObjGameDataRace {
+		return &GameDataRace{ItemId: itemId}
 	}
 
 	// TODO: add this panic and remove it again once all tests pass
