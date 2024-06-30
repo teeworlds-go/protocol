@@ -51,14 +51,36 @@ func (u *Unpacker) GetRaw(size int) ([]byte, error) {
 	return b, nil
 }
 
+// get the full payload from the very beginning
+//
+// see also:
+// - Rest()
+// - RemainingData()
 func (u *Unpacker) Data() []byte {
 	return u.data
 }
 
+// consume raw data until the end
+//
+// see also:
+// - Data()
+// - RemainingData()
 func (u *Unpacker) Rest() []byte {
 	rest := u.data[u.idx:]
 	u.idx = u.Size()
 	return rest
+}
+
+// read only operation
+// does not consume the data
+// if you need to consume the data use Rest() instead
+// this method is mostly used for debugging
+//
+// see also:
+// - Rest()
+// - Data()
+func (u *Unpacker) RemainingData() []byte {
+	return u.data[u.idx:]
 }
 
 func (u *Unpacker) Size() int {
