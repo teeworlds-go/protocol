@@ -107,9 +107,7 @@ func TestUniqueRaceSnapshot(t *testing.T) {
 	require.Equal(t, 0, msg.Snapshot.NumRemovedItems)
 	require.Equal(t, 25, len(msg.Snapshot.Items))
 
-	// TODO: we are missing 2 in the crc
-	//       not sure whats going on here
-	require.Equal(t, 489504, msg.Snapshot.Crc)
+	require.Equal(t, 489506, msg.Snapshot.Crc)
 
 	// verified with hacking on protocol
 	item := msg.Snapshot.Items[0]

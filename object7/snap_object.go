@@ -19,6 +19,10 @@ type SnapObject interface {
 
 	// number of packed integers
 	// not the number of bytes
+	//
+	// only counting the payload
+	// not the type id or item id
+	// and also not the optional size field (game data race, player info race)
 	Size() int
 
 	Pack() []byte

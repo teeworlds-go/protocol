@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/teeworlds-go/go-teeworlds-protocol/network7"
 	"github.com/teeworlds-go/go-teeworlds-protocol/object7"
 	"github.com/teeworlds-go/go-teeworlds-protocol/packer"
 )
@@ -38,6 +39,14 @@ func CrcItem(o object7.SnapObject) int {
 	u.Reset(o.Pack())
 	u.GetInt()
 	u.GetInt()
+
+	if o.TypeId() == network7.ObjGameDataRace || o.TypeId() == network7.ObjPlayerInfoRace {
+		// the backwards compatibility size
+		// is not part of the payload
+		// and is not used to compute the crc
+		u.GetInt()
+	}
+
 	crc := 0
 	for i := 0; i < o.Size(); i++ {
 		crc += u.GetInt()

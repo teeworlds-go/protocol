@@ -29,7 +29,12 @@ func (o *PlayerInfoRace) TypeId() int {
 }
 
 func (o *PlayerInfoRace) Size() int {
-	// TODO: is this correct? is this just payload size or does it contain the size field as well?
+	// this is correct and verified
+	// the additional size field is not included in the size
+	//
+	// player info race has an additional size field which other snap items
+	// do not have
+	// but its size is only 1 (4 bytes) not 2 (8 bytes) if we were to count the size field
 	return reflect.TypeOf(PlayerInfoRace{}).NumField() - 1
 }
 
