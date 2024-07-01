@@ -59,6 +59,23 @@ func (msg *SnapSingle) Unpack(u *packer.Unpacker) error {
 	msg.PartSize = u.GetInt()
 	msg.Data = u.Rest()
 
+	// TODO: should this be optional?
+	//       there is also snapshot7.UnpackDelta
+	//       which unpacks the snapshot AND applies it as a delta
+	//       to get a full snapshot with ALL items in it
+	//       which is what one wants in most cases anyways
+	//
+	//       but there is still the chance that someone wants to inspect
+	//       what is sent over the network as is without any
+	//       delta applied
+	//
+	//       for consistency this should also be added to partial snap messages (NETMSG_SNAP)
+	//       but you can not really dump the items of snapshot part 3 out of 5 can you?
+	//
+	//       currently all the tests depend on it
+	//       and it is nice to have unit tests that only look at one packet
+	//       without any deltas
+
 	// genius
 	u.Reset(msg.Data)
 	err := msg.Snapshot.Unpack(u)

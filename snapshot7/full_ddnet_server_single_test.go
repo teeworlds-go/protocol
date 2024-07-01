@@ -78,10 +78,7 @@ func TestDDNetFullServerSnapSingle(t *testing.T) {
 	playerInfo, ok := item.(*object7.PlayerInfo)
 	require.Equal(t, true, ok)
 	require.Equal(t, 4, playerInfo.PlayerFlags)
-	// this is odd the score in ddnet should not be 0
-	// if a player has no score shouldnt it be -99999? or did that change?
 	require.Equal(t, 0, playerInfo.Score)
-	// this is highly suspicious. why is there 0 latency for some player on a ddnet rus server?
 	require.Equal(t, 0, playerInfo.Latency)
 
 	// this is not verified
@@ -90,8 +87,13 @@ func TestDDNetFullServerSnapSingle(t *testing.T) {
 	playerInfo, ok = item.(*object7.PlayerInfo)
 	require.Equal(t, true, ok)
 	require.Equal(t, 0, playerInfo.PlayerFlags)
+	// did this player just finish the map or join?
+	// all items should be sent as diff
+	// so in ddnet this value should be zero unless:
+	// - the player finished and changed the score
+	// - the player joined and it is a diff to zero (could also be called no diff at all)
+	// - the player joined and the score worker finished loading the score
 	require.Equal(t, 758141, playerInfo.Score)
-	// this is highly suspicious. why is there 0 latency for some player on a ddnet rus server?
 	require.Equal(t, 0, playerInfo.Latency)
 
 	// this is not verified
@@ -100,8 +102,6 @@ func TestDDNetFullServerSnapSingle(t *testing.T) {
 	character, ok := item.(*object7.Character)
 	require.Equal(t, true, ok)
 	require.Equal(t, 45, character.Tick)
-	// that seems like a odd position to be in on Multeasymap
-	// this is probably wrong
 	require.Equal(t, 0, character.X)
 	require.Equal(t, 32, character.Y)
 	require.Equal(t, 0, character.VelX)
@@ -135,8 +135,10 @@ func TestDDNetFullServerSnapSingle(t *testing.T) {
 	character, ok = item.(*object7.Character)
 	require.Equal(t, true, ok)
 	require.Equal(t, 23, character.Tick)
-	// that seems like a odd position to be in on Multeasymap
-	// this is probably wrong
+	// this is not the actual position on the map
+	// but the diff
+	// so the character moved 43 units to the left
+	// and is not outside of the Multeasymap border
 	require.Equal(t, -43, character.X)
 	require.Equal(t, 155, character.Y)
 	require.Equal(t, 588, character.VelX)
@@ -153,7 +155,12 @@ func TestDDNetFullServerSnapSingle(t *testing.T) {
 	require.Equal(t, 0, character.HookDy)
 	require.Equal(t, 0, character.Health)
 	require.Equal(t, 0, character.Armor)
-	// this for sure is wrong???
+	// this is a 0.7 client on a ddnet server
+	// which computes ammo like this currently
+	// https://github.com/ddnet/ddnet/blob/726e5c9a490e524bde029692764d8be36ed56b08/src/game/server/entities/character.cpp#L1137
+	// so this oddly high value might check out
+	// the ddnet bridge uses the teeworlds 0.7 ninja progress bar as freeze indicator
+	// https://github.com/teeworlds/teeworlds/commit/0e28755475545f4961e2d1e259fe9a85e66beccf
 	require.Equal(t, 11271786, character.AmmoCount)
 	require.Equal(t, network7.WeaponLaser, character.Weapon)
 	require.Equal(t, network7.EyeEmoteBlink, character.Emote)

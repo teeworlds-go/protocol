@@ -910,6 +910,11 @@ func TestFirstFewSnaps(t *testing.T) {
 	character, ok = item.(*object7.Character)
 	require.Equal(t, true, ok)
 	require.Equal(t, 2, character.Id())
+	// the characters actual tick is not 17
+	// but the old tick (1039) plus the diff 17
+	// so the actual undiffed tick would be 1056
+	// but at the moment the snapshots are unpacked without a delta
+	// so there is no diff applied
 	require.Equal(t, 17, character.Tick)
 	require.Equal(t, 1, character.X)
 	require.Equal(t, 4, character.Y)
@@ -926,17 +931,10 @@ func TestFirstFewSnaps(t *testing.T) {
 	require.Equal(t, 0, character.HookDx)
 	require.Equal(t, 0, character.HookDy)
 	// health 0 is verified with hacking on protocol
-	// but the value is still odd
-	// because in the non delta snapshots the health was 10
-	// its character with id 2 so that has be us
-	// there were two characters (id 0 and id 1) already on the server
-	// so when we connect with the hacking on protocol client
-	// we get id 2 ( see also Local: true in the details further up )
-	// and we should be able to see our own health to display it in the hud
-	// and we also did in the first 3 non delta snapshots
-	// but the delta then claims that we have a health of 0
-	// iirc i did not die in the first second after joining
-	// so what is going on here?
+	// this is our own health and we did not die
+	// but items are sent as diffs
+	// meaning our health incremented by 0
+	// so it still is 10
 	require.Equal(t, 0, character.Health)
 	require.Equal(t, 0, character.Armor)
 	require.Equal(t, 0, character.AmmoCount)
