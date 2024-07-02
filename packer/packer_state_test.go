@@ -3,7 +3,7 @@ package packer
 import (
 	"testing"
 
-	"github.com/teeworlds-go/go-teeworlds-protocol/internal/testutils/require"
+	"github.com/teeworlds-go/protocol/internal/testutils/require"
 )
 
 // rest and remaining size

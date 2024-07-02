@@ -3,7 +3,7 @@ package chunk7
 import (
 	"fmt"
 
-	"github.com/teeworlds-go/go-teeworlds-protocol/packer"
+	"github.com/teeworlds-go/protocol/packer"
 )
 
 const (
@@ -82,7 +82,7 @@ func (header *ChunkHeader) Unpack(u *packer.Unpacker) error {
 //	Unpack(u *packer.Unpacker)
 //	UnpackTodoFindAGoodName(data []byte)
 //
-//	See https://github.com/teeworlds-go/go-teeworlds-protocol/issues/5
+//	See https://github.com/teeworlds-go/protocol/issues/5
 func (header *ChunkHeader) UnpackRaw(data []byte) error {
 	if len(data) < 2 {
 		return fmt.Errorf("size=%d not enough data to read chunk header", len(data))

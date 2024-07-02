@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/teeworlds-go/go-teeworlds-protocol/chunk7"
-	"github.com/teeworlds-go/go-teeworlds-protocol/network7"
-	"github.com/teeworlds-go/go-teeworlds-protocol/packer"
+	"github.com/teeworlds-go/protocol/chunk7"
+	"github.com/teeworlds-go/protocol/network7"
+	"github.com/teeworlds-go/protocol/packer"
 )
 
 type SvGameMsg struct {

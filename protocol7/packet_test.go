@@ -4,9 +4,9 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/teeworlds-go/go-teeworlds-protocol/chunk7"
-	"github.com/teeworlds-go/go-teeworlds-protocol/internal/testutils/require"
-	"github.com/teeworlds-go/go-teeworlds-protocol/messages7"
+	"github.com/teeworlds-go/protocol/chunk7"
+	"github.com/teeworlds-go/protocol/internal/testutils/require"
+	"github.com/teeworlds-go/protocol/messages7"
 )
 
 // repack packet with unknown messages should not lose data

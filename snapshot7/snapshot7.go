@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/teeworlds-go/go-teeworlds-protocol/network7"
-	"github.com/teeworlds-go/go-teeworlds-protocol/object7"
-	"github.com/teeworlds-go/go-teeworlds-protocol/packer"
+	"github.com/teeworlds-go/protocol/network7"
+	"github.com/teeworlds-go/protocol/object7"
+	"github.com/teeworlds-go/protocol/packer"
 )
 
 const (
@@ -126,7 +126,7 @@ func UnpackDelata(from *Snapshot, u *packer.Unpacker) (*Snapshot, error) {
 	if u.RemainingSize() > 0 {
 		// TODO: this should not panic but return an error
 		//       once the returned error actually shows up somewhere and can be checked in the tests
-		//       https://github.com/teeworlds-go/go-teeworlds-protocol/issues/6
+		//       https://github.com/teeworlds-go/protocol/issues/6
 		panic(fmt.Sprintf("unexpected remaining size %d after snapshot unpack\n", u.RemainingSize()))
 	}
 
@@ -186,7 +186,7 @@ func (snap *Snapshot) Unpack(u *packer.Unpacker) error {
 	if u.RemainingSize() > 0 {
 		// TODO: this should not panic but return an error
 		//       once the returned error actually shows up somewhere and can be checked in the tests
-		//       https://github.com/teeworlds-go/go-teeworlds-protocol/issues/6
+		//       https://github.com/teeworlds-go/protocol/issues/6
 		panic(fmt.Sprintf("unexpected remaining size %d after snapshot unpack\n", u.RemainingSize()))
 	}
 

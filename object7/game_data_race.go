@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"slices"
 
-	"github.com/teeworlds-go/go-teeworlds-protocol/network7"
-	"github.com/teeworlds-go/go-teeworlds-protocol/packer"
+	"github.com/teeworlds-go/protocol/network7"
+	"github.com/teeworlds-go/protocol/packer"
 )
 
 // this is a new snap item that was added after the 0.7 release

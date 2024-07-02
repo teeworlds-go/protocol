@@ -6,10 +6,10 @@ package messages7
 import (
 	"slices"
 
-	"github.com/teeworlds-go/go-teeworlds-protocol/chunk7"
-	"github.com/teeworlds-go/go-teeworlds-protocol/network7"
-	"github.com/teeworlds-go/go-teeworlds-protocol/packer"
-	"github.com/teeworlds-go/go-teeworlds-protocol/snapshot7"
+	"github.com/teeworlds-go/protocol/chunk7"
+	"github.com/teeworlds-go/protocol/network7"
+	"github.com/teeworlds-go/protocol/packer"
+	"github.com/teeworlds-go/protocol/snapshot7"
 )
 
 type SnapSingle struct {

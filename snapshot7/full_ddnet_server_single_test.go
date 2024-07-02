@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/teeworlds-go/go-teeworlds-protocol/internal/testutils/require"
-	"github.com/teeworlds-go/go-teeworlds-protocol/messages7"
-	"github.com/teeworlds-go/go-teeworlds-protocol/network7"
-	"github.com/teeworlds-go/go-teeworlds-protocol/object7"
-	"github.com/teeworlds-go/go-teeworlds-protocol/protocol7"
+	"github.com/teeworlds-go/protocol/internal/testutils/require"
+	"github.com/teeworlds-go/protocol/messages7"
+	"github.com/teeworlds-go/protocol/network7"
+	"github.com/teeworlds-go/protocol/object7"
+	"github.com/teeworlds-go/protocol/protocol7"
 )
 
 // --------------------------------

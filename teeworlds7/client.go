@@ -5,9 +5,9 @@ import (
 	"net"
 	"time"
 
-	"github.com/teeworlds-go/go-teeworlds-protocol/messages7"
-	"github.com/teeworlds-go/go-teeworlds-protocol/protocol7"
-	"github.com/teeworlds-go/go-teeworlds-protocol/snapshot7"
+	"github.com/teeworlds-go/protocol/messages7"
+	"github.com/teeworlds-go/protocol/protocol7"
+	"github.com/teeworlds-go/protocol/snapshot7"
 )
 
 type Player struct {

@@ -3,7 +3,7 @@ package teeworlds7
 import (
 	"fmt"
 
-	"github.com/teeworlds-go/go-teeworlds-protocol/messages7"
+	"github.com/teeworlds-go/protocol/messages7"
 )
 
 func userSendMsgCallback[T any](userCallbacks []func(T) bool, msg T) bool {

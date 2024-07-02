@@ -3,8 +3,8 @@ package messages7
 import (
 	"testing"
 
-	"github.com/teeworlds-go/go-teeworlds-protocol/internal/testutils/require"
-	"github.com/teeworlds-go/go-teeworlds-protocol/packer"
+	"github.com/teeworlds-go/protocol/internal/testutils/require"
+	"github.com/teeworlds-go/protocol/packer"
 )
 
 func TestUnpackClientInfo(t *testing.T) {

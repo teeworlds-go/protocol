@@ -1,4 +1,4 @@
-# go-teeworlds-protocol
+# protocol
 
 # WARNING! NOT READY TO BE USED YET! Apis might change. Packages and repository might be renamed!
 
@@ -12,8 +12,8 @@ The package **teeworlds7** implements a high level client library. Designed for 
 package main
 
 import (
-	"github.com/teeworlds-go/go-teeworlds-protocol/messages7"
-	"github.com/teeworlds-go/go-teeworlds-protocol/teeworlds7"
+	"github.com/teeworlds-go/protocol/messages7"
+	"github.com/teeworlds-go/protocol/teeworlds7"
 )
 
 func main() {
@@ -21,7 +21,7 @@ func main() {
 	client.Name = "nameless tee"
 
 	// Register your callback for incoming chat messages
-	// For a full list of all callbacks see: https://github.com/teeworlds-go/go-teeworlds-protocol/tree/master/teeworlds7/user_hooks.go
+	// For a full list of all callbacks see: https://github.com/teeworlds-go/protocol/tree/master/teeworlds7/user_hooks.go
 	client.OnChat(func(msg *messages7.SvChat, defaultAction teeworlds7.DefaultAction) {
 		// the default action prints the chat message to the console
 		// if this is not called and you don't print it your self the chat will not be visible
@@ -29,7 +29,7 @@ func main() {
 
 		if msg.Message == "!ping" {
 			// Send reply in chat using the SendChat() action
-			// For a full list of all actions see: https://github.com/teeworlds-go/go-teeworlds-protocol/tree/master/teeworlds7/user_actions.go
+			// For a full list of all actions see: https://github.com/teeworlds-go/protocol/tree/master/teeworlds7/user_actions.go
 			client.SendChat("pong")
 		}
 	})
@@ -46,7 +46,7 @@ Example usages:
 
 The packages **chunk7, messages7, network7, packer, protocol7** Implement the low level 0.7 teeworlds protocol. Use them if you want to build something advanced such as a custom proxy.
 
-## projects using go-teeworlds-protocol
+## projects using protocol
 
 - [MITM teeworlds proxy](https://github.com/teeworlds-go/proxy)
 

@@ -3,8 +3,8 @@ package object7
 import (
 	"reflect"
 
-	"github.com/teeworlds-go/go-teeworlds-protocol/network7"
-	"github.com/teeworlds-go/go-teeworlds-protocol/packer"
+	"github.com/teeworlds-go/protocol/network7"
+	"github.com/teeworlds-go/protocol/packer"
 )
 
 // only used for demos

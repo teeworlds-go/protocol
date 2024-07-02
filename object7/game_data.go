@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"slices"
 
-	"github.com/teeworlds-go/go-teeworlds-protocol/network7"
-	"github.com/teeworlds-go/go-teeworlds-protocol/packer"
+	"github.com/teeworlds-go/protocol/network7"
+	"github.com/teeworlds-go/protocol/packer"
 )
 
 type GameData struct {

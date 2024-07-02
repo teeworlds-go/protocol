@@ -3,10 +3,10 @@ package object7_test
 import (
 	"testing"
 
-	"github.com/teeworlds-go/go-teeworlds-protocol/internal/testutils/require"
-	"github.com/teeworlds-go/go-teeworlds-protocol/network7"
-	"github.com/teeworlds-go/go-teeworlds-protocol/object7"
-	"github.com/teeworlds-go/go-teeworlds-protocol/packer"
+	"github.com/teeworlds-go/protocol/internal/testutils/require"
+	"github.com/teeworlds-go/protocol/network7"
+	"github.com/teeworlds-go/protocol/object7"
+	"github.com/teeworlds-go/protocol/packer"
 )
 
 func TestLaserStandalone(t *testing.T) {

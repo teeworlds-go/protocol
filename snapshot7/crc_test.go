@@ -3,9 +3,9 @@ package snapshot7_test
 import (
 	"testing"
 
-	"github.com/teeworlds-go/go-teeworlds-protocol/internal/testutils/require"
-	"github.com/teeworlds-go/go-teeworlds-protocol/object7"
-	"github.com/teeworlds-go/go-teeworlds-protocol/snapshot7"
+	"github.com/teeworlds-go/protocol/internal/testutils/require"
+	"github.com/teeworlds-go/protocol/object7"
+	"github.com/teeworlds-go/protocol/snapshot7"
 )
 
 func TestLaserCrc(t *testing.T) {

@@ -1,6 +1,6 @@
 package protocol7
 
-import "github.com/teeworlds-go/go-teeworlds-protocol/messages7"
+import "github.com/teeworlds-go/protocol/messages7"
 
 // teeworlds low level protocol
 // keeping track of connection state

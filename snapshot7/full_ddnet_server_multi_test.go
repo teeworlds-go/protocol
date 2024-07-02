@@ -7,8 +7,8 @@ package snapshot7_test
 // 	"fmt"
 // 	"testing"
 //
-// 	"github.com/teeworlds-go/go-teeworlds-protocol/internal/testutils/require"
-// 	"github.com/teeworlds-go/go-teeworlds-protocol/protocol7"
+// 	"github.com/teeworlds-go/protocol/internal/testutils/require"
+// 	"github.com/teeworlds-go/protocol/protocol7"
 // )
 //
 // func TestVoteOptionListAddPlusTwoSnaps(t *testing.T) {

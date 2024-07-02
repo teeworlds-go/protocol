@@ -3,9 +3,9 @@ package messages7
 import (
 	"slices"
 
-	"github.com/teeworlds-go/go-teeworlds-protocol/chunk7"
-	"github.com/teeworlds-go/go-teeworlds-protocol/network7"
-	"github.com/teeworlds-go/go-teeworlds-protocol/packer"
+	"github.com/teeworlds-go/protocol/chunk7"
+	"github.com/teeworlds-go/protocol/network7"
+	"github.com/teeworlds-go/protocol/packer"
 )
 
 // You have to manually set NumOptions to be the amount of Descriptions
