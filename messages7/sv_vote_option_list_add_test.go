@@ -1,7 +1,6 @@
 package messages7_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/teeworlds-go/protocol/chunk7"
@@ -75,9 +74,6 @@ func TestKeepDDNetServerTranslationTrailingNullbytes(t *testing.T) {
 
 	conn.Ack = packet.Header.Ack
 	repack := packet.Pack(&conn)
-
-	fmt.Printf("  want: %x\n", dumpVoteList)
-	fmt.Printf("repack: %x\n", repack)
 
 	require.Equal(t, dumpVoteList, repack)
 }

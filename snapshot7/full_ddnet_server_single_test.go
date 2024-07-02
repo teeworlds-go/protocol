@@ -4,7 +4,6 @@ package snapshot7_test
 // but NETMSG_SNAPSINGLE
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/teeworlds-go/protocol/internal/testutils/require"
@@ -210,9 +209,6 @@ func TestSvEmoticonAndSnapSingle(t *testing.T) {
 
 	conn.Ack = packet.Header.Ack
 	repack := packet.Pack(&conn)
-
-	fmt.Printf("repack: %x\n", repack)
-	fmt.Printf("dump:   %x\n", dump)
 
 	require.Equal(t, dump, repack)
 
