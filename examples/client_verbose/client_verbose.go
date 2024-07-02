@@ -15,9 +15,9 @@ import (
 )
 
 func main() {
-	client := teeworlds7.Client{
-		Name: "nameless tee",
-	}
+
+	client := teeworlds7.NewClient()
+	client.Name = "nameless tee"
 
 	client.OnAccept(func(msg *messages7.CtrlAccept, defaultAction teeworlds7.DefaultAction) {
 		// respond with the next message to establish a connection
@@ -39,7 +39,7 @@ func main() {
 	// you can also alter packet here before it will be sent to the server
 	//
 	// return false to drop the packet
-	client.OnSend(func(packet *protocol7.Packet) bool {
+	client.OnSendPacket(func(packet *protocol7.Packet) bool {
 		fmt.Printf("sending packet with %d messages\n", len(packet.Messages))
 		return true
 	})

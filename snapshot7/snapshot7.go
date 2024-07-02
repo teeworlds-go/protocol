@@ -54,6 +54,102 @@ func CrcItem(o object7.SnapObject) int {
 	return crc
 }
 
+func ItemKey(o object7.SnapObject) int {
+	return (o.TypeId() << 16) | (o.Id() & 0xffff)
+}
+
+// the key is one integer holding both type and id
+func (snap *Snapshot) GetItemAtKey(key int) *object7.SnapObject {
+	for _, i := range snap.Items {
+		if key == ItemKey(i) {
+			return &i
+		}
+	}
+	return nil
+}
+
+// from has to be the old snapshot we delta against
+// and the unpacker has to point to the payload of the new delta snapshot
+// the payload starts with NumRemovedItems
+//
+// it returns the new full snapshot with the delta applied to the from
+//
+// See also (Snapshot *)Unpack()
+func UnpackDelata(from *Snapshot, u *packer.Unpacker) (*Snapshot, error) {
+	// TODO: add all the error checking the C++ reference implementation has
+
+	snap := &Snapshot{}
+
+	snap.NumRemovedItems = u.GetInt()
+	snap.NumItemDeltas = u.GetInt()
+	u.GetInt() // _zero
+
+	slog.Info("got new snapshot!", "num_deleted", snap.NumRemovedItems, "num_updates", snap.NumItemDeltas)
+
+	for i := 0; i < len(from.Items); i++ {
+		fromItem := from.Items[i]
+		keep := true
+
+		for d := 0; d < snap.NumRemovedItems; d++ {
+			// fmt.Printf("deleted item key = %d\n", deleted)
+			deleted := u.GetInt()
+			slog.Info("delta unpack del item", "key", deleted, "d_index", d, "num_deleted", snap.NumRemovedItems, "remaining_data", u.RemainingData())
+
+			if deleted == ItemKey(fromItem) {
+				keep = false
+				break
+			}
+		}
+
+		if keep {
+			snap.Items = append(snap.Items, fromItem)
+		}
+	}
+
+	for i := 0; i < snap.NumItemDeltas; i++ {
+		itemType := u.GetInt()
+		itemId := u.GetInt()
+
+		slog.Debug("unpack item snap item ", "num", i, "total", snap.NumItemDeltas, "type", itemType, "id", itemId)
+
+		item := object7.NewObject(itemType, itemId, u)
+		err := item.Unpack(u)
+		if err != nil {
+			return nil, err
+		}
+
+		snap.Items = append(snap.Items, item)
+
+		// TODO: update old items
+	}
+
+	if u.RemainingSize() > 0 {
+		// TODO: this should not panic but return an error
+		//       once the returned error actually shows up somewhere and can be checked in the tests
+		//       https://github.com/teeworlds-go/go-teeworlds-protocol/issues/6
+		panic(fmt.Sprintf("unexpected remaining size %d after snapshot unpack\n", u.RemainingSize()))
+	}
+
+	crc := 0
+	for _, item := range snap.Items {
+		crc += CrcItem(item)
+	}
+	snap.Crc = crc
+
+	return snap, nil
+}
+
+// unpacks the snapshot as is
+// the unpacker has to point to the payload of the new delta snapshot
+// the payload starts with NumRemovedItems
+//
+// it does not unpack any delta
+// just a raw snapshot parser
+// useful for inspecting network traffic
+// not useful for gameplay relevant things
+// because snap items will be missing since it is not merged into the old delta
+//
+// See also snapshot7.UnpackDelta()
 func (snap *Snapshot) Unpack(u *packer.Unpacker) error {
 	// TODO: add all the error checking the C++ reference implementation has
 

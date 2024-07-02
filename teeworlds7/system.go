@@ -2,9 +2,12 @@ package teeworlds7
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/teeworlds-go/go-teeworlds-protocol/messages7"
+	"github.com/teeworlds-go/go-teeworlds-protocol/packer"
 	"github.com/teeworlds-go/go-teeworlds-protocol/protocol7"
+	"github.com/teeworlds-go/go-teeworlds-protocol/snapshot7"
 )
 
 func (client *Client) processSystem(netMsg messages7.NetMessage, response *protocol7.Packet) bool {
@@ -56,7 +59,45 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 		})
 	case *messages7.SnapSingle:
 		userMsgCallback(client.Callbacks.SysSnapSingle, msg, func() {
-			response.Messages = append(response.Messages, &messages7.CtrlKeepAlive{})
+			deltaTick := msg.GameTick - msg.DeltaTick
+			fmt.Printf("delta=%d msgdeltaa=%d gametick=%d\n", deltaTick, msg.DeltaTick, msg.GameTick)
+			prevSnap, err := client.SnapshotStorage.Get(deltaTick)
+
+			if err != nil {
+				// couldn't find the delta snapshots that the server used
+				// to compress this snapshot. force the server to resync
+				slog.Error("error, couldn't find the delta snapshot", "error", err)
+
+				// ack snapshot
+				// TODO:
+				// m_AckGameTick = -1;
+				return
+			}
+
+			u := &packer.Unpacker{}
+			u.Reset(msg.Data)
+
+			newFullSnap, err := snapshot7.UnpackDelata(prevSnap, u)
+			if err != nil {
+				slog.Error("delta unpack failed!", "error", err)
+				return
+			}
+			err = client.SnapshotStorage.Add(msg.GameTick, newFullSnap)
+			if err != nil {
+				slog.Error("failed to store snap", "error", err)
+			}
+			client.SnapshotStorage.PurgeUntil(deltaTick)
+
+			for _, callback := range client.Callbacks.Snapshot {
+				callback(newFullSnap, func() {})
+			}
+
+			client.Game.Input.AckGameTick = msg.GameTick
+			client.Game.Input.PredictionTick = client.SnapshotStorage.NewestTick
+
+			fmt.Printf("set client.Game.Input.AckGameTick to %d\n", client.Game.Input.AckGameTick)
+
+			response.Messages = append(response.Messages, client.Game.Input)
 		})
 	case *messages7.SnapEmpty:
 		userMsgCallback(client.Callbacks.SysSnapEmpty, msg, func() {

@@ -2,7 +2,9 @@ package protocol7
 
 import "github.com/teeworlds-go/go-teeworlds-protocol/messages7"
 
-// teeworlds connection state
+// teeworlds low level protocol
+// keeping track of connection state
+// resends and anti spoof tokens
 type Session struct {
 	ClientToken [4]byte
 	ServerToken [4]byte

@@ -13,8 +13,7 @@ type Input struct {
 
 	AckGameTick    int
 	PredictionTick int
-	Size           int
-
+	// Size           int // size is always 40
 	Direction    int
 	TargetX      int
 	TargetY      int
@@ -25,6 +24,9 @@ type Input struct {
 	WantedWeapon network7.Weapon
 	NextWeapon   network7.Weapon
 	PrevWeapon   network7.Weapon
+
+	// could use object7.Input here instead of redefining everything
+	// could also use object7.Input.Size() instead of hard coding 40
 }
 
 func (msg *Input) MsgId() int {
@@ -45,6 +47,9 @@ func (msg *Input) Vital() bool {
 
 func (msg *Input) Pack() []byte {
 	return slices.Concat(
+		packer.PackInt(msg.AckGameTick),
+		packer.PackInt(msg.PredictionTick),
+		packer.PackInt(40),
 		packer.PackInt(msg.Direction),
 		packer.PackInt(msg.TargetX),
 		packer.PackInt(msg.TargetY),
@@ -59,6 +64,9 @@ func (msg *Input) Pack() []byte {
 }
 
 func (msg *Input) Unpack(u *packer.Unpacker) error {
+	msg.AckGameTick = u.GetInt()
+	msg.PredictionTick = u.GetInt()
+	_ = u.GetInt() // size is always 40
 	msg.Direction = u.GetInt()
 	msg.TargetX = u.GetInt()
 	msg.TargetY = u.GetInt()

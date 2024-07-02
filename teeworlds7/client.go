@@ -3,9 +3,11 @@ package teeworlds7
 import (
 	"log"
 	"net"
+	"time"
 
 	"github.com/teeworlds-go/go-teeworlds-protocol/messages7"
 	"github.com/teeworlds-go/go-teeworlds-protocol/protocol7"
+	"github.com/teeworlds-go/go-teeworlds-protocol/snapshot7"
 )
 
 type Player struct {
@@ -14,6 +16,7 @@ type Player struct {
 
 type Game struct {
 	Players []Player
+	Input   *messages7.Input
 }
 
 type Client struct {
@@ -34,8 +37,21 @@ type Client struct {
 	// teeworlds session
 	Session protocol7.Session
 
+	// old snapshots used to unpack new deltas
+	SnapshotStorage *snapshot7.Storage
+
+	// for snapshot syncing
+	LastPredTime *time.Time
+
 	// teeworlds game state
 	Game Game
+}
+
+func NewClient() *Client {
+	client := &Client{}
+	client.SnapshotStorage = snapshot7.NewStorage()
+	client.Game.Input = &messages7.Input{}
+	return client
 }
 
 func (client *Client) throwError(err error) {

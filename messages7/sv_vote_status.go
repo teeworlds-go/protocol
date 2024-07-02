@@ -55,6 +55,6 @@ func (msg *SvVoteStatus) Header() *chunk7.ChunkHeader {
 	return msg.ChunkHeader
 }
 
-func (msg *SvVoteStatus) StatusHeader(header *chunk7.ChunkHeader) {
+func (msg *SvVoteStatus) SetHeader(header *chunk7.ChunkHeader) {
 	msg.ChunkHeader = header
 }

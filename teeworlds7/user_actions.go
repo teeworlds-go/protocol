@@ -62,6 +62,18 @@ func (client *Client) SendPacket(packet *protocol7.Packet) error {
 	}
 	client.QueuedMessages = nil
 
+	packet.Messages = client.registerMessagesCallbacks(packet.Messages)
+
+	// slog.Info("after filter got messages", "len", len(packet.Messages))
+
+	// for i, msg := range filteredMessages {
+	// 	slog.Info("about to xxxx pack w msg", "i", i, "msg", msg)
+	// }
+
+	// for i, msg := range packet.Messages {
+	// 	slog.Info("about to send pack w msg", "i", i, "msg", msg)
+	// }
+
 	for _, callback := range client.Callbacks.PacketOut {
 		if callback(packet) == false {
 			return nil
@@ -95,6 +107,14 @@ func (client *Client) SendMessage(msg messages7.NetMessage) {
 // ----------------------------
 // high level actions
 // ----------------------------
+
+// Example of walking left
+//
+//	client.Game.Input.Direction = -1
+//	client.SendInput()
+func (client *Client) SendInput() {
+	client.SendMessage(client.Game.Input)
+}
 
 // see also SendWhisper()
 // see also SendChatTeam()
