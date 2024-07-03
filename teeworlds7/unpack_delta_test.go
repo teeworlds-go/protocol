@@ -64,7 +64,7 @@ func TestUnpackDelta(t *testing.T) {
 	//     Delta tick: 1301
 	//     Crc: 2205
 	//     Data (45 bytes)
-	dump := []byte{
+	dumpSnap1 := []byte{
 		0x10, 0x04, 0x03, 0x01, 0x02, 0x03, 0x04,
 		0x4a, 0x36, 0x4c, 0xed, 0xe1, 0x47, 0xde, 0x6a, 0x3d, 0x8c, 0xd8, 0xb5, 0x73, 0x14, 0x1d,
 		0x71, 0x82, 0x2b, 0xc1, 0x09, 0x74, 0x4a, 0xa7, 0xac, 0xa1, 0x84, 0x13, 0x38, 0xe1, 0x74, 0x0e,
@@ -84,7 +84,7 @@ func TestUnpackDelta(t *testing.T) {
 	conn := protocol7.Session{}
 
 	packet := protocol7.Packet{}
-	err := packet.Unpack(dump)
+	err := packet.Unpack(dumpSnap1)
 	require.NoError(t, err)
 
 	conn.Ack = packet.Header.Ack
@@ -95,19 +95,19 @@ func TestUnpackDelta(t *testing.T) {
 	// content
 	require.Equal(t, 3, len(packet.Messages))
 	require.Equal(t, network7.MsgSysSnapSingle, packet.Messages[2].MsgId())
-	msg, ok := packet.Messages[2].(*messages7.SnapSingle)
+	snapSingle1, ok := packet.Messages[2].(*messages7.SnapSingle)
 	require.Equal(t, true, ok)
 
 	// unverified
-	require.Equal(t, 4, msg.Snapshot.NumItemDeltas)
-	require.Equal(t, 0, msg.Snapshot.NumRemovedItems)
-	require.Equal(t, 4, len(msg.Snapshot.Items))
+	require.Equal(t, 4, snapSingle1.Snapshot.NumItemDeltas)
+	require.Equal(t, 0, snapSingle1.Snapshot.NumRemovedItems)
+	require.Equal(t, 4, len(snapSingle1.Snapshot.Items))
 
 	// matches libtw2
-	require.Equal(t, 2205, msg.Snapshot.Crc)
+	require.Equal(t, 2205, snapSingle1.Snapshot.Crc)
 
 	// unverified
-	item := msg.Snapshot.Items[0]
+	item := snapSingle1.Snapshot.Items[0]
 	require.Equal(t, network7.ObjGameData, item.TypeId())
 	gameData, ok := item.(*object7.GameData)
 	require.Equal(t, true, ok)
@@ -116,7 +116,7 @@ func TestUnpackDelta(t *testing.T) {
 	require.Equal(t, 1, gameData.FlagsRaw)
 	require.Equal(t, 0, gameData.GameStateEndTick)
 
-	item = msg.Snapshot.Items[1]
+	item = snapSingle1.Snapshot.Items[1]
 	require.Equal(t, network7.ObjCharacter, item.TypeId())
 	character, ok := item.(*object7.Character)
 	require.Equal(t, true, ok)
@@ -144,107 +144,38 @@ func TestUnpackDelta(t *testing.T) {
 	require.Equal(t, 0, character.AttackTick)
 	require.Equal(t, 0, character.TriggeredEvents)
 
-	item = msg.Snapshot.Items[2]
+	item = snapSingle1.Snapshot.Items[2]
 	require.Equal(t, network7.ObjPlayerInfo, item.TypeId())
 	playerInfo, ok := item.(*object7.PlayerInfo)
 	require.Equal(t, 8, playerInfo.PlayerFlags)
 	require.Equal(t, 0, playerInfo.Score)
 	require.Equal(t, 0, playerInfo.Latency)
 
-	// ------------------------------------
-	// client with state and delta unpacker
-	// ------------------------------------
-
-	client := teeworlds7.NewClient()
-
-	deltaTick := msg.GameTick - msg.DeltaTick
-	prevSnap, err := client.SnapshotStorage.Get(deltaTick)
-	require.NoError(t, err)
-
-	u := &packer.Unpacker{}
-	u.Reset(msg.Data)
-
-	newFullSnap, err := snapshot7.UnpackDelata(prevSnap, u)
-	require.NoError(t, err)
-
-	err = client.SnapshotStorage.Add(msg.GameTick, newFullSnap)
-	require.NoError(t, err)
-
-	client.SnapshotStorage.PurgeUntil(deltaTick)
-
 	// Teeworlds 0.7 Protocol packet
-	// Teeworlds 0.7 Protocol chunk: game.sv_game_info
-	//     Header (vital: 9)
-	//         Flags: vital (01.. ....)
-	//         Size: 6 bytes (..00 0000 ..00 0110)
-	//         Sequence number: 9 (00.. .... 0000 1001)
-	//     Message: game.sv_game_info
-	//         .... ...0 = Game message
-	//         Raw message ID: 19
-	//     Game flags: none (0x0)
-	//         .... ...0 = NOT teams
-	//         .... ..0. = NOT flags
-	//         .... .0.. = NOT survival
-	//         .... 0... = NOT race
-	//     Score limit: 20
-	//     Time limit: 0
-	//     Match num: 0
-	//     Match current: 1
-	// Teeworlds 0.7 Protocol chunk: game.sv_client_info
-	//     Header (vital: 10)
-	//         Flags: vital (01.. ....)
-	//         Size: 80 bytes (..00 0001 ..01 0000)
-	//         Sequence number: 10 (00.. .... 0000 1010)
-	//     Message: game.sv_client_info
-	//         .... ...0 = Game message
-	//         Raw message ID: 18
-	//     Client id: 0
-	//     Local: true
-	//     Team: red
-	//     Name: "nameless tee"
-	//     Clan: ""
-	//     Country: 0
-	//     Skin part names: "greensward"
-	//     Skin part names: "duodonny"
-	//     Skin part names: ""
-	//     Skin part names: "standard"
-	//     Skin part names: "standard"
-	//     Skin part names: "standard"
-	//     Use custom colors: false
-	//     Use custom colors: false
-	//     Use custom colors: false
-	//     Use custom colors: false
-	//     Use custom colors: false
-	//     Use custom colors: false
-	//     Skin part colors: 0
-	//     Skin part colors: 0
-	//     Skin part colors: 0
-	//     Skin part colors: 0
-	//     Skin part colors: 0
-	//     Skin part colors: 0
-	//     Silent: false
+	//     Flags: compressed (..01 00..)
+	//     Acknowledged sequence number: 4 (.... ..00 0000 0100)
+	//     Number of chunks: 2
+	//     Token: 01020304
+	//     Compressed payload (66 bytes)
+	// Teeworlds 0.7 Protocol chunk: sys.input_timing
+	//     Header (non-vital)
+	//     Message: sys.input_timing
+	//     Input pred tick: 1300
+	//     Time left: -10
 	// Teeworlds 0.7 Protocol chunk: sys.snap_single
 	//     Header (non-vital)
-	//         Flags: none (00.. ....)
-	//         Size: 53 bytes (..00 0000 ..11 0101)
 	//     Message: sys.snap_single
-	//         .... ...1 = System message
-	//         Raw message ID: 8
-	//     Tick: 1300
-	//     Delta tick: 1301
-	//     Crc: 2205
-	//     Data (45 bytes)
-	dump = []byte{
-		0x10, 0x04, 0x03, 0x01, 0x02, 0x03, 0x04,
-		0x4a, 0x36, 0x4c, 0xed, 0xe1, 0x47, 0xde, 0x6a, 0x3d, 0x8c, 0xd8, 0xb5, 0x73, 0x14, 0x1d,
-		0x71, 0x82, 0x2b, 0xc1, 0x09, 0x74, 0x4a, 0xa7, 0xac, 0xa1, 0x84, 0x13, 0x38, 0xe1, 0x74, 0x0e,
-		0x4e, 0x9c, 0xc0, 0x09, 0xae, 0x9d, 0x4e, 0x15, 0xb7, 0x1c, 0x05, 0x27, 0x4e, 0xcc, 0x89, 0xb6,
-		0xd4, 0x16, 0x71, 0xa2, 0x2d, 0x72, 0xed, 0xae, 0x1d, 0xca, 0xa7, 0x53, 0x28, 0xe1, 0x28, 0xd7,
-		0xce, 0x89, 0x1c, 0x05, 0x27, 0x4e, 0x4c, 0xa7, 0x50, 0xc2, 0x51, 0xae, 0x9d, 0x13, 0x39, 0x0a,
-		0x4e, 0x9c, 0x98, 0x4e, 0xa1, 0x84, 0xa3, 0x5c, 0x3b, 0x27, 0x72, 0x14, 0x9c, 0x38, 0xf1, 0xff,
-		0xcf, 0xd1, 0xa6, 0x0c, 0x78, 0xc5, 0xe0, 0x7d, 0xac, 0xdb, 0xd6, 0x5e, 0x9b, 0xb1, 0x7e, 0x93,
-		0x72, 0x58, 0xef, 0x2b, 0xfd, 0xfa, 0x7a, 0xbc, 0x7f, 0x32, 0xb7, 0x49, 0x39, 0xac, 0xa7, 0xb8,
-		0x01,
+	//     Tick: 1302
+	//     Delta tick: 2
+	//     Crc: 12075
+	//     Data (71 bytes)
+	dumpSnap2 := []byte{
+		0x10, 0x04, 0x02, 0x01, 0x02, 0x03, 0x04,
+		0x3d, 0xdf, 0x0c, 0x78, 0x4a, 0x54, 0x9b, 0x92, 0x01, 0x2f, 0xa8, 0xe7, 0x85, 0xae, 0x46,
+		0xb4, 0x09, 0x80, 0x49, 0xf4, 0x10, 0xd6, 0x37, 0x93, 0x1e, 0x7a, 0xc2, 0x24, 0x0d, 0x93, 0x5e,
+		0xcf, 0xc2, 0x24, 0x1f, 0x93, 0x9e, 0xf0, 0x3c, 0x93, 0x10, 0x93, 0x9e, 0x85, 0x67, 0x37, 0xc9,
+		0xd3, 0xa4, 0xe7, 0xe9, 0x2b, 0x06, 0x1f, 0x03, 0xc1, 0x37, 0x36, 0xdf, 0xa4, 0x1c, 0xd6, 0xfb,
+		0xaf, 0xb8, 0x01,
 	}
 
 	//               13	0.071199	8303	41371	TW7	177	game.sv_game_info, game.sv_client_info, sys.snap_single
@@ -252,18 +183,59 @@ func TestUnpackDelta(t *testing.T) {
 	// 2nd snap ->   15	0.111582	8303	41371	TW7	115	sys.input_timing, sys.snap_single
 
 	packet = protocol7.Packet{}
-	err = packet.Unpack(dump)
+	err = packet.Unpack(dumpSnap2)
 	require.NoError(t, err)
 
-	// WOAH THERE! this should be 2
-	require.Equal(t, 3, len(packet.Messages))
+	require.Equal(t, 2, len(packet.Messages))
 
-	// require.Equal(t, network7.MsgSysSnapSingle, packet.Messages[1].MsgId())
-	// msg, ok = packet.Messages[1].(*messages7.SnapSingle)
-	// require.Equal(t, true, ok)
+	require.Equal(t, true, packet.Messages[0].System())
+	require.Equal(t, network7.MsgSysInputTiming, packet.Messages[0].MsgId())
 
-	// // unverified
-	// require.Equal(t, 000000000, msg.Snapshot.NumItemDeltas)
-	// require.Equal(t, 000000000, msg.Snapshot.NumRemovedItems)
-	// require.Equal(t, 000000000, len(msg.Snapshot.Items))
+	require.Equal(t, true, packet.Messages[1].System())
+	require.Equal(t, network7.MsgSysSnapSingle, packet.Messages[1].MsgId())
+	snapSingle2, ok := packet.Messages[1].(*messages7.SnapSingle)
+	require.Equal(t, true, ok)
+
+	// unverified
+	require.Equal(t, 6, snapSingle2.Snapshot.NumItemDeltas)
+	require.Equal(t, 1, snapSingle2.Snapshot.NumRemovedItems)
+	require.Equal(t, 6, len(snapSingle2.Snapshot.Items))
+
+	// ------------------------------------
+	// client with state and delta unpacker
+	// ------------------------------------
+
+	client := teeworlds7.NewClient()
+
+	// snap1
+	require.Equal(t, 1300, snapSingle1.GameTick)
+	deltaTick := snapSingle1.GameTick - snapSingle1.DeltaTick
+	prevSnap, err := client.SnapshotStorage.Get(deltaTick)
+	require.NoError(t, err)
+
+	u := &packer.Unpacker{}
+	u.Reset(snapSingle1.Data)
+
+	newFullSnap, err := snapshot7.UnpackDelata(prevSnap, u)
+	require.NoError(t, err)
+
+	err = client.SnapshotStorage.Add(snapSingle1.GameTick, newFullSnap)
+	require.NoError(t, err)
+
+	client.SnapshotStorage.PurgeUntil(deltaTick)
+
+	// snap2
+	deltaTick = snapSingle2.GameTick - snapSingle2.DeltaTick
+	prevSnap, err = client.SnapshotStorage.Get(deltaTick)
+	require.NoError(t, err)
+
+	u.Reset(snapSingle2.Data)
+
+	newFullSnap, err = snapshot7.UnpackDelata(prevSnap, u)
+	require.NoError(t, err)
+
+	err = client.SnapshotStorage.Add(snapSingle2.GameTick, newFullSnap)
+	require.NoError(t, err)
+
+	client.SnapshotStorage.PurgeUntil(deltaTick)
 }

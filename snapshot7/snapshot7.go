@@ -86,16 +86,19 @@ func UnpackDelata(from *Snapshot, u *packer.Unpacker) (*Snapshot, error) {
 
 	slog.Info("got new snapshot!", "num_deleted", snap.NumRemovedItems, "num_updates", snap.NumItemDeltas)
 
+	deletedKeys := make([]int, snap.NumRemovedItems)
+	for d := 0; d < snap.NumRemovedItems; d++ {
+		deletedKeys[d] = u.GetInt()
+		slog.Info("delta unpack del key", "key", deletedKeys[d], "d_index", d, "num_deleted", snap.NumRemovedItems, "remaining_data", u.RemainingData())
+	}
+
 	for i := 0; i < len(from.Items); i++ {
 		fromItem := from.Items[i]
 		keep := true
 
-		for d := 0; d < snap.NumRemovedItems; d++ {
-			// fmt.Printf("deleted item key = %d\n", deleted)
-			deleted := u.GetInt()
-			slog.Info("delta unpack del item", "key", deleted, "d_index", d, "num_deleted", snap.NumRemovedItems, "remaining_data", u.RemainingData())
-
-			if deleted == ItemKey(fromItem) {
+		for _, deletedKey := range deletedKeys {
+			if deletedKey == ItemKey(fromItem) {
+				slog.Info("delta del item", "deleted_key", deletedKey, "item_type", fromItem.TypeId(), "item_id", fromItem.Id())
 				keep = false
 				break
 			}
