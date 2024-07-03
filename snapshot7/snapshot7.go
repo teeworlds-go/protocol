@@ -1,6 +1,7 @@
 package snapshot7
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"slices"
@@ -115,12 +116,22 @@ func UndiffItemSlow(oldItem object7.SnapObject, diffItem object7.SnapObject) obj
 
 // the key is one integer holding both type and id
 func (snap *Snapshot) GetItemAtKey(key int) *object7.SnapObject {
-	for _, i := range snap.Items {
-		if key == ItemKey(i) {
-			return &i
+	for _, item := range snap.Items {
+		if key == ItemKey(item) {
+			return &item
 		}
 	}
 	return nil
+}
+
+// the key is one integer holding both type and id
+func (snap *Snapshot) GetItemIndex(key int) (int, error) {
+	for i, item := range snap.Items {
+		if key == ItemKey(item) {
+			return i, nil
+		}
+	}
+	return 0, errors.New("not found")
 }
 
 // from has to be the old snapshot we delta against
@@ -139,12 +150,12 @@ func UnpackDelata(from *Snapshot, u *packer.Unpacker) (*Snapshot, error) {
 	snap.NumItemDeltas = u.GetInt()
 	u.GetInt() // _zero
 
-	slog.Info("got new snapshot!", "num_deleted", snap.NumRemovedItems, "num_updates", snap.NumItemDeltas)
+	slog.Debug("got new snapshot!", "num_deleted", snap.NumRemovedItems, "num_updates", snap.NumItemDeltas)
 
 	deletedKeys := make([]int, snap.NumRemovedItems)
 	for d := 0; d < snap.NumRemovedItems; d++ {
 		deletedKeys[d] = u.GetInt()
-		slog.Info("delta unpack del key", "key", deletedKeys[d], "d_index", d, "num_deleted", snap.NumRemovedItems, "remaining_data", u.RemainingData())
+		slog.Debug("delta unpack del key", "key", deletedKeys[d], "d_index", d, "num_deleted", snap.NumRemovedItems, "remaining_data", u.RemainingData())
 	}
 
 	for i := 0; i < len(from.Items); i++ {
@@ -153,7 +164,7 @@ func UnpackDelata(from *Snapshot, u *packer.Unpacker) (*Snapshot, error) {
 
 		for _, deletedKey := range deletedKeys {
 			if deletedKey == ItemKey(fromItem) {
-				slog.Info("delta del item", "deleted_key", deletedKey, "item_type", fromItem.TypeId(), "item_id", fromItem.Id())
+				slog.Debug("delta del item", "deleted_key", deletedKey, "item_type", fromItem.TypeId(), "item_id", fromItem.Id())
 				keep = false
 				break
 			}
@@ -178,17 +189,18 @@ func UnpackDelata(from *Snapshot, u *packer.Unpacker) (*Snapshot, error) {
 
 		key := (itemType << 16) | (itemId & 0xffff)
 		oldItem := from.GetItemAtKey(key)
-		fmt.Printf("old %v\n", oldItem)
-		fmt.Printf("new %v\n", item)
 
-		// TODO: this can be done better. there is already an if statement in UndiffItemSlow
 		if oldItem == nil {
-			item = UndiffItemSlow(nil, item)
+			snap.Items = append(snap.Items, item)
 		} else {
 			item = UndiffItemSlow(*oldItem, item)
+			idx, err := snap.GetItemIndex(key)
+			if err != nil {
+				// TODO: the error message is bogus and it should also not panic
+				panic("tried to update item that was not found")
+			}
+			snap.Items[idx] = item
 		}
-
-		snap.Items = append(snap.Items, item)
 	}
 
 	if u.RemainingSize() > 0 {
