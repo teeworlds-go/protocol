@@ -1,6 +1,4 @@
-# protocol
-
-# WARNING! NOT READY TO BE USED YET! Apis might change. Packages and repository might be renamed!
+# teeworlds 0.7 protocol library for go
 
 A client side network protocol implementation of the game teeworlds.
 
@@ -12,7 +10,10 @@ The package **teeworlds7** implements a high level client library. Designed for 
 package main
 
 import (
+	"fmt"
+
 	"github.com/teeworlds-go/protocol/messages7"
+	"github.com/teeworlds-go/protocol/snapshot7"
 	"github.com/teeworlds-go/protocol/teeworlds7"
 )
 
@@ -31,6 +32,14 @@ func main() {
 			// Send reply in chat using the SendChat() action
 			// For a full list of all actions see: https://github.com/teeworlds-go/protocol/tree/master/teeworlds7/user_actions.go
 			client.SendChat("pong")
+		}
+	})
+
+	client.OnSnapshot(func(snap *snapshot7.Snapshot, defaultAction teeworlds7.DefaultAction) {
+		fmt.Printf("got snap with %d items\n", len(snap.Items))
+
+		for _, character := range client.Game.Snap.Characters {
+			fmt.Printf("  got tee at %.2f %.2f\n", float32(character.X)/32.0, float32(character.Y)/32.0)
 		}
 	})
 

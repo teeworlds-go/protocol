@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"slices"
 
 	"github.com/teeworlds-go/protocol/network7"
 	"github.com/teeworlds-go/protocol/object7"
@@ -63,23 +62,26 @@ func ItemKey(o object7.SnapObject) int {
 // TODO: this is horrible
 func GetItemPayload(o object7.SnapObject) []int {
 	data := o.Pack()
-	// nasty reverse hack
-	// to read backwards Size() items
-	// which then supports the race extenion items
-	// that have an additional size field in their header
 
-	// TODO: at least get rid of the two calls to reverse
-	//       and use a smarter for loop instead
-	slices.Reverse(data)
-
-	ints := make([]int, o.Size())
+	// the + 3 are type, id and size
+	ints := make([]int, o.Size()+3)
 	u := &packer.Unpacker{}
 	u.Reset(data)
-	for i := 0; i < o.Size(); i++ {
+	offset := 3
+	for i := 0; i < o.Size()+3; i++ {
+		if u.RemainingSize() == 0 {
+			// this is some hack to identify
+			// items with additional size field
+			// if we run out of data
+			// we just assume there was no size field
+			// and then we only cut off
+			// type and id to get the payload
+			offset = 2
+			break
+		}
 		ints[i] = u.GetInt()
 	}
-	slices.Reverse(ints)
-	return ints
+	return ints[offset:]
 }
 
 // TODO: don't undiff items the slowest possible way
@@ -99,11 +101,11 @@ func UndiffItemSlow(oldItem object7.SnapObject, diffItem object7.SnapObject) obj
 
 	oldPayload := GetItemPayload(oldItem)
 	diffPayload := GetItemPayload(diffItem)
-
 	newPayload := []byte{}
 
 	for i := 0; i < oldItem.Size(); i++ {
-		newPayload = append(newPayload, packer.PackInt(oldPayload[i]+diffPayload[i])...)
+		diffApplied := oldPayload[i] + diffPayload[i]
+		newPayload = append(newPayload, packer.PackInt(diffApplied)...)
 	}
 
 	u := &packer.Unpacker{}
@@ -241,7 +243,7 @@ func (snap *Snapshot) Unpack(u *packer.Unpacker) error {
 
 	for i := 0; i < snap.NumRemovedItems; i++ {
 		deleted := u.GetInt()
-		fmt.Printf("deleted item key = %d\n", deleted)
+		slog.Debug("deleted item", "key", deleted)
 
 		// TODO: don't copy those from the delta snapshot
 	}

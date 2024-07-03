@@ -3,7 +3,6 @@ package teeworlds7
 import (
 	"log"
 	"net"
-	"time"
 
 	"github.com/teeworlds-go/protocol/messages7"
 	"github.com/teeworlds-go/protocol/protocol7"
@@ -40,9 +39,6 @@ type Client struct {
 
 	// old snapshots used to unpack new deltas
 	SnapshotStorage *snapshot7.Storage
-
-	// for snapshot syncing
-	LastPredTime *time.Time
 
 	// teeworlds game state
 	Game Game

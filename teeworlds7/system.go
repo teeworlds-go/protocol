@@ -104,7 +104,7 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 		})
 	case *messages7.InputTiming:
 		userMsgCallback(client.Callbacks.SysInputTiming, msg, func() {
-			fmt.Printf("timing time left=%d\n", msg.TimeLeft)
+			// fmt.Printf("timing time left=%d\n", msg.TimeLeft)
 		})
 	case *messages7.RconAuthOn:
 		userMsgCallback(client.Callbacks.SysRconAuthOn, msg, func() {
