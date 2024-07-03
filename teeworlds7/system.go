@@ -60,7 +60,7 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 	case *messages7.SnapSingle:
 		userMsgCallback(client.Callbacks.SysSnapSingle, msg, func() {
 			deltaTick := msg.GameTick - msg.DeltaTick
-			fmt.Printf("delta=%d msgdeltaa=%d gametick=%d\n", deltaTick, msg.DeltaTick, msg.GameTick)
+			slog.Debug("got snap single", "delta_tick", deltaTick, "raw_delta_tick", msg.DeltaTick, "game_tick", msg.GameTick)
 			prevSnap, err := client.SnapshotStorage.Get(deltaTick)
 
 			if err != nil {
@@ -94,8 +94,7 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 
 			client.Game.Input.AckGameTick = msg.GameTick
 			client.Game.Input.PredictionTick = client.SnapshotStorage.NewestTick
-
-			fmt.Printf("set client.Game.Input.AckGameTick to %d\n", client.Game.Input.AckGameTick)
+			client.Game.Snap.fill(newFullSnap)
 
 			response.Messages = append(response.Messages, client.Game.Input)
 		})

@@ -16,6 +16,7 @@ type Player struct {
 
 type Game struct {
 	Players []Player
+	Snap    *GameSnap
 	Input   *messages7.Input
 }
 
@@ -50,6 +51,7 @@ type Client struct {
 func NewClient() *Client {
 	client := &Client{}
 	client.SnapshotStorage = snapshot7.NewStorage()
+	client.Game.Snap = &GameSnap{}
 	client.Game.Input = &messages7.Input{}
 	return client
 }
