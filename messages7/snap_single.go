@@ -57,7 +57,13 @@ func (msg *SnapSingle) Unpack(u *packer.Unpacker) error {
 	msg.DeltaTick = u.GetInt()
 	msg.Crc = u.GetInt()
 	msg.PartSize = u.GetInt()
-	msg.Data = u.Rest()
+	// do not consume data it
+	// will be consumed in msg.Snapshot.Unpack(u)
+	// TODO: is that safe without clone?
+	//       do we have two references to the same slice now?
+	//       sounds scary and performant
+	//       and should work because the unpacker is read only
+	msg.Data = u.RemainingData()
 
 	// TODO: should this be optional?
 	//       there is also snapshot7.UnpackDelta
@@ -76,8 +82,6 @@ func (msg *SnapSingle) Unpack(u *packer.Unpacker) error {
 	//       and it is nice to have unit tests that only look at one packet
 	//       without any deltas
 
-	// genius
-	u.Reset(msg.Data)
 	err := msg.Snapshot.Unpack(u)
 	if err != nil {
 		return err
