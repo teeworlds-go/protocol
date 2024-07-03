@@ -3,6 +3,7 @@ package snapshot7
 import (
 	"fmt"
 	"log/slog"
+	"slices"
 
 	"github.com/teeworlds-go/protocol/network7"
 	"github.com/teeworlds-go/protocol/object7"
@@ -56,6 +57,60 @@ func CrcItem(o object7.SnapObject) int {
 
 func ItemKey(o object7.SnapObject) int {
 	return (o.TypeId() << 16) | (o.Id() & 0xffff)
+}
+
+// TODO: this is horrible
+func GetItemPayload(o object7.SnapObject) []int {
+	data := o.Pack()
+	// nasty reverse hack
+	// to read backwards Size() items
+	// which then supports the race extenion items
+	// that have an additional size field in their header
+
+	// TODO: at least get rid of the two calls to reverse
+	//       and use a smarter for loop instead
+	slices.Reverse(data)
+
+	ints := make([]int, o.Size())
+	u := &packer.Unpacker{}
+	u.Reset(data)
+	for i := 0; i < o.Size(); i++ {
+		ints[i] = u.GetInt()
+	}
+	slices.Reverse(ints)
+	return ints
+}
+
+// TODO: don't undiff items the slowest possible way
+//
+//	there should be way to do it like the C++ implementation
+//	which does no unpacking or repacking before applying the diff
+func UndiffItemSlow(oldItem object7.SnapObject, diffItem object7.SnapObject) object7.SnapObject {
+	if oldItem == nil {
+		return diffItem
+	}
+	if oldItem.TypeId() != diffItem.TypeId() {
+		panic("can not diff items of different type")
+	}
+	if oldItem.Size() != diffItem.Size() {
+		panic("can not diff items of different sizes")
+	}
+
+	oldPayload := GetItemPayload(oldItem)
+	diffPayload := GetItemPayload(diffItem)
+
+	newPayload := []byte{}
+
+	for i := 0; i < oldItem.Size(); i++ {
+		newPayload = append(newPayload, packer.PackInt(oldPayload[i]+diffPayload[i])...)
+	}
+
+	u := &packer.Unpacker{}
+	u.Reset(newPayload)
+
+	oldItem.Unpack(u)
+
+	return oldItem
 }
 
 // the key is one integer holding both type and id
@@ -121,9 +176,19 @@ func UnpackDelata(from *Snapshot, u *packer.Unpacker) (*Snapshot, error) {
 			return nil, err
 		}
 
-		snap.Items = append(snap.Items, item)
+		key := (itemType << 16) | (itemId & 0xffff)
+		oldItem := from.GetItemAtKey(key)
+		fmt.Printf("old %v\n", oldItem)
+		fmt.Printf("new %v\n", item)
 
-		// TODO: update old items
+		// TODO: this can be done better. there is already an if statement in UndiffItemSlow
+		if oldItem == nil {
+			item = UndiffItemSlow(nil, item)
+		} else {
+			item = UndiffItemSlow(*oldItem, item)
+		}
+
+		snap.Items = append(snap.Items, item)
 	}
 
 	if u.RemainingSize() > 0 {
