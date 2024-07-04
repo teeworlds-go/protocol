@@ -112,8 +112,55 @@ func (client *Client) SendMessage(msg messages7.NetMessage) {
 //
 //	client.Game.Input.Direction = -1
 //	client.SendInput()
+//
+// see also:
+//
+//	Right()
+//	Left()
+//	Stop()
+//	Jump()
+//	Fire()
+//	Hook()
+//	Aim(x, y)
 func (client *Client) SendInput() {
 	client.SendMessage(client.Game.Input)
+}
+
+func (client *Client) Right() {
+	client.Game.Input.Direction = 1
+	client.SendInput()
+}
+
+func (client *Client) Left() {
+	client.Game.Input.Direction = -1
+	client.SendInput()
+}
+
+func (client *Client) Stop() {
+	client.Game.Input.Direction = 0
+	client.SendInput()
+}
+
+func (client *Client) Jump() {
+	client.Game.Input.Jump = 1
+	client.SendInput()
+}
+
+func (client *Client) Hook() {
+	client.Game.Input.Hook = 1
+	client.SendInput()
+}
+
+func (client *Client) Fire() {
+	// TODO: fire is weird do we ever have to reset or mask it or something?
+	client.Game.Input.Fire++
+	client.SendInput()
+}
+
+func (client *Client) Aim(x int, y int) {
+	client.Game.Input.TargetX = x
+	client.Game.Input.TargetY = y
+	client.SendInput()
 }
 
 // see also SendWhisper()
