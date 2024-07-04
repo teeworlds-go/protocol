@@ -1,11 +1,32 @@
 package snapshot7_test
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/teeworlds-go/protocol/internal/testutils/require"
 	"github.com/teeworlds-go/protocol/snapshot7"
 )
+
+func TestMultiPartStorage(t *testing.T) {
+	t.Parallel()
+
+	storage := snapshot7.NewStorage()
+	err := storage.AddIncomingData(0, 2, []byte{0xaa, 0xbb})
+	require.NotNil(t, err)
+
+	err = storage.AddIncomingData(0, 1, []byte{0xff, 0xdd})
+	require.NoError(t, err)
+	require.Equal(t, []byte{0xff, 0xdd}, storage.IncomingData())
+
+	zeros := []byte{899: 0}
+	err = storage.AddIncomingData(0, 2, zeros)
+	require.NoError(t, err)
+	require.Equal(t, zeros, storage.IncomingData())
+	err = storage.AddIncomingData(1, 2, zeros)
+	require.NoError(t, err)
+	require.Equal(t, slices.Concat(zeros, zeros), storage.IncomingData())
+}
 
 func TestStorage(t *testing.T) {
 	t.Parallel()

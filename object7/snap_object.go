@@ -98,6 +98,7 @@ func NewObject(typeId int, itemId int, u *packer.Unpacker) SnapObject {
 	unknown := &Unknown{
 		ItemId:   itemId,
 		ItemType: typeId,
+		ItemSize: u.GetInt(),
 	}
 	return unknown
 }

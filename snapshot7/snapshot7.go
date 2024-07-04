@@ -11,10 +11,11 @@ import (
 )
 
 const (
-	MaxType  = 0x7fff
-	MaxId    = 0xffff
-	MaxParts = 64
-	MaxSize  = MaxParts * 1024
+	MaxType     = 0x7fff
+	MaxId       = 0xffff
+	MaxParts    = 64
+	MaxSize     = MaxParts * 1024
+	MaxPackSize = 900
 )
 
 type Snapshot struct {
@@ -233,13 +234,9 @@ func UnpackDelata(from *Snapshot, u *packer.Unpacker) (*Snapshot, error) {
 //
 // See also snapshot7.UnpackDelta()
 func (snap *Snapshot) Unpack(u *packer.Unpacker) error {
-	// TODO: add all the error checking the C++ reference implementation has
-
 	snap.NumRemovedItems = u.GetInt()
 	snap.NumItemDeltas = u.GetInt()
 	u.GetInt() // _zero
-
-	// TODO: copy non deleted items from a delta snapshot
 
 	for i := 0; i < snap.NumRemovedItems; i++ {
 		deleted := u.GetInt()
@@ -252,8 +249,6 @@ func (snap *Snapshot) Unpack(u *packer.Unpacker) error {
 		itemType := u.GetInt()
 		itemId := u.GetInt()
 
-		slog.Debug("unpack item snap item ", "num", i, "total", snap.NumItemDeltas, "type", itemType, "id", itemId)
-
 		item := object7.NewObject(itemType, itemId, u)
 		err := item.Unpack(u)
 		if err != nil {
@@ -261,8 +256,6 @@ func (snap *Snapshot) Unpack(u *packer.Unpacker) error {
 		}
 
 		snap.Items = append(snap.Items, item)
-
-		// TODO: update old items
 	}
 
 	if u.RemainingSize() > 0 {

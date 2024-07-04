@@ -27,6 +27,11 @@ type Storage struct {
 	holder     map[int]*holder
 	OldestTick int
 	NewestTick int
+
+	// use to store and concatinate data
+	// of multi part snapshots
+	// use AddIncomingData() and IncomingData() to read and write
+	multiPartIncomingData []byte
 }
 
 func NewStorage() *Storage {
@@ -34,7 +39,33 @@ func NewStorage() *Storage {
 	s.holder = make(map[int]*holder)
 	s.OldestTick = -1
 	s.NewestTick = -1
+	s.multiPartIncomingData = make([]byte, 0, MaxSize)
 	return s
+}
+func (s *Storage) AddIncomingData(part int, numParts int, data []byte) error {
+	if part == 0 {
+		// reset length if we get a new snapshot
+		s.multiPartIncomingData = s.multiPartIncomingData[:0]
+	}
+	if part != numParts-1 {
+		// a snapshot payload can be 900 at most
+		// so unless it is the last part it should fill
+		// all 900 bytes
+		if len(data) != MaxPackSize {
+			return fmt.Errorf("part=%d num_parts=%d expected_size=900 got_size=%d", part, numParts, len(data))
+		}
+	}
+	if len(s.multiPartIncomingData)+len(data) > MaxSize {
+		return errors.New("reached the maximum amount of snapshot data")
+	}
+
+	s.multiPartIncomingData = append(s.multiPartIncomingData, data...)
+
+	return nil
+}
+
+func (s *Storage) IncomingData() []byte {
+	return s.multiPartIncomingData
 }
 
 func (s *Storage) First() (*Snapshot, error) {

@@ -45,7 +45,6 @@ func (o *Unknown) Pack() []byte {
 }
 
 func (o *Unknown) Unpack(u *packer.Unpacker) error {
-	o.ItemSize = u.GetInt()
 	o.Fields = make([]int, o.Size())
 
 	for i := 0; i < o.Size(); i++ {

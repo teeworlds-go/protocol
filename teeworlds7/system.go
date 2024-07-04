@@ -55,7 +55,61 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 		})
 	case *messages7.Snap:
 		userMsgCallback(client.Callbacks.SysSnap, msg, func() {
-			response.Messages = append(response.Messages, &messages7.CtrlKeepAlive{})
+			deltaTick := msg.GameTick - msg.DeltaTick
+			slog.Debug("got snap", "delta_tick", deltaTick, "raw_delta_tick", msg.DeltaTick, "game_tick", msg.GameTick, "part", msg.Part, "num_parts", msg.NumParts)
+
+			err := client.SnapshotStorage.AddIncomingData(msg.Part, msg.NumParts, msg.Data)
+			if err != nil {
+				// TODO: dont panic
+				panic(err)
+			}
+
+			// TODO: this is as naive as it gets
+			//       we should check if we actually received all the previous parts
+			//       teeworlds does some fancy bit stuff here
+			//       m_SnapshotParts |= 1<<Part;
+			if msg.Part != msg.NumParts-1 {
+				// TODO: remove this print
+				slog.Info("storing partial snap", "part", msg.Part, "num_parts", msg.NumParts)
+				return
+			}
+
+			prevSnap, err := client.SnapshotStorage.Get(deltaTick)
+
+			if err != nil {
+				// couldn't find the delta snapshots that the server used
+				// to compress this snapshot. force the server to resync
+				slog.Error("error, couldn't find the delta snapshot", "error", err)
+
+				// ack snapshot
+				// TODO:
+				// m_AckGameTick = -1;
+				return
+			}
+
+			u := &packer.Unpacker{}
+			u.Reset(client.SnapshotStorage.IncomingData())
+
+			newFullSnap, err := snapshot7.UnpackDelata(prevSnap, u)
+			if err != nil {
+				slog.Error("delta unpack failed!", "error", err)
+				return
+			}
+			err = client.SnapshotStorage.Add(msg.GameTick, newFullSnap)
+			if err != nil {
+				slog.Error("failed to store snap", "error", err)
+			}
+			client.SnapshotStorage.PurgeUntil(deltaTick)
+
+			for _, callback := range client.Callbacks.Snapshot {
+				callback(newFullSnap, func() {})
+			}
+
+			client.Game.Input.AckGameTick = msg.GameTick
+			client.Game.Input.PredictionTick = client.SnapshotStorage.NewestTick
+			client.Game.Snap.fill(newFullSnap)
+
+			response.Messages = append(response.Messages, client.Game.Input)
 		})
 	case *messages7.SnapSingle:
 		userMsgCallback(client.Callbacks.SysSnapSingle, msg, func() {
