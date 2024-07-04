@@ -100,7 +100,39 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 		})
 	case *messages7.SnapEmpty:
 		userMsgCallback(client.Callbacks.SysSnapEmpty, msg, func() {
-			response.Messages = append(response.Messages, &messages7.CtrlKeepAlive{})
+			deltaTick := msg.GameTick - msg.DeltaTick
+			slog.Debug("got snap empty", "delta_tick", deltaTick, "raw_delta_tick", msg.DeltaTick, "game_tick", msg.GameTick)
+			prevSnap, err := client.SnapshotStorage.Get(deltaTick)
+
+			if err != nil {
+				// couldn't find the delta snapshots that the server used
+				// to compress this snapshot. force the server to resync
+				slog.Error("error, couldn't find the delta snapshot", "error", err)
+
+				// ack snapshot
+				// TODO:
+				// m_AckGameTick = -1;
+				return
+			}
+
+			err = client.SnapshotStorage.Add(msg.GameTick, prevSnap)
+			if err != nil {
+				slog.Error("failed to store snap", "error", err)
+			}
+			client.SnapshotStorage.PurgeUntil(deltaTick)
+
+			for _, callback := range client.Callbacks.Snapshot {
+				callback(prevSnap, func() {})
+			}
+
+			client.Game.Input.AckGameTick = msg.GameTick
+			client.Game.Input.PredictionTick = client.SnapshotStorage.NewestTick
+			// blazingly fast empty snaps
+			// reuse the old game state
+			// there is no need to refill if it is the same snapshot anyways
+			// client.Game.Snap.fill(prevSnap)
+
+			response.Messages = append(response.Messages, client.Game.Input)
 		})
 	case *messages7.InputTiming:
 		userMsgCallback(client.Callbacks.SysInputTiming, msg, func() {

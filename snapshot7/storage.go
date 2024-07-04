@@ -7,6 +7,10 @@ import (
 	"sort"
 )
 
+const (
+	EmptySnapTick = -1
+)
+
 // TODO: do we even need this?
 //
 //	can we just put the snap as is in the map?
@@ -121,7 +125,7 @@ func (s *Storage) PreviousTick(tick int) int {
 }
 
 func (s *Storage) Get(tick int) (*Snapshot, error) {
-	if tick == -1 {
+	if tick == EmptySnapTick {
 		// -1 is the magic value for the empty snapshot
 		return &Snapshot{}, nil
 	}
