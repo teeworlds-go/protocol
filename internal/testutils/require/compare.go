@@ -10,35 +10,42 @@ import (
 func GreaterOrEqual(t *testing.T, expected, actual any, msgAndArgs ...any) {
 	t.Helper()
 
-	if compare(t, expected, actual) < 0 {
-		FailNow(t, fmt.Sprintf("expected: %v to be greater or equal to: %v", expected, actual), msgAndArgs...)
+	if compare(t, actual, expected) < 0 {
+		FailNow(t, fmt.Sprintf("expected actual value: %v to be greater or equal to: %v", actual, expected), msgAndArgs...)
 	}
 }
 
 func Greater(t *testing.T, expected, actual any, msgAndArgs ...any) {
 	t.Helper()
 
-	if compare(t, expected, actual) <= 0 {
-		FailNow(t, fmt.Sprintf("expected: %v to be greater than: %v", expected, actual), msgAndArgs...)
+	if compare(t, actual, expected) <= 0 {
+		FailNow(t, fmt.Sprintf("expected actual value: %v to be greater than: %v", actual, expected), msgAndArgs...)
 	}
 }
 
 func LessOrEqual(t *testing.T, expected, actual any, msgAndArgs ...any) {
 	t.Helper()
 
-	if compare(t, expected, actual) > 0 {
-		FailNow(t, fmt.Sprintf("expected: %v to be less or equal to: %v", expected, actual), msgAndArgs...)
+	if compare(t, actual, expected) > 0 {
+		FailNow(t, fmt.Sprintf("expected actual value: %v to be less or equal to: %v", actual, expected), msgAndArgs...)
 	}
 }
 
 func Less(t *testing.T, expected, actual any, msgAndArgs ...any) {
 	t.Helper()
 
-	if compare(t, expected, actual) >= 0 {
-		FailNow(t, fmt.Sprintf("expected: %v to be less than: %v", expected, actual), msgAndArgs...)
+	if compare(t, actual, expected) >= 0 {
+		FailNow(t, fmt.Sprintf("expected actual value: %v to be less than: %v", actual, expected), msgAndArgs...)
 	}
 }
 
+// compare returns
+//
+// -1 if expected is less than actual,
+//
+//	0 if expected equals actual,
+//
+// +1 if expected is greater than actual.
 func compare(t *testing.T, expected, actual any) int {
 	t.Helper()
 
