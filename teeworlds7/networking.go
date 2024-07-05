@@ -78,7 +78,7 @@ func (client *Client) Connect(serverIp string, serverPort int) {
 				client.throwError(err)
 			}
 		default:
-			// do nothing
+			client.gameTick()
 		}
 	}
 }

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"slices"
 	"sort"
+
+	"github.com/teeworlds-go/protocol/object7"
 )
 
 const (
@@ -16,6 +18,7 @@ const (
 //	can we just put the snap as is in the map?
 type holder struct {
 	snap *Snapshot
+	tick int
 }
 
 // TODO: do we need this at all?
@@ -24,8 +27,22 @@ type holder struct {
 //	data structure
 //	but in golang users could just define their own map
 type Storage struct {
-	holder     map[int]*holder
+	// a backlog of a few snapshots
+	// kept to unpack new deltas sent by the server
+	holder map[int]*holder
+
+	// the alt snap is the snapshot
+	// that should be used for everything gameplay related
+	// it is the snapshot of the current predicton tick
+	// and invalid items were already filtered out
+	// TODO: add prediction ticks and item validation
+	altSnap holder
+
+	// oldest tick still in the holder
+	// not the oldest tick we ever received
 	OldestTick int
+
+	// newest tick in the holder
 	NewestTick int
 
 	// use to store and concatinate data
@@ -42,6 +59,32 @@ func NewStorage() *Storage {
 	s.multiPartIncomingData = make([]byte, 0, MaxSize)
 	return s
 }
+
+func (s *Storage) AltSnap() (*Snapshot, error) {
+	if s.altSnap.snap == nil {
+		return nil, errors.New("there is no alt snap in the storage")
+	}
+	return s.altSnap.snap, nil
+}
+
+func (s *Storage) SetAltSnap(tick int, snap *Snapshot) {
+	s.altSnap.snap = snap
+	s.altSnap.tick = tick
+}
+
+func (s *Storage) FindAltSnapItem(typeId int, itemId int) (object7.SnapObject, error) {
+	altSnap, err := s.AltSnap()
+	if err != nil {
+		return nil, err
+	}
+	key := (typeId << 16) | (itemId & 0xffff)
+	item := altSnap.GetItemAtKey(key)
+	if item == nil {
+		return nil, errors.New("item not found")
+	}
+	return *item, nil
+}
+
 func (s *Storage) AddIncomingData(part int, numParts int, data []byte) error {
 	if part == 0 {
 		// reset length if we get a new snapshot

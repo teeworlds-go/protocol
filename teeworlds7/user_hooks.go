@@ -10,6 +10,10 @@ import (
 // special cases
 // --------------------------------
 
+func (client *Client) OnTick(callback func(defaultAction DefaultAction)) {
+	client.Callbacks.Tick = append(client.Callbacks.Tick, callback)
+}
+
 // if not implemented by the user the application might throw and exit
 //
 // return false to drop the error

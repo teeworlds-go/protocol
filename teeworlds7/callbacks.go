@@ -37,6 +37,8 @@ func userMsgCallback[T any](userCallbacks []func(T, DefaultAction), msg T, defau
 // // key is the network7.MessageId
 // UserMsgCallbacks map[int]UserMsgCallback
 type UserMsgCallbacks struct {
+	Tick []func(DefaultAction)
+
 	// return false to drop the packet
 	PacketIn []func(*protocol7.Packet) bool
 

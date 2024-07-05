@@ -108,6 +108,7 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 			client.Game.Input.AckGameTick = msg.GameTick
 			client.Game.Input.PredictionTick = client.SnapshotStorage.NewestTick
 			client.Game.Snap.fill(newFullSnap)
+			client.SnapshotStorage.SetAltSnap(msg.GameTick, newFullSnap)
 
 			response.Messages = append(response.Messages, client.Game.Input)
 		})
@@ -149,7 +150,9 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 			client.Game.Input.AckGameTick = msg.GameTick
 			client.Game.Input.PredictionTick = client.SnapshotStorage.NewestTick
 			client.Game.Snap.fill(newFullSnap)
+			client.SnapshotStorage.SetAltSnap(msg.GameTick, newFullSnap)
 
+			client.SendInput()
 			response.Messages = append(response.Messages, client.Game.Input)
 		})
 	case *messages7.SnapEmpty:

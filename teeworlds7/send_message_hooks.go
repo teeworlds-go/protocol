@@ -2,6 +2,7 @@ package teeworlds7
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/teeworlds-go/protocol/messages7"
 )
@@ -122,6 +123,8 @@ func (client *Client) registerMessagesCallbacks(messages []messages7.NetMessage)
 			if userSendMsgCallback(client.Callbacks.SysInputOut, castMsg) == false {
 				continue
 			}
+			client.Game.LastSentInput = *castMsg
+			client.LastInputSend = time.Now()
 		case *messages7.RconCmd:
 			if userSendMsgCallback(client.Callbacks.SysRconCmdOut, castMsg) == false {
 				continue

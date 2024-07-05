@@ -2,6 +2,7 @@ package teeworlds7
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/teeworlds-go/protocol/messages7"
 	"github.com/teeworlds-go/protocol/network7"
@@ -80,6 +81,7 @@ func (client *Client) SendPacket(packet *protocol7.Packet) error {
 		}
 	}
 
+	client.LastSend = time.Now()
 	client.Conn.Write(packet.Pack(&client.Session))
 	return nil
 }
@@ -128,39 +130,39 @@ func (client *Client) SendInput() {
 
 func (client *Client) Right() {
 	client.Game.Input.Direction = 1
-	client.SendInput()
+	// client.SendInput()
 }
 
 func (client *Client) Left() {
 	client.Game.Input.Direction = -1
-	client.SendInput()
+	// client.SendInput()
 }
 
 func (client *Client) Stop() {
 	client.Game.Input.Direction = 0
-	client.SendInput()
+	// client.SendInput()
 }
 
 func (client *Client) Jump() {
 	client.Game.Input.Jump = 1
-	client.SendInput()
+	// client.SendInput()
 }
 
 func (client *Client) Hook() {
 	client.Game.Input.Hook = 1
-	client.SendInput()
+	// client.SendInput()
 }
 
 func (client *Client) Fire() {
 	// TODO: fire is weird do we ever have to reset or mask it or something?
 	client.Game.Input.Fire++
-	client.SendInput()
+	// client.SendInput()
 }
 
 func (client *Client) Aim(x int, y int) {
 	client.Game.Input.TargetX = x
 	client.Game.Input.TargetY = y
-	client.SendInput()
+	// client.SendInput()
 }
 
 // see also SendWhisper()
@@ -197,4 +199,8 @@ func (client *Client) SendWhisper(targetId int, msg string) {
 			TargetId: targetId,
 		},
 	)
+}
+
+func (client *Client) SendKeepAlive() {
+	client.SendMessage(&messages7.CtrlKeepAlive{})
 }

@@ -32,6 +32,9 @@ func (client *Client) processGame(netMsg messages7.NetMessage, response *protoco
 	case *messages7.SvClientInfo:
 		userMsgCallback(client.Callbacks.GameSvClientInfo, msg, func() {
 			client.Game.Players[msg.ClientId].Info = *msg
+			if msg.Local {
+				client.LocalClientId = msg.ClientId
+			}
 			fmt.Printf("got client info id=%d name=%s\n", msg.ClientId, msg.Name)
 		})
 	case *messages7.SvReadyToEnter:
