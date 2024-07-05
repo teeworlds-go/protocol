@@ -41,6 +41,12 @@ func main() {
 		for _, character := range client.Game.Snap.Characters {
 			fmt.Printf("  got tee at %.2f %.2f\n", float32(character.X)/32.0, float32(character.Y)/32.0)
 		}
+
+		char, err := client.SnapFindCharacter(client.LocalClientId)
+		if err == nil {
+			fmt.Printf("  we are at %d %d\n", char.X/32, char.Y/32)
+			client.Right()
+		}
 	})
 
 	client.Connect("127.0.0.1", 8303)
