@@ -149,8 +149,11 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 
 			client.Game.Input.AckGameTick = msg.GameTick
 			client.Game.Input.PredictionTick = client.SnapshotStorage.NewestTick
-			client.Game.Snap.fill(newFullSnap)
-			client.SnapshotStorage.SetAltSnap(msg.GameTick, newFullSnap)
+
+			// altSnap := client.CreateAltSnap(prevSnap, newFullSnap)
+			altSnap := newFullSnap
+			client.Game.Snap.fill(altSnap)
+			client.SnapshotStorage.SetAltSnap(msg.GameTick, altSnap)
 
 			client.SendInput()
 			response.Messages = append(response.Messages, client.Game.Input)

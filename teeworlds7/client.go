@@ -58,6 +58,10 @@ type Client struct {
 }
 
 // TODO: add this for all items and move it to a different file
+//
+//	this would be more useful to have on the Snapshot struct directly
+//	so it can be used everywhere not only in a client
+//	and the client then can just wrap it to acces the alt snap
 func (client *Client) SnapFindCharacter(ClientId int) (*object7.Character, error) {
 	item, err := client.SnapshotStorage.FindAltSnapItem(network7.ObjCharacter, ClientId)
 	if err != nil {
