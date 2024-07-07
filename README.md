@@ -64,4 +64,5 @@ The packages **chunk7, messages7, network7, packer, protocol7** Implement the lo
 ## projects using protocol
 
 - [MITM teeworlds proxy](https://github.com/teeworlds-go/proxy)
+- [goofworlds gui client](https://github.com/teeworlds-go/goofworlds)
 
