@@ -160,7 +160,7 @@ func (s *Storage) First() (snap *Snapshot, found bool) {
 	if s.oldestTick == UninitializedTick {
 		return nil, false
 	}
-	return s.Get(s.oldestTick)
+	return s.get(s.oldestTick)
 }
 
 func (s *Storage) Last() (snap *Snapshot, found bool) {
@@ -170,7 +170,7 @@ func (s *Storage) Last() (snap *Snapshot, found bool) {
 	if s.newestTick == UninitializedTick {
 		return nil, false
 	}
-	return s.Get(s.newestTick)
+	return s.get(s.newestTick)
 }
 
 func (s *Storage) PurgeUntil(tick int) {
@@ -262,6 +262,10 @@ func (s *Storage) previousTick(tick int) int {
 func (s *Storage) Get(tick int) (snap *Snapshot, found bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+	return s.get(tick)
+}
+
+func (s *Storage) get(tick int) (snap *Snapshot, found bool) {
 
 	if tick == EmptySnapTick {
 		// -1 is the magic value for the empty snapshot
