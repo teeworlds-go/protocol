@@ -107,13 +107,6 @@ func (client *Client) ConnectContext(ctx context.Context, serverIp string, serve
 	ticker := time.NewTicker(10 * time.Millisecond)
 	defer ticker.Stop()
 
-	defer func() {
-		i := recover()
-		if i != nil {
-			err = fmt.Errorf("panic: %v", i)
-		}
-	}()
-
 	for {
 		select {
 		case msg, ok := <-ch:
