@@ -210,13 +210,13 @@ func TestUnpackDelta(t *testing.T) {
 	// snap1
 	require.Equal(t, 1300, snapSingle1.GameTick)
 	deltaTick := snapSingle1.GameTick - snapSingle1.DeltaTick
-	prevSnap, err := client.SnapshotStorage.Get(deltaTick)
-	require.NoError(t, err)
+	prevSnap, found := client.SnapshotStorage.Get(deltaTick)
+	require.True(t, found)
 
 	u := &packer.Unpacker{}
 	u.Reset(snapSingle1.Data)
 
-	newFullSnap, err := snapshot7.UnpackDelata(prevSnap, u)
+	newFullSnap, err := snapshot7.UnpackDelta(prevSnap, u)
 	require.NoError(t, err)
 
 	err = client.SnapshotStorage.Add(snapSingle1.GameTick, newFullSnap)
@@ -226,12 +226,12 @@ func TestUnpackDelta(t *testing.T) {
 
 	// snap2
 	deltaTick = snapSingle2.GameTick - snapSingle2.DeltaTick
-	prevSnap, err = client.SnapshotStorage.Get(deltaTick)
-	require.NoError(t, err)
+	prevSnap, found = client.SnapshotStorage.Get(deltaTick)
+	require.True(t, found)
 
 	u.Reset(snapSingle2.Data)
 
-	newFullSnap, err = snapshot7.UnpackDelata(prevSnap, u)
+	newFullSnap, err = snapshot7.UnpackDelta(prevSnap, u)
 	require.NoError(t, err)
 
 	err = client.SnapshotStorage.Add(snapSingle2.GameTick, newFullSnap)

@@ -196,7 +196,7 @@ func TestDdnetCrash(t *testing.T) {
 	u := &packer.Unpacker{}
 	u.Reset(client.SnapshotStorage.IncomingData())
 
-	newFullSnap, err := snapshot7.UnpackDelata(prevSnap, u)
+	newFullSnap, err := snapshot7.UnpackDelta(prevSnap, u)
 	require.NoError(t, err)
 
 	err = client.SnapshotStorage.Add(part1.GameTick, newFullSnap)
@@ -212,7 +212,7 @@ func TestDdnetCrash(t *testing.T) {
 //
 //
 // goroutine 12 [running]:
-// github.com/teeworlds-go/protocol/snapshot7.UnpackDelata(0xc00058e930, 0xc000f16240)
+// github.com/teeworlds-go/protocol/snapshot7.UnpackDelta(0xc00058e930, 0xc000f16240)
 //         /home/chiller/go/pkg/mod/github.com/teeworlds-go/protocol@v0.0.0-20240707012613-e2851cf3343e/snapshot7/snapshot7.go:213 +0xb74
 // github.com/teeworlds-go/protocol/teeworlds7.(*Client).processSystem.func5()
 //         /home/chiller/go/pkg/mod/github.com/teeworlds-go/protocol@v0.0.0-20240707012613-e2851cf3343e/teeworlds7/system.go:93 +0x410

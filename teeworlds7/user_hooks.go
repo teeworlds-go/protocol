@@ -10,7 +10,7 @@ import (
 // special cases
 // --------------------------------
 
-func (client *Client) OnTick(callback func(defaultAction DefaultAction)) {
+func (client *Client) OnTick(callback func(defaultAction DefaultAction) error) {
 	client.Callbacks.Tick = append(client.Callbacks.Tick, callback)
 }
 
@@ -18,7 +18,7 @@ func (client *Client) OnTick(callback func(defaultAction DefaultAction)) {
 //
 // return false to drop the error
 // return true if you did not handle the error and it should be passed on (will crash unless someone else catches it)
-func (client *Client) OnError(callback func(err error) bool) {
+func (client *Client) OnError(callback func(err error) (bool, error)) {
 	client.Callbacks.InternalError = append(client.Callbacks.InternalError, callback)
 }
 
@@ -38,13 +38,13 @@ func (client *Client) OnPacket(callback func(packet *protocol7.Packet) bool) {
 	client.Callbacks.PacketIn = append(client.Callbacks.PacketIn, callback)
 }
 
-func (client *Client) OnUnknown(callback func(msg *messages7.Unknown, defaultAction DefaultAction)) {
+func (client *Client) OnUnknown(callback func(msg *messages7.Unknown, defaultAction DefaultAction) error) {
 	client.Callbacks.MsgUnknown = append(client.Callbacks.MsgUnknown, callback)
 }
 
 // will be called when a snap, snap single or empty snapshot is received
 // if you want to know which type of snapshot was received look at OnMsgSnap(), OnMsgSnapEmpty(), OnMsgSnapSingle(), OnMsgSnapSmall()
-func (client *Client) OnSnapshot(callback func(snap *snapshot7.Snapshot, defaultAction DefaultAction)) {
+func (client *Client) OnSnapshot(callback func(snap *snapshot7.Snapshot, defaultAction DefaultAction) error) {
 	client.Callbacks.Snapshot = append(client.Callbacks.Snapshot, callback)
 }
 
@@ -52,24 +52,24 @@ func (client *Client) OnSnapshot(callback func(snap *snapshot7.Snapshot, default
 // incoming control messages
 // --------------------------------
 
-func (client *Client) OnKeepAlive(callback func(msg *messages7.CtrlKeepAlive, defaultAction DefaultAction)) {
+func (client *Client) OnKeepAlive(callback func(msg *messages7.CtrlKeepAlive, defaultAction DefaultAction) error) {
 	client.Callbacks.CtrlKeepAlive = append(client.Callbacks.CtrlKeepAlive, callback)
 }
 
 // This is just misleading. It should never be called. This message is only received by the server.
-// func (client *Client) OnCtrlConnect(callback func(msg *messages7.CtrlConnect, defaultAction DefaultAction)) {
+// func (client *Client) OnCtrlConnect(callback func(msg *messages7.CtrlConnect, defaultAction DefaultAction) error) {
 // 	client.Callbacks.CtrlConnect = append(// 	client.Callbacks, callback)
 // }
 
-func (client *Client) OnAccept(callback func(msg *messages7.CtrlAccept, defaultAction DefaultAction)) {
+func (client *Client) OnAccept(callback func(msg *messages7.CtrlAccept, defaultAction DefaultAction) error) {
 	client.Callbacks.CtrlAccept = append(client.Callbacks.CtrlAccept, callback)
 }
 
-func (client *Client) OnDisconnect(callback func(msg *messages7.CtrlClose, defaultAction DefaultAction)) {
+func (client *Client) OnDisconnect(callback func(msg *messages7.CtrlClose, defaultAction DefaultAction) error) {
 	client.Callbacks.CtrlClose = append(client.Callbacks.CtrlClose, callback)
 }
 
-func (client *Client) OnToken(callback func(msg *messages7.CtrlToken, defaultAction DefaultAction)) {
+func (client *Client) OnToken(callback func(msg *messages7.CtrlToken, defaultAction DefaultAction) error) {
 	client.Callbacks.CtrlToken = append(client.Callbacks.CtrlToken, callback)
 }
 
@@ -77,172 +77,172 @@ func (client *Client) OnToken(callback func(msg *messages7.CtrlToken, defaultAct
 // incoming game messages
 // --------------------------------
 
-func (client *Client) OnMotd(callback func(msg *messages7.SvMotd, defaultAction DefaultAction)) {
+func (client *Client) OnMotd(callback func(msg *messages7.SvMotd, defaultAction DefaultAction) error) {
 	client.Callbacks.GameSvMotd = append(client.Callbacks.GameSvMotd, callback)
 }
 
-func (client *Client) OnBroadcast(callback func(msg *messages7.SvBroadcast, defaultAction DefaultAction)) {
+func (client *Client) OnBroadcast(callback func(msg *messages7.SvBroadcast, defaultAction DefaultAction) error) {
 	client.Callbacks.GameSvBroadcast = append(client.Callbacks.GameSvBroadcast, callback)
 }
 
-func (client *Client) OnChat(callback func(msg *messages7.SvChat, defaultAction DefaultAction)) {
+func (client *Client) OnChat(callback func(msg *messages7.SvChat, defaultAction DefaultAction) error) {
 	client.Callbacks.GameSvChat = append(client.Callbacks.GameSvChat, callback)
 }
 
-func (client *Client) OnTeam(callback func(msg *messages7.SvTeam, defaultAction DefaultAction)) {
+func (client *Client) OnTeam(callback func(msg *messages7.SvTeam, defaultAction DefaultAction) error) {
 	client.Callbacks.GameSvTeam = append(client.Callbacks.GameSvTeam, callback)
 }
 
-func (client *Client) OnKillMsg(callback func(msg *messages7.SvKillMsg, defaultAction DefaultAction)) {
+func (client *Client) OnKillMsg(callback func(msg *messages7.SvKillMsg, defaultAction DefaultAction) error) {
 	client.Callbacks.GameSvKillMsg = append(client.Callbacks.GameSvKillMsg, callback)
 }
 
-func (client *Client) OnTuneParams(callback func(msg *messages7.SvTuneParams, defaultAction DefaultAction)) {
+func (client *Client) OnTuneParams(callback func(msg *messages7.SvTuneParams, defaultAction DefaultAction) error) {
 	client.Callbacks.GameSvTuneParams = append(client.Callbacks.GameSvTuneParams, callback)
 }
 
-func (client *Client) OnExtraProjectile(callback func(msg *messages7.SvExtraProjectile, defaultAction DefaultAction)) {
+func (client *Client) OnExtraProjectile(callback func(msg *messages7.SvExtraProjectile, defaultAction DefaultAction) error) {
 	client.Callbacks.GameSvExtraProjectile = append(client.Callbacks.GameSvExtraProjectile, callback)
 }
 
-func (client *Client) OnReadyToEnter(callback func(msg *messages7.SvReadyToEnter, defaultAction DefaultAction)) {
+func (client *Client) OnReadyToEnter(callback func(msg *messages7.SvReadyToEnter, defaultAction DefaultAction) error) {
 	client.Callbacks.GameSvReadyToEnter = append(client.Callbacks.GameSvReadyToEnter, callback)
 }
 
-func (client *Client) OnWeaponPickup(callback func(msg *messages7.SvWeaponPickup, defaultAction DefaultAction)) {
+func (client *Client) OnWeaponPickup(callback func(msg *messages7.SvWeaponPickup, defaultAction DefaultAction) error) {
 	client.Callbacks.GameSvWeaponPickup = append(client.Callbacks.GameSvWeaponPickup, callback)
 }
 
-func (client *Client) OnEmoticon(callback func(msg *messages7.SvEmoticon, defaultAction DefaultAction)) {
+func (client *Client) OnEmoticon(callback func(msg *messages7.SvEmoticon, defaultAction DefaultAction) error) {
 	client.Callbacks.GameSvEmoticon = append(client.Callbacks.GameSvEmoticon, callback)
 }
 
-func (client *Client) OnVoteClearoptions(callback func(msg *messages7.SvVoteClearOptions, defaultAction DefaultAction)) {
+func (client *Client) OnVoteClearoptions(callback func(msg *messages7.SvVoteClearOptions, defaultAction DefaultAction) error) {
 	client.Callbacks.GameSvVoteClearOptions = append(client.Callbacks.GameSvVoteClearOptions, callback)
 }
 
-func (client *Client) OnVoteOptionlistadd(callback func(msg *messages7.SvVoteOptionListAdd, defaultAction DefaultAction)) {
+func (client *Client) OnVoteOptionlistadd(callback func(msg *messages7.SvVoteOptionListAdd, defaultAction DefaultAction) error) {
 	client.Callbacks.GameSvVoteOptionListAdd = append(client.Callbacks.GameSvVoteOptionListAdd, callback)
 }
 
-func (client *Client) OnVotePptionadd(callback func(msg *messages7.SvVoteOptionAdd, defaultAction DefaultAction)) {
+func (client *Client) OnVotePptionadd(callback func(msg *messages7.SvVoteOptionAdd, defaultAction DefaultAction) error) {
 	client.Callbacks.GameSvVoteOptionAdd = append(client.Callbacks.GameSvVoteOptionAdd, callback)
 }
 
-func (client *Client) OnVoteOptionremove(callback func(msg *messages7.SvVoteOptionRemove, defaultAction DefaultAction)) {
+func (client *Client) OnVoteOptionremove(callback func(msg *messages7.SvVoteOptionRemove, defaultAction DefaultAction) error) {
 	client.Callbacks.GameSvVoteOptionRemove = append(client.Callbacks.GameSvVoteOptionRemove, callback)
 }
 
-func (client *Client) OnVoteSet(callback func(msg *messages7.SvVoteSet, defaultAction DefaultAction)) {
+func (client *Client) OnVoteSet(callback func(msg *messages7.SvVoteSet, defaultAction DefaultAction) error) {
 	client.Callbacks.GameSvVoteSet = append(client.Callbacks.GameSvVoteSet, callback)
 }
 
-func (client *Client) OnVoteStatus(callback func(msg *messages7.SvVoteStatus, defaultAction DefaultAction)) {
+func (client *Client) OnVoteStatus(callback func(msg *messages7.SvVoteStatus, defaultAction DefaultAction) error) {
 	client.Callbacks.GameSvVoteStatus = append(client.Callbacks.GameSvVoteStatus, callback)
 }
 
-func (client *Client) OnServerSettings(callback func(msg *messages7.SvServerSettings, defaultAction DefaultAction)) {
+func (client *Client) OnServerSettings(callback func(msg *messages7.SvServerSettings, defaultAction DefaultAction) error) {
 	client.Callbacks.GameSvServerSettings = append(client.Callbacks.GameSvServerSettings, callback)
 }
 
-func (client *Client) OnClientInfo(callback func(msg *messages7.SvClientInfo, defaultAction DefaultAction)) {
+func (client *Client) OnClientInfo(callback func(msg *messages7.SvClientInfo, defaultAction DefaultAction) error) {
 	client.Callbacks.GameSvClientInfo = append(client.Callbacks.GameSvClientInfo, callback)
 }
 
-func (client *Client) OnGameInfo(callback func(msg *messages7.SvGameInfo, defaultAction DefaultAction)) {
+func (client *Client) OnGameInfo(callback func(msg *messages7.SvGameInfo, defaultAction DefaultAction) error) {
 	client.Callbacks.GameSvGameInfo = append(client.Callbacks.GameSvGameInfo, callback)
 }
 
-func (client *Client) OnClientDrop(callback func(msg *messages7.SvClientDrop, defaultAction DefaultAction)) {
+func (client *Client) OnClientDrop(callback func(msg *messages7.SvClientDrop, defaultAction DefaultAction) error) {
 	client.Callbacks.GameSvClientDrop = append(client.Callbacks.GameSvClientDrop, callback)
 }
 
-func (client *Client) OnGameMsg(callback func(msg *messages7.SvGameMsg, defaultAction DefaultAction)) {
+func (client *Client) OnGameMsg(callback func(msg *messages7.SvGameMsg, defaultAction DefaultAction) error) {
 	client.Callbacks.GameSvGameMsg = append(client.Callbacks.GameSvGameMsg, callback)
 }
 
 // demo only
-// func (client *Client) OnClientEnter(callback func(msg *messages7.DeClientEnter, defaultAction DefaultAction)) {
+// func (client *Client) OnClientEnter(callback func(msg *messages7.DeClientEnter, defaultAction DefaultAction) error) {
 // 	client.Callbacks.GameDeClientEnter = append(client.Callbacks.GameDeClientEnter, callback)
 // }
 
 // demo only
-// func (client *Client) OnClientLeave(callback func(msg *messages7.DeClientLeave, defaultAction DefaultAction)) {
+// func (client *Client) OnClientLeave(callback func(msg *messages7.DeClientLeave, defaultAction DefaultAction) error) {
 // 	client.Callbacks.GameDeClientLeave = append(client.Callbacks.GameDeClientLeave, callback)
 // }
 
 // send by client
-// func (client *Client) OnSay(callback func(msg *messages7.ClSay, defaultAction DefaultAction)) {
+// func (client *Client) OnSay(callback func(msg *messages7.ClSay, defaultAction DefaultAction) error) {
 // 	client.Callbacks.GameClSay = append(client.Callbacks.GameClSay, callback)
 // }
 
 // send by client
-// func (client *Client) OnSetTeam(callback func(msg *messages7.ClSetTeam, defaultAction DefaultAction)) {
+// func (client *Client) OnSetTeam(callback func(msg *messages7.ClSetTeam, defaultAction DefaultAction) error) {
 // 	client.Callbacks.GameClSetTeam = append(client.Callbacks.GameClSetTeam, callback)
 // }
 
 // send by client
-// func (client *Client) OnSetSpectatorMode(callback func(msg *messages7.ClSetSpectatorMode, defaultAction DefaultAction)) {
+// func (client *Client) OnSetSpectatorMode(callback func(msg *messages7.ClSetSpectatorMode, defaultAction DefaultAction) error) {
 // 	client.Callbacks.GameClSetSpectatorMode = append(client.Callbacks.GameClSetSpectatorMode, callback)
 // }
 
 // send by client
-// func (client *Client) OnStartInfo(callback func(msg *messages7.ClStartInfo, defaultAction DefaultAction)) {
+// func (client *Client) OnStartInfo(callback func(msg *messages7.ClStartInfo, defaultAction DefaultAction) error) {
 // 	client.Callbacks.GameClStartInfo = append(client.Callbacks.GameClStartInfo, callback)
 // }
 
 // send by client
-// func (client *Client) OnKill(callback func(msg *messages7.ClKill, defaultAction DefaultAction)) {
+// func (client *Client) OnKill(callback func(msg *messages7.ClKill, defaultAction DefaultAction) error) {
 // 	client.Callbacks.GameClKill = append(client.Callbacks.GameClKill, callback)
 // }
 
 // send by client
-// func (client *Client) OnReadyChange(callback func(msg *messages7.ClReadyChange, defaultAction DefaultAction)) {
+// func (client *Client) OnReadyChange(callback func(msg *messages7.ClReadyChange, defaultAction DefaultAction) error) {
 // 	client.Callbacks.GameClReadyChange = append(client.Callbacks.GameClReadyChange, callback)
 // }
 
 // send by client
-// func (client *Client) OnEmoticon(callback func(msg *messages7.ClEmoticon, defaultAction DefaultAction)) {
+// func (client *Client) OnEmoticon(callback func(msg *messages7.ClEmoticon, defaultAction DefaultAction) error) {
 // 	client.Callbacks.GameClEmoticon = append(client.Callbacks.GameClEmoticon, callback)
 // }
 
 // send by client
-// func (client *Client) OnVote(callback func(msg *messages7.ClVote, defaultAction DefaultAction)) {
+// func (client *Client) OnVote(callback func(msg *messages7.ClVote, defaultAction DefaultAction) error) {
 // 	client.Callbacks.GameClVote = append(client.Callbacks.GameClVote, callback)
 // }
 
 // send by client
-// func (client *Client) OnCallVote(callback func(msg *messages7.ClCallVote, defaultAction DefaultAction)) {
+// func (client *Client) OnCallVote(callback func(msg *messages7.ClCallVote, defaultAction DefaultAction) error) {
 // 	client.Callbacks.GameClCallVote = append(client.Callbacks.GameClCallVote, callback)
 // }
 
-func (client *Client) OnSkinChange(callback func(msg *messages7.SvSkinChange, defaultAction DefaultAction)) {
+func (client *Client) OnSkinChange(callback func(msg *messages7.SvSkinChange, defaultAction DefaultAction) error) {
 	client.Callbacks.GameSvSkinChange = append(client.Callbacks.GameSvSkinChange, callback)
 }
 
 // send by client
-// func (client *Client) OnSkinChange(callback func(msg *messages7.ClSkinChange, defaultAction DefaultAction)) {
+// func (client *Client) OnSkinChange(callback func(msg *messages7.ClSkinChange, defaultAction DefaultAction) error) {
 // 	client.Callbacks.GameClSkinChange = append(client.Callbacks.GameClSkinChange, callback)
 // }
 
-func (client *Client) OnRaceFinish(callback func(msg *messages7.SvRaceFinish, defaultAction DefaultAction)) {
+func (client *Client) OnRaceFinish(callback func(msg *messages7.SvRaceFinish, defaultAction DefaultAction) error) {
 	client.Callbacks.GameSvRaceFinish = append(client.Callbacks.GameSvRaceFinish, callback)
 }
 
-func (client *Client) OnCheckpoint(callback func(msg *messages7.SvCheckpoint, defaultAction DefaultAction)) {
+func (client *Client) OnCheckpoint(callback func(msg *messages7.SvCheckpoint, defaultAction DefaultAction) error) {
 	client.Callbacks.GameSvCheckpoint = append(client.Callbacks.GameSvCheckpoint, callback)
 }
 
-func (client *Client) OnCommandInfo(callback func(msg *messages7.SvCommandInfo, defaultAction DefaultAction)) {
+func (client *Client) OnCommandInfo(callback func(msg *messages7.SvCommandInfo, defaultAction DefaultAction) error) {
 	client.Callbacks.GameSvCommandInfo = append(client.Callbacks.GameSvCommandInfo, callback)
 }
 
-func (client *Client) OnCommandInfoRemove(callback func(msg *messages7.SvCommandInfoRemove, defaultAction DefaultAction)) {
+func (client *Client) OnCommandInfoRemove(callback func(msg *messages7.SvCommandInfoRemove, defaultAction DefaultAction) error) {
 	client.Callbacks.GameSvCommandInfoRemove = append(client.Callbacks.GameSvCommandInfoRemove, callback)
 }
 
 // send by client
-// func (client *Client) OnCommand(callback func(msg *messages7.ClCommand, defaultAction DefaultAction)) {
+// func (client *Client) OnCommand(callback func(msg *messages7.ClCommand, defaultAction DefaultAction) error) {
 // 	client.Callbacks.GameClCommand = append(client.Callbacks.GameClCommand, callback)
 // }
 
@@ -250,27 +250,27 @@ func (client *Client) OnCommandInfoRemove(callback func(msg *messages7.SvCommand
 // incoming system messages
 // --------------------------------
 
-func (client *Client) OnMapChange(callback func(msg *messages7.MapChange, defaultAction DefaultAction)) {
+func (client *Client) OnMapChange(callback func(msg *messages7.MapChange, defaultAction DefaultAction) error) {
 	client.Callbacks.SysMapChange = append(client.Callbacks.SysMapChange, callback)
 }
 
 // You probably want to use OnSnapshot() instead
-func (client *Client) OnMsgSnap(callback func(msg *messages7.Snap, defaultAction DefaultAction)) {
+func (client *Client) OnMsgSnap(callback func(msg *messages7.Snap, defaultAction DefaultAction) error) {
 	client.Callbacks.SysSnap = append(client.Callbacks.SysSnap, callback)
 }
 
 // You probably want to use OnSnapshot() instead
-func (client *Client) OnMsgSnapEmpty(callback func(msg *messages7.SnapEmpty, defaultAction DefaultAction)) {
+func (client *Client) OnMsgSnapEmpty(callback func(msg *messages7.SnapEmpty, defaultAction DefaultAction) error) {
 	client.Callbacks.SysSnapEmpty = append(client.Callbacks.SysSnapEmpty, callback)
 }
 
 // You probably want to use OnSnapshot() instead
-func (client *Client) OnMsgSnapSingle(callback func(msg *messages7.SnapSingle, defaultAction DefaultAction)) {
+func (client *Client) OnMsgSnapSingle(callback func(msg *messages7.SnapSingle, defaultAction DefaultAction) error) {
 	client.Callbacks.SysSnapSingle = append(client.Callbacks.SysSnapSingle, callback)
 }
 
 // You probably want to use OnSnapshot() instead
-func (client *Client) OnMsgSnapSmall(callback func(msg *messages7.SnapSmall, defaultAction DefaultAction)) {
+func (client *Client) OnMsgSnapSmall(callback func(msg *messages7.SnapSmall, defaultAction DefaultAction) error) {
 	client.Callbacks.SysSnapSmall = append(client.Callbacks.SysSnapSmall, callback)
 }
 

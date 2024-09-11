@@ -1,9 +1,11 @@
 package teeworlds7
 
 import (
-	"bufio"
+	"context"
+	"errors"
 	"fmt"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/teeworlds-go/protocol/network7"
@@ -14,71 +16,128 @@ const (
 	maxPacksize = 1400
 )
 
-func getConnection(serverIp string, serverPort int) (net.Conn, error) {
-	conn, err := net.Dial("udp", fmt.Sprintf("%s:%d", serverIp, serverPort))
-	if err != nil {
-		fmt.Printf("Some error %v", err)
-	}
-	return conn, err
-}
+func readNetwork(ctx context.Context, cancelCause context.CancelCauseFunc, wg *sync.WaitGroup, ch chan<- []byte, conn net.Conn) {
+	defer wg.Done()
+	fmt.Println("starting reader goroutine...")
+	defer fmt.Println("reader goroutine stopped")
 
-func readNetwork(ch chan<- []byte, conn net.Conn) {
 	buf := make([]byte, maxPacksize)
-
 	for {
-		len, err := bufio.NewReader(conn).Read(buf)
-		packet := make([]byte, len)
-		copy(packet[:], buf[:])
-		if err == nil {
-			ch <- packet
-		} else {
-			fmt.Printf("Some error %v\n", err)
-			break
+		n, err := conn.Read(buf)
+		if err != nil {
+			cancelCause(err)
+			return
+		}
+
+		if n == 0 {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				continue
+			}
+		}
+
+		packet := make([]byte, n)
+		copy(packet, buf[:n])
+		select {
+		case ch <- packet:
+		case <-ctx.Done():
+			return
 		}
 	}
-
-	conn.Close()
 }
 
-func (client *Client) Connect(serverIp string, serverPort int) {
+func (client *Client) Connect(serverIp string, serverPort int) error {
+	return client.ConnectContext(context.Background(), serverIp, serverPort)
+}
+
+func (client *Client) ConnectContext(ctx context.Context, serverIp string, serverPort int) (err error) {
+	ctx, cancelCause := context.WithCancelCause(ctx)
+	defer func() {
+		cancelCause(nil)
+
+		ctxErr := context.Cause(ctx)
+		if ctxErr != nil {
+			err = ctxErr
+			return
+		}
+
+		ctxErr = ctx.Err()
+		if err != nil && !errors.Is(ctxErr, context.Canceled) {
+			err = ctxErr
+			return
+		}
+	}()
+
 	ch := make(chan []byte, maxPacksize)
-
-	conn, err := getConnection(serverIp, serverPort)
+	var d net.Dialer
+	conn, err := d.DialContext(ctx, "udp", fmt.Sprintf("%s:%d", serverIp, serverPort))
 	if err != nil {
-		fmt.Printf("error connecting %v\n", err)
-		return
+		return fmt.Errorf("failed to connect to server: %s:%d: %w", serverIp, serverPort, err)
 	}
-
-	client.Session = protocol7.Session{
-		ClientToken: [4]byte{0x01, 0x02, 0x03, 0x04},
-		ServerToken: [4]byte{0xff, 0xff, 0xff, 0xff},
-		Ack:         0,
-	}
-	client.Game.Players = make([]Player, network7.MaxClients)
 	client.Conn = conn
+	defer func() {
+		closeErr := client.Conn.Close()
+		if closeErr != nil {
+			fmt.Printf("failed to close connection: %v\n", closeErr)
+		} else {
+			fmt.Println("connection closed")
+		}
+	}()
 
-	go readNetwork(ch, conn)
+	client.Session = protocol7.NewSession()
+	client.Game.Players = make([]Player, network7.MaxClients)
 
-	client.SendPacket(client.Session.CtrlToken())
+	var wg sync.WaitGroup
+	wg.Add(1)
+	defer wg.Wait()
+
+	go readNetwork(ctx, cancelCause, &wg, ch, conn)
+
+	err = client.SendPacket(client.Session.CtrlToken())
+	if err != nil {
+		return fmt.Errorf("failed to send token: %w", err)
+	}
 
 	// TODO: do we really need a non blocking network read?
 	//       if not remove the channel, the sleep and the select statement
 	//       if yes also offer an OnTick callback to the user, and also do keepalives and resends
+
+	ticker := time.NewTicker(10 * time.Millisecond)
+	defer ticker.Stop()
+
+	defer func() {
+		i := recover()
+		if i != nil {
+			err = fmt.Errorf("panic: %v", i)
+		}
+	}()
+
 	for {
-		time.Sleep(10_000_000)
 		select {
-		case msg := <-ch:
+		case msg, ok := <-ch:
+			if !ok {
+				fmt.Println("processing channel closed")
+				return nil
+			}
 			packet := &protocol7.Packet{}
 			err := packet.Unpack(msg)
 			if err != nil {
-				client.throwError(err)
+				return fmt.Errorf("failed to unpack packet: %w", err)
 			}
 			err = client.processPacket(packet)
 			if err != nil {
-				client.throwError(err)
+				return fmt.Errorf("failed to process packet: %w", err)
 			}
-		default:
-			client.gameTick()
+		case <-ticker.C:
+			err = client.gameTick()
+			if err != nil {
+				return fmt.Errorf("failed to process game tick: %w", err)
+			}
+		case <-ctx.Done():
+			return context.Cause(ctx)
 		}
 	}
+
 }

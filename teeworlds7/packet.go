@@ -21,11 +21,11 @@ func printUnknownMessage(msg messages7.NetMessage, msgType string) {
 	}
 }
 
-func (client *Client) processMessage(msg messages7.NetMessage, response *protocol7.Packet) bool {
+func (client *Client) processMessage(msg messages7.NetMessage, response *protocol7.Packet) (err error) {
 	if msg.Header() == nil {
 		// this is probably an unknown message
 		fmt.Printf("warning ignoring msgId=%d because header is nil\n", msg.MsgId())
-		return false
+		return nil
 	}
 	if msg.Header().Flags.Vital {
 		client.Session.Ack++
@@ -37,9 +37,15 @@ func (client *Client) processMessage(msg messages7.NetMessage, response *protoco
 	return client.processGame(msg, response)
 }
 
-func (client *Client) processPacket(packet *protocol7.Packet) error {
+func (client *Client) processPacket(packet *protocol7.Packet) (err error) {
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("failed to process packet: %w", err)
+		}
+	}()
+
 	for _, callback := range client.Callbacks.PacketIn {
-		if callback(packet) == false {
+		if !callback(packet) {
 			return nil
 		}
 	}
@@ -48,23 +54,25 @@ func (client *Client) processPacket(packet *protocol7.Packet) error {
 
 	if packet.Header.Flags.Control {
 		if len(packet.Messages) != 1 {
-			return fmt.Errorf("got control packet with %d messages.\n", len(packet.Messages))
+			return fmt.Errorf("got control packet with %d messages: expected only 1", len(packet.Messages))
 		}
 
 		msg := packet.Messages[0]
 		// TODO: is this shadow nasty?
 		switch msg := msg.(type) {
 		case *messages7.CtrlKeepAlive:
-			userMsgCallback(client.Callbacks.CtrlKeepAlive, msg, func() {
+			err = userMsgCallback(client.Callbacks.CtrlKeepAlive, msg, func() error {
 				fmt.Println("got keep alive")
+				return nil
 			})
 		case *messages7.CtrlConnect:
-			userMsgCallback(client.Callbacks.CtrlConnect, msg, func() {
+			err = userMsgCallback(client.Callbacks.CtrlConnect, msg, func() error {
 				fmt.Println("we got connect as a client. this should never happen lol.")
-				fmt.Println("who is tryint to connect to us? We are not a server!")
+				fmt.Println("who is trying to connect to us? We are not a server!")
+				return nil
 			})
 		case *messages7.CtrlAccept:
-			userMsgCallback(client.Callbacks.CtrlAccept, msg, func() {
+			err = userMsgCallback(client.Callbacks.CtrlAccept, msg, func() error {
 				fmt.Println("got accept")
 				response.Messages = append(
 					response.Messages,
@@ -74,14 +82,15 @@ func (client *Client) processPacket(packet *protocol7.Packet) error {
 						ClientVersion: network7.ClientVersion,
 					},
 				)
-				client.SendPacket(response)
+				return client.SendPacket(response)
 			})
 		case *messages7.CtrlClose:
-			userMsgCallback(client.Callbacks.CtrlClose, msg, func() {
+			err = userMsgCallback(client.Callbacks.CtrlClose, msg, func() error {
 				fmt.Printf("disconnected (%s)\n", msg.Reason)
+				return nil
 			})
 		case *messages7.CtrlToken:
-			userMsgCallback(client.Callbacks.CtrlToken, msg, func() {
+			err = userMsgCallback(client.Callbacks.CtrlToken, msg, func() error {
 				fmt.Printf("got server token %x\n", msg.Token)
 				client.Session.ServerToken = msg.Token
 				response.Header.Token = msg.Token
@@ -91,25 +100,33 @@ func (client *Client) processPacket(packet *protocol7.Packet) error {
 						Token: client.Session.ClientToken,
 					},
 				)
-				client.SendPacket(response)
+				return client.SendPacket(response)
 			})
 		case *messages7.Unknown:
-			userMsgCallback(client.Callbacks.MsgUnknown, msg, func() {
+			err = userMsgCallback(client.Callbacks.MsgUnknown, msg, func() error {
 				printUnknownMessage(msg, "unknown control")
+				return nil
 			})
-			return fmt.Errorf("unknown control message: %d\n", msg.MsgId())
+			if err != nil {
+				return fmt.Errorf("unknown control message: %d: %w", msg.MsgId(), err)
+			}
+
+			return fmt.Errorf("unknown control message: %d", msg.MsgId())
 		default:
-			return fmt.Errorf("unprocessed control message: %d\n", msg.MsgId())
+			return fmt.Errorf("unprocessed control message: %d", msg.MsgId())
 		}
-		return nil
+		return err
 	}
 
 	for _, msg := range packet.Messages {
-		client.processMessage(msg, response)
+		err = client.processMessage(msg, response)
+		if err != nil {
+			return err
+		}
 	}
 
 	if len(response.Messages) > 0 || response.Header.Flags.Resend {
-		client.SendPacket(response)
+		return client.SendPacket(response)
 	}
 	return nil
 }

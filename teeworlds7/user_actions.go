@@ -1,6 +1,7 @@
 package teeworlds7
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -13,9 +14,15 @@ import (
 // low level access for experts
 // ----------------------------
 
-func (client *Client) SendPacket(packet *protocol7.Packet) error {
-	if packet.Header.Flags.Resend == false && len(packet.Messages) == 0 && len(client.QueuedMessages) == 0 {
-		return fmt.Errorf("Failed to send packet: payload is empty.")
+func (client *Client) SendPacket(packet *protocol7.Packet) (err error) {
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("failed to send packet: %w", err)
+		}
+	}()
+
+	if !packet.Header.Flags.Resend && len(packet.Messages) == 0 && len(client.QueuedMessages) == 0 {
+		return errors.New("payload is empty")
 	}
 
 	gotNet := false
@@ -27,17 +34,17 @@ func (client *Client) SendPacket(packet *protocol7.Packet) error {
 		} else if msg.MsgType() == network7.TypeNet {
 			gotNet = true
 		} else {
-			return fmt.Errorf("Failed to send packet: only game, system and control messages are supported.")
+			return errors.New("only game, system and control messages are supported")
 		}
 	}
 
 	if gotNet && numCtrlMsgs > 0 {
-		return fmt.Errorf("Failed to send packet: can not mix control messages with others.")
+		return errors.New("can not mix control messages with others")
 	}
 
 	if numCtrlMsgs > 1 {
 		// TODO: should this automatically split it up into multiple packets?
-		return fmt.Errorf("Failed to send packet: can only send one control message at a time.")
+		return errors.New("can only send one control message at a time")
 	}
 
 	// If the user queued a game message and then sends a control message
@@ -52,18 +59,20 @@ func (client *Client) SendPacket(packet *protocol7.Packet) error {
 		// flushPacket.Header.Flags.Compression = true
 
 		flushPacket := client.Session.BuildResponse()
-		client.SendPacket(flushPacket)
+		err = client.SendPacket(flushPacket)
+		if err != nil {
+			return err
+		}
 	}
 
-	for _, queuedChunk := range client.QueuedMessages {
-		// TODO: check if we exceed packet size and only put in as many chunks as we can
-		//       also use a more performant queue implementation then if we unshift it partially
-		//       popping of one element from the queue should not reallocate the entire queued messages slice
-		packet.Messages = append(packet.Messages, queuedChunk)
-	}
-	client.QueuedMessages = nil
+	// TODO: check if we exceed packet size and only put in as many chunks as we can
+	//       also use a more performant queue implementation then if we unshift it partially
+	//       popping of one element from the queue should not reallocate the entire queued messages slice
+	packet.Messages = append(packet.Messages, client.QueuedMessages...)
 
-	packet.Messages = client.registerMessagesCallbacks(packet.Messages)
+	client.QueuedMessages = client.QueuedMessages[:0]
+
+	packet.Messages = client.applyCallbacks(packet.Messages)
 
 	// slog.Info("after filter got messages", "len", len(packet.Messages))
 
@@ -76,13 +85,22 @@ func (client *Client) SendPacket(packet *protocol7.Packet) error {
 	// }
 
 	for _, callback := range client.Callbacks.PacketOut {
-		if callback(packet) == false {
+		if !callback(packet) {
 			return nil
 		}
 	}
 
 	client.LastSend = time.Now()
-	client.Conn.Write(packet.Pack(&client.Session))
+
+	data := packet.Pack(&client.Session)
+	n := 0
+	for len(data) > 0 {
+		n, err = client.Conn.Write(data[n:])
+		if err != nil {
+			return err
+		}
+		data = data[n:]
+	}
 	return nil
 }
 
@@ -90,20 +108,26 @@ func (client *Client) SendPacket(packet *protocol7.Packet) error {
 // this sends a network chunk and is for expert users
 //
 // if you want to send a chat message use SendChat()
-func (client *Client) SendMessage(msg messages7.NetMessage) {
-	if msg.MsgType() == network7.TypeControl {
+func (client *Client) SendMessage(msg messages7.NetMessage) (err error) {
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("failed to send message: %w", err)
+		}
+	}()
+
+	switch msg.MsgType() {
+	case network7.TypeControl:
 		packet := client.Session.BuildResponse()
 		packet.Header.Flags.Control = true
 		packet.Messages = append(packet.Messages, msg)
-		client.SendPacket(packet)
-		return
-	}
-	if msg.MsgType() == network7.TypeConnless {
+		return client.SendPacket(packet)
+	case network7.TypeConnless:
 		// TODO: connless
 		panic("connless messages are not supported yet")
 	}
 
 	client.QueuedMessages = append(client.QueuedMessages, msg)
+	return nil
 }
 
 // ----------------------------
@@ -124,8 +148,12 @@ func (client *Client) SendMessage(msg messages7.NetMessage) {
 //	Fire()
 //	Hook()
 //	Aim(x, y)
-func (client *Client) SendInput() {
-	client.SendMessage(client.Game.Input)
+func (client *Client) SendInput() error {
+	err := client.SendMessage(client.Game.Input)
+	if err != nil {
+		return fmt.Errorf("failed to send input: %w", err)
+	}
+	return nil
 }
 
 func (client *Client) Right() {
@@ -167,40 +195,56 @@ func (client *Client) Aim(x int, y int) {
 
 // see also SendWhisper()
 // see also SendChatTeam()
-func (client *Client) SendChat(msg string) {
-	client.SendMessage(
+func (client *Client) SendChat(msg string) error {
+	err := client.SendMessage(
 		&messages7.ClSay{
 			Mode:     network7.ChatAll,
 			Message:  msg,
 			TargetId: -1,
 		},
 	)
+	if err != nil {
+		return fmt.Errorf("failed to send chat: %w", err)
+	}
+	return nil
 }
 
 // see also SendWhisper()
 // see also SendChat()
-func (client *Client) SendChatTeam(msg string) {
-	client.SendMessage(
+func (client *Client) SendChatTeam(msg string) error {
+	err := client.SendMessage(
 		&messages7.ClSay{
 			Mode:     network7.ChatTeam,
 			Message:  msg,
 			TargetId: -1,
 		},
 	)
+	if err != nil {
+		return fmt.Errorf("failed to send team chat: %w", err)
+	}
+	return nil
 }
 
 // see also SendChat()
 // see also SendChatTeam()
-func (client *Client) SendWhisper(targetId int, msg string) {
-	client.SendMessage(
+func (client *Client) SendWhisper(targetId int, msg string) error {
+	err := client.SendMessage(
 		&messages7.ClSay{
 			Mode:     network7.ChatWhisper,
 			Message:  msg,
 			TargetId: targetId,
 		},
 	)
+	if err != nil {
+		return fmt.Errorf("failed to send whisper to client id %d: %w", targetId, err)
+	}
+	return nil
 }
 
-func (client *Client) SendKeepAlive() {
-	client.SendMessage(&messages7.CtrlKeepAlive{})
+func (client *Client) SendKeepAlive() error {
+	err := client.SendMessage(&messages7.CtrlKeepAlive{})
+	if err != nil {
+		return fmt.Errorf("failed to send keep alive: %w", err)
+	}
+	return nil
 }

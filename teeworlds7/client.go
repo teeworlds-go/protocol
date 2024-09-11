@@ -1,8 +1,7 @@
 package teeworlds7
 
 import (
-	"errors"
-	"log"
+	"fmt"
 	"net"
 	"time"
 
@@ -11,6 +10,10 @@ import (
 	"github.com/teeworlds-go/protocol/object7"
 	"github.com/teeworlds-go/protocol/protocol7"
 	"github.com/teeworlds-go/protocol/snapshot7"
+)
+
+const (
+	UnknownClientId = -1
 )
 
 type Player struct {
@@ -62,69 +65,83 @@ type Client struct {
 //	this would be more useful to have on the Snapshot struct directly
 //	so it can be used everywhere not only in a client
 //	and the client then can just wrap it to acces the alt snap
-func (client *Client) SnapFindCharacter(ClientId int) (*object7.Character, error) {
-	item, err := client.SnapshotStorage.FindAltSnapItem(network7.ObjCharacter, ClientId)
+func (client *Client) SnapFindCharacter(clientId int) (character *object7.Character, found bool, err error) {
+	item, found, err := client.SnapshotStorage.FindAltSnapItem(network7.ObjCharacter, clientId)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
+
+	if !found {
+		return nil, false, nil
+	}
+
 	character, ok := item.(*object7.Character)
-	if ok == false {
-		return nil, errors.New("failed to cast character")
+	if !ok {
+		panic(fmt.Sprintf("type assertion failed: found client snap item is not a *object7.Character: %T", item))
 	}
-	return character, nil
+	return character, true, nil
 }
 
 func NewClient() *Client {
-	client := &Client{}
-	client.SnapshotStorage = snapshot7.NewStorage()
-	client.Game.Snap = &GameSnap{}
-	client.Game.Input = &messages7.Input{}
-	client.LocalClientId = -1
-	client.LastSend = time.Now()
-	return client
+	return &Client{
+		SnapshotStorage: snapshot7.NewStorage(),
+		Game: Game{
+			Snap:  &GameSnap{},
+			Input: &messages7.Input{},
+		},
+		LocalClientId: UnknownClientId,
+		LastSend:      time.Now(),
+	}
 }
 
-func (client *Client) sendInputIfNeeded() bool {
-	diff := time.Now().Sub(client.LastSend)
+func (client *Client) sendInputIfNeeded() (sent bool, err error) {
+	diff := time.Since(client.LastSend)
 	send := false
 	// at least every 10hz or on change
 	if diff.Microseconds() > 1000000 {
 		send = true
 	}
-	if client.Game.LastSentInput != *client.Game.Input {
+	if client.Game.Input != nil && client.Game.LastSentInput != *client.Game.Input {
 		send = true
 	}
 
-	if send {
-		client.SendInput()
+	if !send {
+		return false, nil
 	}
 
-	return send
+	err = client.SendInput()
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
-func (client *Client) gameTick() {
-	defaultAction := func() {
-		if client.sendInputIfNeeded() == true {
-			return
+func (client *Client) gameTick() error {
+	defaultAction := func() error {
+
+		// either input or keepalive
+		send, err := client.sendInputIfNeeded()
+		if err != nil {
+			return err
 		}
 
-		diff := time.Now().Sub(client.LastSend)
-		if diff.Seconds() > 2 {
-			client.SendKeepAlive()
+		if send {
+			return nil
 		}
+
+		// keepalive in case we did not send anything
+		if time.Since(client.LastSend).Seconds() > 2 {
+			return client.SendKeepAlive()
+		}
+		return nil
 	}
 
+	var err error
 	for _, callback := range client.Callbacks.Tick {
-		callback(defaultAction)
-	}
-}
-
-func (client *Client) throwError(err error) {
-	for _, callback := range client.Callbacks.InternalError {
-		if callback(err) == false {
-			return
+		err = callback(defaultAction)
+		if err != nil {
+			return err
 		}
 	}
-
-	log.Fatal(err)
+	return nil
 }

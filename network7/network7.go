@@ -239,3 +239,18 @@ type WeaponAll int
 type Weapon int
 
 type MsgType int
+
+// implement fmt.Stringer interface for
+// pretty print with fmt.Sprintf
+func (t MsgType) String() string {
+	switch t {
+	case TypeControl:
+		return "control"
+	case TypeNet:
+		return "net"
+	case TypeConnless:
+		return "connless"
+	default:
+		return "unknown"
+	}
+}

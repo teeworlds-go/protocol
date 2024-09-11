@@ -367,7 +367,7 @@ func Test4PartSnap(t *testing.T) {
 	u := &packer.Unpacker{}
 	u.Reset(client.SnapshotStorage.IncomingData())
 
-	newFullSnap, err := snapshot7.UnpackDelata(prevSnap, u)
+	newFullSnap, err := snapshot7.UnpackDelta(prevSnap, u)
 	require.NoError(t, err)
 
 	err = client.SnapshotStorage.Add(part2.GameTick, newFullSnap)
