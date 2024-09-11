@@ -33,7 +33,7 @@ func TestLaserStandalone(t *testing.T) {
 	u := &packer.Unpacker{}
 	u.Reset(laser.Pack())
 	typeId := u.GetInt()
-	require.Equal(t, network7.ObjLaser, typeId)
+	require.Equal(t, network7.ObjLaser, int(typeId))
 	itemId := u.GetInt()
 	require.Equal(t, 1, itemId)
 	laser.Unpack(u)
@@ -68,7 +68,7 @@ func TestLaserStandaloneAllZeros(t *testing.T) {
 	u := &packer.Unpacker{}
 	u.Reset(laser.Pack())
 	typeId := u.GetInt()
-	require.Equal(t, network7.ObjLaser, typeId)
+	require.Equal(t, network7.ObjLaser, int(typeId))
 	itemId := u.GetInt()
 	require.Equal(t, 0, itemId)
 	laser.Unpack(u)

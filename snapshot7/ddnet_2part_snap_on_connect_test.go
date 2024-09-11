@@ -190,8 +190,8 @@ func TestDdnetCrash(t *testing.T) {
 	// part 1/2 (last)
 	client.SnapshotStorage.AddIncomingData(part1.Part, part1.NumParts, part1.Data)
 
-	prevSnap, err := client.SnapshotStorage.Get(snapshot7.EmptySnapTick)
-	require.NoError(t, err)
+	prevSnap, found := client.SnapshotStorage.Get(snapshot7.EmptySnapTick)
+	require.True(t, found)
 
 	u := &packer.Unpacker{}
 	u.Reset(client.SnapshotStorage.IncomingData())

@@ -126,7 +126,7 @@ func TestDDNetFullServerSnapSingle(t *testing.T) {
 	// this is not verified
 	// not fully testing ddnet ex item
 	item = msg.Snapshot.Items[3]
-	require.Equal(t, 32765, item.TypeId())
+	require.Equal(t, 32765, int(item.TypeId()))
 
 	// this is not verified
 	item = msg.Snapshot.Items[4]
