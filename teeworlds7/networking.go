@@ -130,7 +130,7 @@ func (client *Client) ConnectContext(ctx context.Context, serverIp string, serve
 				return fmt.Errorf("failed to process game tick: %w", err)
 			}
 		case <-ctx.Done():
-			return context.Cause(ctx)
+			return nil
 		}
 	}
 
