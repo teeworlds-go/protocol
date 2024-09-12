@@ -93,13 +93,9 @@ func (client *Client) SendPacket(packet *protocol7.Packet) (err error) {
 	client.LastSend = time.Now()
 
 	data := packet.Pack(&client.Session)
-	n := 0
-	for len(data) > 0 {
-		n, err = client.Conn.Write(data)
-		if err != nil {
-			return err
-		}
-		data = data[n:]
+	_, err = client.Conn.Write(data)
+	if err != nil {
+		return err
 	}
 	return nil
 }
