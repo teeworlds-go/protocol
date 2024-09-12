@@ -95,7 +95,7 @@ func (client *Client) SendPacket(packet *protocol7.Packet) (err error) {
 	data := packet.Pack(&client.Session)
 	n := 0
 	for len(data) > 0 {
-		n, err = client.Conn.Write(data[n:])
+		n, err = client.Conn.Write(data)
 		if err != nil {
 			return err
 		}
