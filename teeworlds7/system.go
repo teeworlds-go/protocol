@@ -161,12 +161,12 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 		userMsgCallback(client.Callbacks.SysSnapEmpty, msg, func() {
 			deltaTick := msg.GameTick - msg.DeltaTick
 			slog.Debug("got snap empty", "delta_tick", deltaTick, "raw_delta_tick", msg.DeltaTick, "game_tick", msg.GameTick)
-			prevSnap, err := client.SnapshotStorage.Get(deltaTick)
+			prevSnap, found := client.SnapshotStorage.Get(deltaTick)
 
-			if err != nil {
+			if !found {
 				// couldn't find the delta snapshots that the server used
 				// to compress this snapshot. force the server to resync
-				slog.Error("error, couldn't find the delta snapshot", "error", err)
+				slog.Error("error, couldn't find the delta snapshot")
 
 				// ack snapshot
 				// TODO:
