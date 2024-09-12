@@ -4,3 +4,6 @@ teeworlds_client
 teeworlds
 protocol
 
+.vscode/
+examples/client_simple/client_simple
+examples/client_verbose/client_verbose
