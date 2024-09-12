@@ -1,7 +1,6 @@
 package snapshot7
 
 import (
-	"errors"
 	"fmt"
 	"log/slog"
 
@@ -118,23 +117,23 @@ func UndiffItemSlow(oldItem object7.SnapObject, diffItem object7.SnapObject) obj
 }
 
 // the key is one integer holding both type and id
-func (snap *Snapshot) GetItemAtKey(key int) *object7.SnapObject {
+func (snap *Snapshot) GetItemAtKey(key int) (obj *object7.SnapObject, found bool) {
 	for _, item := range snap.Items {
 		if key == ItemKey(item) {
-			return &item
+			return &item, true
 		}
 	}
-	return nil
+	return nil, false
 }
 
 // the key is one integer holding both type and id
-func (snap *Snapshot) GetItemIndex(key int) (int, error) {
+func (snap *Snapshot) GetItemIndex(key int) (index int, found bool) {
 	for i, item := range snap.Items {
 		if key == ItemKey(item) {
-			return i, nil
+			return i, true
 		}
 	}
-	return 0, errors.New("not found")
+	return 0, false
 }
 
 // from has to be the old snapshot we delta against
@@ -144,7 +143,7 @@ func (snap *Snapshot) GetItemIndex(key int) (int, error) {
 // it returns the new full snapshot with the delta applied to the from
 //
 // See also (Snapshot *)Unpack()
-func UnpackDelata(from *Snapshot, u *packer.Unpacker) (*Snapshot, error) {
+func UnpackDelta(from *Snapshot, u *packer.Unpacker) (*Snapshot, error) {
 	// TODO: add all the error checking the C++ reference implementation has
 
 	snap := &Snapshot{}
@@ -191,14 +190,14 @@ func UnpackDelata(from *Snapshot, u *packer.Unpacker) (*Snapshot, error) {
 		}
 
 		key := (itemType << 16) | (itemId & 0xffff)
-		oldItem := from.GetItemAtKey(key)
+		oldItem, found := from.GetItemAtKey(key)
 
-		if oldItem == nil {
+		if !found {
 			snap.Items = append(snap.Items, item)
 		} else {
 			item = UndiffItemSlow(*oldItem, item)
-			idx, err := snap.GetItemIndex(key)
-			if err != nil {
+			idx, found := snap.GetItemIndex(key)
+			if !found {
 				// TODO: the error message is bogus and it should also not panic
 				panic("tried to update item that was not found")
 			}

@@ -30,7 +30,7 @@ func (client *Client) CreateAltSnap(oldSnap *snapshot7.Snapshot, newSnap *snapsh
 
 		if newItem.TypeId() == network7.ObjCharacter {
 			char, ok := altSnap.Items[i].(*object7.Character)
-			if ok == false {
+			if !ok {
 				panic("failed to cast character")
 			}
 			// TODO: this is wrong

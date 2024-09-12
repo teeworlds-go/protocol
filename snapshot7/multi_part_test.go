@@ -361,13 +361,13 @@ func Test4PartSnap(t *testing.T) {
 	// we don't have the actual prev snap here
 	// just use an empty snap should be fine too
 	// then the final values will be wrong but it should still parse correctly i think
-	prevSnap, err := client.SnapshotStorage.Get(snapshot7.EmptySnapTick)
-	require.NoError(t, err)
+	prevSnap, found := client.SnapshotStorage.Get(snapshot7.EmptySnapTick)
+	require.True(t, found)
 
 	u := &packer.Unpacker{}
 	u.Reset(client.SnapshotStorage.IncomingData())
 
-	newFullSnap, err := snapshot7.UnpackDelata(prevSnap, u)
+	newFullSnap, err := snapshot7.UnpackDelta(prevSnap, u)
 	require.NoError(t, err)
 
 	err = client.SnapshotStorage.Add(part2.GameTick, newFullSnap)
