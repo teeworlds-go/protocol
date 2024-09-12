@@ -42,8 +42,8 @@ func main() {
 			fmt.Printf("  got tee at %.2f %.2f\n", float32(character.X)/32.0, float32(character.Y)/32.0)
 		}
 
-		char, err := client.SnapFindCharacter(client.LocalClientId)
-		if err == nil {
+		char, found, err := client.SnapFindCharacter(client.LocalClientId)
+		if err == nil && found{
 			fmt.Printf("  we are at %d %d\n", char.X/32, char.Y/32)
 			client.Right()
 		}
