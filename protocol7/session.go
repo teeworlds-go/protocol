@@ -2,6 +2,17 @@ package protocol7
 
 import "github.com/teeworlds-go/protocol/messages7"
 
+// NewSession creates a new session with default values that can be used to request a new token from the server.
+func NewSession() Session {
+	return Session{
+		ClientToken: [4]byte{0x01, 0x02, 0x03, 0x04},
+		ServerToken: [4]byte{0xff, 0xff, 0xff, 0xff}, // special value for requesting a new token
+		Ack:         0,
+		Sequence:    0,
+		PeerAck:     0,
+	}
+}
+
 // teeworlds low level protocol
 // keeping track of connection state
 // resends and anti spoof tokens
