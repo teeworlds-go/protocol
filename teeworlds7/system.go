@@ -10,23 +10,26 @@ import (
 	"github.com/teeworlds-go/protocol/snapshot7"
 )
 
-func (client *Client) processSystem(netMsg messages7.NetMessage, response *protocol7.Packet) bool {
+func (client *Client) processSystem(netMsg messages7.NetMessage, response *protocol7.Packet) (err error) {
 	switch msg := netMsg.(type) {
 	case *messages7.MapChange:
-		userMsgCallback(client.Callbacks.SysMapChange, msg, func() {
+		return userMsgCallback(client.Callbacks.SysMapChange, msg, func() error {
 			fmt.Println("got map change")
 			response.Messages = append(response.Messages, &messages7.Ready{})
+			return nil
 		})
 	case *messages7.MapData:
-		userMsgCallback(client.Callbacks.SysMapData, msg, func() {
+		return userMsgCallback(client.Callbacks.SysMapData, msg, func() error {
 			fmt.Printf("got map chunk %x\n", msg.Data)
+			return nil
 		})
 	case *messages7.ServerInfo:
-		userMsgCallback(client.Callbacks.SysServerInfo, msg, func() {
+		return userMsgCallback(client.Callbacks.SysServerInfo, msg, func() error {
 			fmt.Printf("connected to server with name '%s'\n", msg.Name)
+			return nil
 		})
 	case *messages7.ConReady:
-		userMsgCallback(client.Callbacks.SysConReady, msg, func() {
+		return userMsgCallback(client.Callbacks.SysConReady, msg, func() error {
 			fmt.Println("connected, sending info")
 			info := &messages7.ClStartInfo{
 				Name:                  client.Name,
@@ -52,16 +55,16 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 				ColorEyes:             65408,
 			}
 			response.Messages = append(response.Messages, info)
+			return nil
 		})
 	case *messages7.Snap:
-		userMsgCallback(client.Callbacks.SysSnap, msg, func() {
+		return userMsgCallback(client.Callbacks.SysSnap, msg, func() error {
 			deltaTick := msg.GameTick - msg.DeltaTick
 			slog.Debug("got snap", "delta_tick", deltaTick, "raw_delta_tick", msg.DeltaTick, "game_tick", msg.GameTick, "part", msg.Part, "num_parts", msg.NumParts)
 
 			err := client.SnapshotStorage.AddIncomingData(msg.Part, msg.NumParts, msg.Data)
 			if err != nil {
-				// TODO: dont panic
-				panic(err)
+				return fmt.Errorf("failed to store incoming data snap: %w", err)
 			}
 
 			// TODO: this is as naive as it gets
@@ -70,8 +73,8 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 			//       m_SnapshotParts |= 1<<Part;
 			if msg.Part != msg.NumParts-1 {
 				// TODO: remove this print
-				slog.Info("storing partial snap", "part", msg.Part, "num_parts", msg.NumParts)
-				return
+				slog.Debug("storing partial snap", "part", msg.Part, "num_parts", msg.NumParts)
+				return nil
 			}
 
 			prevSnap, found := client.SnapshotStorage.Get(deltaTick)
@@ -83,7 +86,7 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 				// ack snapshot
 				// TODO:
 				// m_AckGameTick = -1;
-				return
+				return nil
 			}
 
 			u := &packer.Unpacker{}
@@ -91,17 +94,16 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 
 			newFullSnap, err := snapshot7.UnpackDelta(prevSnap, u)
 			if err != nil {
-				slog.Error("delta unpack failed!", "error", err)
-				return
+				return fmt.Errorf("delta unpack failed: %w", err)
 			}
 			err = client.SnapshotStorage.Add(msg.GameTick, newFullSnap)
 			if err != nil {
-				slog.Error("failed to store snap", "error", err)
+				return fmt.Errorf("failed to store snap: %w", err)
 			}
 			client.SnapshotStorage.PurgeUntil(deltaTick)
 
 			for _, callback := range client.Callbacks.Snapshot {
-				callback(newFullSnap, func() {})
+				callback(newFullSnap, noOpFunc)
 			}
 
 			client.Game.Input.AckGameTick = msg.GameTick
@@ -110,9 +112,10 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 			client.SnapshotStorage.SetAltSnap(msg.GameTick, newFullSnap)
 
 			response.Messages = append(response.Messages, client.Game.Input)
+			return nil
 		})
 	case *messages7.SnapSingle:
-		userMsgCallback(client.Callbacks.SysSnapSingle, msg, func() {
+		return userMsgCallback(client.Callbacks.SysSnapSingle, msg, func() error {
 			deltaTick := msg.GameTick - msg.DeltaTick
 			slog.Debug("got snap single", "delta_tick", deltaTick, "raw_delta_tick", msg.DeltaTick, "game_tick", msg.GameTick)
 			prevSnap, found := client.SnapshotStorage.Get(deltaTick)
@@ -125,7 +128,7 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 				// ack snapshot
 				// TODO:
 				// m_AckGameTick = -1;
-				return
+				return nil
 			}
 
 			u := &packer.Unpacker{}
@@ -133,17 +136,16 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 
 			newFullSnap, err := snapshot7.UnpackDelta(prevSnap, u)
 			if err != nil {
-				slog.Error("delta unpack failed!", "error", err)
-				return
+				return fmt.Errorf("delta unpack failed: %w", err)
 			}
 			err = client.SnapshotStorage.Add(msg.GameTick, newFullSnap)
 			if err != nil {
-				slog.Error("failed to store snap", "error", err)
+				return fmt.Errorf("failed to store snap: %w", err)
 			}
 			client.SnapshotStorage.PurgeUntil(deltaTick)
 
 			for _, callback := range client.Callbacks.Snapshot {
-				callback(newFullSnap, func() {})
+				callback(newFullSnap, noOpFunc)
 			}
 
 			client.Game.Input.AckGameTick = msg.GameTick
@@ -154,11 +156,15 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 			client.Game.Snap.fill(altSnap)
 			client.SnapshotStorage.SetAltSnap(msg.GameTick, altSnap)
 
-			client.SendInput()
+			err = client.SendInput()
+			if err != nil {
+				return fmt.Errorf("failed to send input: %w", err)
+			}
 			response.Messages = append(response.Messages, client.Game.Input)
+			return nil
 		})
 	case *messages7.SnapEmpty:
-		userMsgCallback(client.Callbacks.SysSnapEmpty, msg, func() {
+		return userMsgCallback(client.Callbacks.SysSnapEmpty, msg, func() error {
 			deltaTick := msg.GameTick - msg.DeltaTick
 			slog.Debug("got snap empty", "delta_tick", deltaTick, "raw_delta_tick", msg.DeltaTick, "game_tick", msg.GameTick)
 			prevSnap, found := client.SnapshotStorage.Get(deltaTick)
@@ -171,7 +177,7 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 				// ack snapshot
 				// TODO:
 				// m_AckGameTick = -1;
-				return
+				return nil
 			}
 
 			err := client.SnapshotStorage.Add(msg.GameTick, prevSnap)
@@ -181,7 +187,10 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 			client.SnapshotStorage.PurgeUntil(deltaTick)
 
 			for _, callback := range client.Callbacks.Snapshot {
-				callback(prevSnap, func() {})
+				err = callback(prevSnap, noOpFunc)
+				if err != nil {
+					return fmt.Errorf("failed to execute snapshot callback: %w", err)
+				}
 			}
 
 			client.Game.Input.AckGameTick = msg.GameTick
@@ -192,40 +201,51 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 			// client.Game.Snap.fill(prevSnap)
 
 			response.Messages = append(response.Messages, client.Game.Input)
+			return nil
 		})
 	case *messages7.InputTiming:
-		userMsgCallback(client.Callbacks.SysInputTiming, msg, func() {
+		return userMsgCallback(client.Callbacks.SysInputTiming, msg, func() error {
 			// fmt.Printf("timing time left=%d\n", msg.TimeLeft)
+			return nil
 		})
 	case *messages7.RconAuthOn:
-		userMsgCallback(client.Callbacks.SysRconAuthOn, msg, func() {
+		return userMsgCallback(client.Callbacks.SysRconAuthOn, msg, func() error {
 			fmt.Println("you are now authenticated in rcon")
+			return nil
 		})
 	case *messages7.RconAuthOff:
-		userMsgCallback(client.Callbacks.SysRconAuthOff, msg, func() {
+		return userMsgCallback(client.Callbacks.SysRconAuthOff, msg, func() error {
 			fmt.Println("you are no longer authenticated in rcon")
+			return nil
 		})
 	case *messages7.RconLine:
-		userMsgCallback(client.Callbacks.SysRconLine, msg, func() {
+		return userMsgCallback(client.Callbacks.SysRconLine, msg, func() error {
 			fmt.Printf("[rcon] %s\n", msg.Line)
+			return nil
 		})
 	case *messages7.RconCmdAdd:
-		userMsgCallback(client.Callbacks.SysRconCmdAdd, msg, func() {
+		return userMsgCallback(client.Callbacks.SysRconCmdAdd, msg, func() error {
 			fmt.Printf("got rcon cmd=%s %s %s\n", msg.Name, msg.Params, msg.Help)
+			return nil
 		})
 	case *messages7.RconCmdRem:
-		userMsgCallback(client.Callbacks.SysRconCmdRem, msg, func() {
+		return userMsgCallback(client.Callbacks.SysRconCmdRem, msg, func() error {
 			fmt.Printf("removed cmd=%s\n", msg.Name)
+			return nil
 		})
 	case *messages7.Unknown:
-		userMsgCallback(client.Callbacks.MsgUnknown, msg, func() {
+		return userMsgCallback(client.Callbacks.MsgUnknown, msg, func() error {
 			// TODO: msg id of unknown messages should not be -1
 			fmt.Println("TODO: why is the msg id -1???")
 			printUnknownMessage(msg, "unknown system")
+			return nil
 		})
 	default:
 		printUnknownMessage(netMsg, "unprocessed system")
-		return false
+		return fmt.Errorf("unprocessed system message: %v", netMsg)
 	}
-	return true
+}
+
+func noOpFunc() error {
+	return nil
 }

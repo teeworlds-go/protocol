@@ -11,6 +11,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/teeworlds-go/protocol/messages7"
 	"github.com/teeworlds-go/protocol/snapshot7"
@@ -23,19 +24,23 @@ func main() {
 
 	// Register your callback for incoming chat messages
 	// For a full list of all callbacks see: https://github.com/teeworlds-go/protocol/tree/master/teeworlds7/user_hooks.go
-	client.OnChat(func(msg *messages7.SvChat, defaultAction teeworlds7.DefaultAction) {
+	client.OnChat(func(msg *messages7.SvChat, defaultAction teeworlds7.DefaultAction) error {
 		// the default action prints the chat message to the console
 		// if this is not called and you don't print it your self the chat will not be visible
-		defaultAction()
+		err := defaultAction()
+		if err != nil {
+			return err
+		}
 
 		if msg.Message == "!ping" {
 			// Send reply in chat using the SendChat() action
 			// For a full list of all actions see: https://github.com/teeworlds-go/protocol/tree/master/teeworlds7/user_actions.go
-			client.SendChat("pong")
+			return client.SendChat("pong")
 		}
+		return nil
 	})
 
-	client.OnSnapshot(func(snap *snapshot7.Snapshot, defaultAction teeworlds7.DefaultAction) {
+	client.OnSnapshot(func(snap *snapshot7.Snapshot, defaultAction teeworlds7.DefaultAction) error {
 		fmt.Printf("got snap with %d items\n", len(snap.Items))
 
 		for _, character := range client.Game.Snap.Characters {
@@ -43,19 +48,29 @@ func main() {
 		}
 
 		char, found, err := client.SnapFindCharacter(client.LocalClientId)
-		if err == nil && found {
-			fmt.Printf("  we are at %d %d\n", char.X/32, char.Y/32)
-			client.Right()
+		if err != nil {
+			return err
 		}
+		if !found {
+			return nil
+		}
+		fmt.Printf("  we are at %d %d\n", char.X/32, char.Y/32)
+		client.Right()
+		return nil
 	})
 
-	client.Connect("127.0.0.1", 8303)
+	err := client.Connect("127.0.0.1", 8303)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }
 ```
 
-
 Example usages:
+
 - [client_verbose](./examples/client_verbose/) a verbose client show casing the easy to use high level api
+- [client_simple](./examples/client_simple/) a simple client showing the basic use of the high level api
 
 ## low level api for power users
 
@@ -65,4 +80,3 @@ The packages **chunk7, messages7, network7, packer, protocol7** Implement the lo
 
 - [MITM teeworlds proxy](https://github.com/teeworlds-go/proxy)
 - [goofworlds gui client](https://github.com/teeworlds-go/goofworlds)
-

@@ -2,7 +2,6 @@ package teeworlds7
 
 import (
 	"fmt"
-	"log/slog"
 	"net"
 	"time"
 
@@ -116,15 +115,15 @@ func (client *Client) sendInputIfNeeded() (sent bool, err error) {
 }
 
 func (client *Client) gameTick() error {
-	defaultAction := func() {
+	defaultAction := func() error {
 
 		// either input or keepalive
 		sent, err := client.sendInputIfNeeded()
 		if err != nil {
 			// TODO: FIXME: propagate error correctly back to the caller
-			slog.Error("failed to send input", "error", err)
+			return fmt.Errorf("failed to send input: %w", err)
 		} else if sent {
-			return
+			return nil
 		}
 
 		// keepalive in case we did not send anything
@@ -133,16 +132,19 @@ func (client *Client) gameTick() error {
 		if time.Since(client.LastSend).Seconds() > 2 {
 			err = client.SendKeepAlive()
 			if err != nil {
-				slog.Error("failed to send keepalive", "error", err)
-				// TODO: FIXME: propagate error correctly back to the caller
+				return fmt.Errorf("failed to send keepalive: %w", err)
+
 			}
 		}
+		return nil
 	}
 
+	var err error
 	for _, callback := range client.Callbacks.Tick {
-		callback(defaultAction)
+		err = callback(defaultAction)
+		if err != nil {
+			return err
+		}
 	}
-
-	// TODO: preparation for error handling and propagation
 	return nil
 }
