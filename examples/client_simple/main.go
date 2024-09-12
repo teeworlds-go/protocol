@@ -20,7 +20,7 @@ func main() {
 	client.Name = "nameless tee"
 
 	client.OnPacket(func(packet *protocol7.Packet) bool {
-		fmt.Printf("received packet w/ %d messages\n", len(packet.Messages))
+		fmt.Printf("received packet with %d message(s)\n", len(packet.Messages))
 
 		for idx, msg := range packet.Messages {
 			fmt.Printf("%-3d %-8s %d\n", idx, msg.MsgType(), msg.MsgId())
