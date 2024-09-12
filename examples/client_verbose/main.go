@@ -20,6 +20,8 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
+	// wrap context with an additional cancel function
+	// which allows to set a cause for the cancelation
 	ctx, cancelCause := context.WithCancelCause(ctx)
 	defer cancelCause(nil)
 
@@ -71,7 +73,11 @@ func main() {
 	// this is matching the default behavior
 	client.OnDisconnect(func(msg *messages7.CtrlClose, defaultAction teeworlds7.DefaultAction) error {
 		fmt.Printf("disconnected (%s)\n", msg.Reason)
-		os.Exit(0)
+
+		// cancel context on being kicked
+		// this will tell the application to
+		// gracefully shutdown
+		cancelCause(fmt.Errorf("disconnected from server: %s", msg.Reason))
 		return nil
 	})
 
