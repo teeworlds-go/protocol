@@ -98,7 +98,6 @@ func NewClient() *Client {
 func (client *Client) sendInputIfNeeded() (sent bool, err error) {
 	send := false
 	// at least every 10hz or on change
-	// before, this was set to 1 second
 	if time.Since(client.LastSend) > 100*time.Millisecond {
 		send = true
 	} else if client.Game.Input != nil && client.Game.LastSentInput != *client.Game.Input {
