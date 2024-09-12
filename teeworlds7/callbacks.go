@@ -23,7 +23,11 @@ type DefaultAction func() error
 // )
 func userMsgCallback[T any](userCallbacks []func(T, DefaultAction) error, msg T, defaultAction DefaultAction) error {
 	if len(userCallbacks) == 0 {
-		return defaultAction()
+		if defaultAction != nil {
+			return defaultAction()
+
+		}
+		return nil
 	}
 
 	var err error

@@ -21,11 +21,11 @@ func printUnknownMessage(msg messages7.NetMessage, msgType string) {
 	}
 }
 
-func (client *Client) processMessage(msg messages7.NetMessage, response *protocol7.Packet) (err error) {
+func (client *Client) processMessage(msg messages7.NetMessage, response *protocol7.Packet) (process bool, err error) {
 	if msg.Header() == nil {
 		// this is probably an unknown message
 		fmt.Printf("warning ignoring msgId=%d because header is nil\n", msg.MsgId())
-		return nil
+		return false, nil
 	}
 	if msg.Header().Flags.Vital {
 		client.Session.Ack++
@@ -119,7 +119,7 @@ func (client *Client) processPacket(packet *protocol7.Packet) (err error) {
 	}
 
 	for _, msg := range packet.Messages {
-		err = client.processMessage(msg, response)
+		_, err = client.processMessage(msg, response)
 		if err != nil {
 			return err
 		}

@@ -10,26 +10,32 @@ import (
 	"github.com/teeworlds-go/protocol/snapshot7"
 )
 
-func (client *Client) processSystem(netMsg messages7.NetMessage, response *protocol7.Packet) (err error) {
+func (client *Client) processSystem(netMsg messages7.NetMessage, response *protocol7.Packet) (process bool, err error) {
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("failed to process system message: %w", err)
+		}
+	}()
+
 	switch msg := netMsg.(type) {
 	case *messages7.MapChange:
-		return userMsgCallback(client.Callbacks.SysMapChange, msg, func() error {
+		err = userMsgCallback(client.Callbacks.SysMapChange, msg, func() error {
 			fmt.Println("got map change")
 			response.Messages = append(response.Messages, &messages7.Ready{})
 			return nil
 		})
 	case *messages7.MapData:
-		return userMsgCallback(client.Callbacks.SysMapData, msg, func() error {
+		err = userMsgCallback(client.Callbacks.SysMapData, msg, func() error {
 			fmt.Printf("got map chunk %x\n", msg.Data)
 			return nil
 		})
 	case *messages7.ServerInfo:
-		return userMsgCallback(client.Callbacks.SysServerInfo, msg, func() error {
+		err = userMsgCallback(client.Callbacks.SysServerInfo, msg, func() error {
 			fmt.Printf("connected to server with name '%s'\n", msg.Name)
 			return nil
 		})
 	case *messages7.ConReady:
-		return userMsgCallback(client.Callbacks.SysConReady, msg, func() error {
+		err = userMsgCallback(client.Callbacks.SysConReady, msg, func() error {
 			fmt.Println("connected, sending info")
 			info := &messages7.ClStartInfo{
 				Name:                  client.Name,
@@ -58,7 +64,7 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 			return nil
 		})
 	case *messages7.Snap:
-		return userMsgCallback(client.Callbacks.SysSnap, msg, func() error {
+		err = userMsgCallback(client.Callbacks.SysSnap, msg, func() error {
 			deltaTick := msg.GameTick - msg.DeltaTick
 			slog.Debug("got snap", "delta_tick", deltaTick, "raw_delta_tick", msg.DeltaTick, "game_tick", msg.GameTick, "part", msg.Part, "num_parts", msg.NumParts)
 
@@ -103,7 +109,7 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 			client.SnapshotStorage.PurgeUntil(deltaTick)
 
 			for _, callback := range client.Callbacks.Snapshot {
-				callback(newFullSnap, noOpFunc)
+				callback(newFullSnap, nil)
 			}
 
 			client.Game.Input.AckGameTick = msg.GameTick
@@ -115,7 +121,7 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 			return nil
 		})
 	case *messages7.SnapSingle:
-		return userMsgCallback(client.Callbacks.SysSnapSingle, msg, func() error {
+		err = userMsgCallback(client.Callbacks.SysSnapSingle, msg, func() error {
 			deltaTick := msg.GameTick - msg.DeltaTick
 			slog.Debug("got snap single", "delta_tick", deltaTick, "raw_delta_tick", msg.DeltaTick, "game_tick", msg.GameTick)
 			prevSnap, found := client.SnapshotStorage.Get(deltaTick)
@@ -145,7 +151,7 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 			client.SnapshotStorage.PurgeUntil(deltaTick)
 
 			for _, callback := range client.Callbacks.Snapshot {
-				callback(newFullSnap, noOpFunc)
+				callback(newFullSnap, nil)
 			}
 
 			client.Game.Input.AckGameTick = msg.GameTick
@@ -164,7 +170,7 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 			return nil
 		})
 	case *messages7.SnapEmpty:
-		return userMsgCallback(client.Callbacks.SysSnapEmpty, msg, func() error {
+		err = userMsgCallback(client.Callbacks.SysSnapEmpty, msg, func() error {
 			deltaTick := msg.GameTick - msg.DeltaTick
 			slog.Debug("got snap empty", "delta_tick", deltaTick, "raw_delta_tick", msg.DeltaTick, "game_tick", msg.GameTick)
 			prevSnap, found := client.SnapshotStorage.Get(deltaTick)
@@ -187,7 +193,7 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 			client.SnapshotStorage.PurgeUntil(deltaTick)
 
 			for _, callback := range client.Callbacks.Snapshot {
-				err = callback(prevSnap, noOpFunc)
+				err = callback(prevSnap, nil)
 				if err != nil {
 					return fmt.Errorf("failed to execute snapshot callback: %w", err)
 				}
@@ -204,37 +210,37 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 			return nil
 		})
 	case *messages7.InputTiming:
-		return userMsgCallback(client.Callbacks.SysInputTiming, msg, func() error {
+		err = userMsgCallback(client.Callbacks.SysInputTiming, msg, func() error {
 			// fmt.Printf("timing time left=%d\n", msg.TimeLeft)
 			return nil
 		})
 	case *messages7.RconAuthOn:
-		return userMsgCallback(client.Callbacks.SysRconAuthOn, msg, func() error {
+		err = userMsgCallback(client.Callbacks.SysRconAuthOn, msg, func() error {
 			fmt.Println("you are now authenticated in rcon")
 			return nil
 		})
 	case *messages7.RconAuthOff:
-		return userMsgCallback(client.Callbacks.SysRconAuthOff, msg, func() error {
+		err = userMsgCallback(client.Callbacks.SysRconAuthOff, msg, func() error {
 			fmt.Println("you are no longer authenticated in rcon")
 			return nil
 		})
 	case *messages7.RconLine:
-		return userMsgCallback(client.Callbacks.SysRconLine, msg, func() error {
+		err = userMsgCallback(client.Callbacks.SysRconLine, msg, func() error {
 			fmt.Printf("[rcon] %s\n", msg.Line)
 			return nil
 		})
 	case *messages7.RconCmdAdd:
-		return userMsgCallback(client.Callbacks.SysRconCmdAdd, msg, func() error {
+		err = userMsgCallback(client.Callbacks.SysRconCmdAdd, msg, func() error {
 			fmt.Printf("got rcon cmd=%s %s %s\n", msg.Name, msg.Params, msg.Help)
 			return nil
 		})
 	case *messages7.RconCmdRem:
-		return userMsgCallback(client.Callbacks.SysRconCmdRem, msg, func() error {
+		err = userMsgCallback(client.Callbacks.SysRconCmdRem, msg, func() error {
 			fmt.Printf("removed cmd=%s\n", msg.Name)
 			return nil
 		})
 	case *messages7.Unknown:
-		return userMsgCallback(client.Callbacks.MsgUnknown, msg, func() error {
+		err = userMsgCallback(client.Callbacks.MsgUnknown, msg, func() error {
 			// TODO: msg id of unknown messages should not be -1
 			fmt.Println("TODO: why is the msg id -1???")
 			printUnknownMessage(msg, "unknown system")
@@ -242,10 +248,10 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 		})
 	default:
 		printUnknownMessage(netMsg, "unprocessed system")
-		return fmt.Errorf("unprocessed system message: %v", netMsg)
+		return false, nil
 	}
-}
-
-func noOpFunc() error {
-	return nil
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
