@@ -136,6 +136,9 @@ func (client *Client) ConnectContext(ctx context.Context, serverIp string, serve
 				if err != nil {
 					return err
 				}
+				// there was an actual unpacking error, which is why we cannot proceed the execution
+				// processing is not possible
+				continue
 			}
 			err = client.processPacket(packet)
 			if err != nil {
