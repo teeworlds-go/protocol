@@ -43,7 +43,7 @@ func main() {
 		}
 
 		char, found, err := client.SnapFindCharacter(client.LocalClientId)
-		if err == nil && found{
+		if err == nil && found {
 			fmt.Printf("  we are at %d %d\n", char.X/32, char.Y/32)
 			client.Right()
 		}
