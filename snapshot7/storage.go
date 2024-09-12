@@ -4,13 +4,17 @@ import (
 	"errors"
 	"fmt"
 	"slices"
-	"sort"
+	"sync"
 
 	"github.com/teeworlds-go/protocol/object7"
 )
 
 const (
+	// passed to methods
 	EmptySnapTick = -1
+
+	// returned by methods
+	UninitializedTick = -1
 )
 
 // TODO: do we even need this?
@@ -26,7 +30,12 @@ type holder struct {
 //	in teeworlds this makes sense because its a custom
 //	data structure
 //	but in golang users could just define their own map
+//
+// TODO: make this an interface with a default implementation which the user can
+// change and just replace with their own implementation if they want
 type Storage struct {
+	mu sync.RWMutex
+
 	// a backlog of a few snapshots
 	// kept to unpack new deltas sent by the server
 	holder map[int]*holder
@@ -40,10 +49,10 @@ type Storage struct {
 
 	// oldest tick still in the holder
 	// not the oldest tick we ever received
-	OldestTick int
+	oldestTick int
 
 	// newest tick in the holder
-	NewestTick int
+	newestTick int
 
 	// use to store and concatinate data
 	// of multi part snapshots
@@ -52,40 +61,70 @@ type Storage struct {
 }
 
 func NewStorage() *Storage {
-	s := &Storage{}
-	s.holder = make(map[int]*holder)
-	s.OldestTick = -1
-	s.NewestTick = -1
-	s.multiPartIncomingData = make([]byte, 0, MaxSize)
-	return s
+	return &Storage{
+		holder:                make(map[int]*holder),
+		oldestTick:            UninitializedTick,
+		newestTick:            UninitializedTick,
+		multiPartIncomingData: make([]byte, 0, MaxSize),
+	}
 }
 
-func (s *Storage) AltSnap() (*Snapshot, error) {
+func (s *Storage) NewestTick() int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return s.newestTick
+}
+
+func (s *Storage) OldestTick() int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return s.oldestTick
+}
+
+func (s *Storage) altSnapshot() (*Snapshot, error) {
 	if s.altSnap.snap == nil {
 		return nil, errors.New("there is no alt snap in the storage")
 	}
 	return s.altSnap.snap, nil
 }
 
+func (s *Storage) AltSnap() (*Snapshot, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return s.altSnapshot()
+}
+
 func (s *Storage) SetAltSnap(tick int, snap *Snapshot) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	s.altSnap.snap = snap
 	s.altSnap.tick = tick
 }
 
-func (s *Storage) FindAltSnapItem(typeId int, itemId int) (object7.SnapObject, error) {
-	altSnap, err := s.AltSnap()
+func (s *Storage) FindAltSnapItem(typeId, itemId int) (obj object7.SnapObject, found bool, err error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	altSnap, err := s.altSnapshot()
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
-	key := (typeId << 16) | (itemId & 0xffff)
-	item := altSnap.GetItemAtKey(key)
-	if item == nil {
-		return nil, errors.New("item not found")
+	key := (int(typeId) << 16) | (itemId & 0xffff)
+	item, found := altSnap.GetItemAtKey(key) // TODO: does this need to be concurrency safe or is it a read only object?
+	if !found {
+		return nil, false, nil
 	}
-	return *item, nil
+	return *item, true, nil
 }
 
 func (s *Storage) AddIncomingData(part int, numParts int, data []byte) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if part == 0 {
 		// reset length if we get a new snapshot
 		s.multiPartIncomingData = s.multiPartIncomingData[:0]
@@ -95,11 +134,11 @@ func (s *Storage) AddIncomingData(part int, numParts int, data []byte) error {
 		// so unless it is the last part it should fill
 		// all 900 bytes
 		if len(data) != MaxPackSize {
-			return fmt.Errorf("part=%d num_parts=%d expected_size=900 got_size=%d", part, numParts, len(data))
+			return fmt.Errorf("incomplete part that is not the last expected part: part=%d num_parts=%d expected_size=900 got_size=%d", part, numParts, len(data))
 		}
 	}
 	if len(s.multiPartIncomingData)+len(data) > MaxSize {
-		return errors.New("reached the maximum amount of snapshot data")
+		return fmt.Errorf("reached the maximum amount of snapshot data: %d bytes", MaxSize)
 	}
 
 	s.multiPartIncomingData = append(s.multiPartIncomingData, data...)
@@ -108,121 +147,156 @@ func (s *Storage) AddIncomingData(part int, numParts int, data []byte) error {
 }
 
 func (s *Storage) IncomingData() []byte {
-	return s.multiPartIncomingData
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return slices.Clone(s.multiPartIncomingData)
 }
 
-func (s *Storage) First() (*Snapshot, error) {
-	if s.OldestTick == -1 {
-		return nil, errors.New("no snapshot in storage yet")
+func (s *Storage) First() (snap *Snapshot, found bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	if s.oldestTick == UninitializedTick {
+		return nil, false
 	}
-	return s.Get(s.OldestTick)
+	return s.get(s.oldestTick)
 }
 
-func (s *Storage) Last() (*Snapshot, error) {
-	if s.NewestTick == -1 {
-		return nil, errors.New("no snapshot in storage yet")
+func (s *Storage) Last() (snap *Snapshot, found bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	if s.newestTick == UninitializedTick {
+		return nil, false
 	}
-	return s.Get(s.NewestTick)
+	return s.get(s.newestTick)
 }
 
 func (s *Storage) PurgeUntil(tick int) {
-	// TODO: i dont know golang
-	//       how to free map values
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-	deletedTicks := []int{}
 	for k := range s.holder {
 		if k < tick {
-			deletedTicks = append(deletedTicks, k)
+			delete(s.holder, k)
 		}
 	}
 
-	for _, deleted := range deletedTicks {
-		// memory management moment
-		// fmt.Printf("deleted index=%d (tick %d)\n", deleted, s.holder[deleted].snap.)
-		s.holder[deleted] = nil
-	}
-
-	if s.OldestTick != -1 {
-		if s.holder[s.OldestTick] == nil {
-			s.OldestTick = s.NextTick(s.OldestTick)
+	if s.oldestTick != UninitializedTick {
+		_, found := s.holder[s.oldestTick]
+		if !found {
+			s.oldestTick = s.nextTick(s.oldestTick)
 		}
 	}
-	if s.NewestTick != -1 {
-		if s.holder[s.NewestTick] == nil {
-			s.NewestTick = s.NextTick(s.NewestTick)
+	if s.newestTick != UninitializedTick {
+		_, found := s.holder[s.oldestTick]
+		if !found {
+			s.newestTick = s.nextTick(s.newestTick)
 		}
 	}
 }
 
 // you probably never have to use this method
 func (s *Storage) Size(tick int) int {
-	// TODO: this is probably the slowest possible way
-	//       to get the size of a map xd
-	return len(s.TicksSorted())
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return len(s.holder)
 }
 
 // you probably never have to use this method
 func (s *Storage) TicksSorted() []int {
-	ticks := []int{}
-	for k, v := range s.holder {
-		// TODO: will nil values even be included in the map?
-		if v != nil {
-			ticks = append(ticks, k)
-		}
-	}
-	sort.Slice(ticks, func(i, j int) bool {
-		return ticks[i] < ticks[j]
-	})
-	return ticks
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.ticksSorted()
 }
 
 // you probably never have to use this method
+func (s *Storage) ticksSorted() []int {
+
+	ticks := make([]int, 0, len(s.holder))
+	for k := range s.holder {
+		ticks = append(ticks, k)
+	}
+	slices.Sort(ticks)
+	return ticks
+}
+
 func (s *Storage) NextTick(tick int) int {
-	for _, t := range s.TicksSorted() {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return s.nextTick(tick)
+}
+
+// you probably never have to use this method
+func (s *Storage) nextTick(tick int) int {
+	for _, t := range s.ticksSorted() {
 		if t > tick {
 			return t
 		}
 	}
-	return -1
+	return UninitializedTick
 }
 
 // you probably never have to use this method
 func (s *Storage) PreviousTick(tick int) int {
-	ticks := s.TicksSorted()
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return s.previousTick(tick)
+}
+
+func (s *Storage) previousTick(tick int) int {
+	ticks := s.ticksSorted()
 	slices.Reverse(ticks)
 	for _, t := range ticks {
 		if t < tick {
 			return t
 		}
 	}
-	return -1
+	return UninitializedTick
 }
 
-func (s *Storage) Get(tick int) (*Snapshot, error) {
+func (s *Storage) Get(tick int) (snap *Snapshot, found bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.get(tick)
+}
+
+func (s *Storage) get(tick int) (snap *Snapshot, found bool) {
+
 	if tick == EmptySnapTick {
 		// -1 is the magic value for the empty snapshot
-		return &Snapshot{}, nil
+		return &Snapshot{}, true
 	}
 	if tick < 0 {
-		return nil, fmt.Errorf("negative ticks not supported! tried to get tick %d", tick)
+		panic(fmt.Sprintf("negative ticks not supported! tried to get tick %d", tick))
 	}
-	holder := s.holder[tick]
-	if holder == nil {
-		return nil, fmt.Errorf("snapshot for tick %d not found", tick)
+	holder, found := s.holder[tick]
+	if !found {
+		return nil, false
 	}
-	return holder.snap, nil
+	return holder.snap, true
 }
 
 func (s *Storage) Add(tick int, snapshot *Snapshot) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if tick < 0 {
 		return fmt.Errorf("negative ticks not supported! tried to add tick %d", tick)
 	}
-	if s.OldestTick == -1 || tick < s.OldestTick {
-		s.OldestTick = tick
+	if s.oldestTick == UninitializedTick || tick < s.oldestTick {
+		s.oldestTick = tick
 	}
-	if s.NewestTick == -1 || tick > s.NewestTick {
-		s.NewestTick = tick
+	if s.newestTick == UninitializedTick || tick > s.newestTick {
+		s.newestTick = tick
 	}
-	s.holder[tick] = &holder{snap: snapshot}
+	s.holder[tick] = &holder{
+		snap: snapshot,
+		tick: tick,
+	}
 	return nil
 }
