@@ -17,6 +17,20 @@ const (
 	maxPacksize = 1400
 )
 
+var (
+	// ErrProcessPacketFailed is returned when processing a packet failed
+	// This error can be checked in your error handling callback with errors.Is
+	ErrProcessPacketFailed = errors.New("failed to process packet")
+
+	// ErrUnpackPacketFailed is returned when unpacking a packet failed
+	// This error can be checked in your error handling callback with errors.Is
+	ErrUnpackPacketFailed = errors.New("failed to unpack packet")
+
+	// ErrProcessGameTickFailed is returned when processing a game tick failed
+	// This error can be checked in your error handling callback with errors.Is
+	ErrProcessGameTickFailed = errors.New("failed to process game tick")
+)
+
 func readNetwork(ctx context.Context, cancelCause context.CancelCauseFunc, wg *sync.WaitGroup, ch chan<- []byte, conn net.Conn) {
 	defer wg.Done()
 	slog.Debug("starting reader goroutine...")
@@ -56,10 +70,10 @@ func (client *Client) Connect(serverIp string, serverPort int) error {
 func (client *Client) ConnectContext(ctx context.Context, serverIp string, serverPort int) (err error) {
 	ctx, cancelCause := context.WithCancelCause(ctx)
 	defer func() {
-		// can be called only once
-		// in case this cause is second, it will not override
-		// the initial cancelation cause
-		cancelCause(nil)
+		// only the first cancelation cause is relevant
+		// subsequent cancelations will be ignored
+		// this one might be a subsequent cancelation
+		cancelCause(err)
 
 		ctxErr := context.Cause(ctx)
 		if ctxErr != nil {
@@ -118,16 +132,25 @@ func (client *Client) ConnectContext(ctx context.Context, serverIp string, serve
 			packet := &protocol7.Packet{}
 			err := packet.Unpack(msg)
 			if err != nil {
-				return fmt.Errorf("failed to unpack packet: %w", err)
+				err = client.handleInternalError(fmt.Errorf("%w: %w", ErrUnpackPacketFailed, err))
+				if err != nil {
+					return err
+				}
 			}
 			err = client.processPacket(packet)
 			if err != nil {
-				return fmt.Errorf("failed to process packet: %w", err)
+				err = client.handleInternalError(fmt.Errorf("%w: %w", ErrProcessPacketFailed, err))
+				if err != nil {
+					return err
+				}
 			}
 		case <-ticker.C:
 			err = client.gameTick()
 			if err != nil {
-				return fmt.Errorf("failed to process game tick: %w", err)
+				err = client.handleInternalError(fmt.Errorf("%w: %w", ErrProcessGameTickFailed, err))
+				if err != nil {
+					return err
+				}
 			}
 		case <-ctx.Done():
 			return nil

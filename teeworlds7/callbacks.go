@@ -137,7 +137,7 @@ type UserMsgCallbacks struct {
 	// return false to drop the error (ignore it)
 	//
 	// return true to pass the error on and finally throw
-	InternalError []func(error) (bool, error)
+	InternalError []func(error) error
 	MsgUnknown    []func(*messages7.Unknown, DefaultAction) error
 	Snapshot      []func(*snapshot7.Snapshot, DefaultAction) error
 

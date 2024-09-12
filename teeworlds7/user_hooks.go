@@ -16,9 +16,10 @@ func (client *Client) OnTick(callback func(defaultAction DefaultAction) error) {
 
 // if not implemented by the user the application might throw and exit
 //
-// return false to drop the error
-// return true if you did not handle the error and it should be passed on (will crash unless someone else catches it)
-func (client *Client) OnError(callback func(err error) (bool, error)) {
+// return nil to drop the error
+// return the error or another error
+// in order to shutdown the application.
+func (client *Client) OnError(callback func(err error) error) {
 	client.Callbacks.InternalError = append(client.Callbacks.InternalError, callback)
 }
 
