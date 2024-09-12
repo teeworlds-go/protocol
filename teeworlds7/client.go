@@ -62,16 +62,21 @@ type Client struct {
 //	this would be more useful to have on the Snapshot struct directly
 //	so it can be used everywhere not only in a client
 //	and the client then can just wrap it to acces the alt snap
-func (client *Client) SnapFindCharacter(ClientId int) (*object7.Character, error) {
-	item, err := client.SnapshotStorage.FindAltSnapItem(network7.ObjCharacter, ClientId)
+func (client *Client) SnapFindCharacter(clientId int) (character *object7.Character, found bool, err error) {
+	item, found, err := client.SnapshotStorage.FindAltSnapItem(network7.ObjCharacter, clientId)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
+
+	if !found {
+		return nil, false, nil
+	}
+
 	character, ok := item.(*object7.Character)
-	if ok == false {
-		return nil, errors.New("failed to cast character")
+	if !ok {
+		panic(fmt.Sprintf("type assertion failed: found client snap item is not a *object7.Character: %T", item))
 	}
-	return character, nil
+	return character, true, nil
 }
 
 func NewClient() *Client {
