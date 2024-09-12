@@ -1,8 +1,7 @@
 package teeworlds7
 
 import (
-	"errors"
-	"log"
+	"fmt"
 	"net"
 	"time"
 
