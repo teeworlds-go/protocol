@@ -19,8 +19,8 @@ const (
 
 func readNetwork(ctx context.Context, cancelCause context.CancelCauseFunc, wg *sync.WaitGroup, ch chan<- []byte, conn net.Conn) {
 	defer wg.Done()
-	fmt.Println("starting reader goroutine...")
-	defer fmt.Println("reader goroutine stopped")
+	slog.Debug("starting reader goroutine...")
+	defer slog.Debug("reader goroutine stopped")
 
 	buf := make([]byte, maxPacksize)
 	for {
