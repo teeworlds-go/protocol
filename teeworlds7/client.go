@@ -2,7 +2,7 @@ package teeworlds7
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"time"
 
@@ -11,6 +11,10 @@ import (
 	"github.com/teeworlds-go/protocol/object7"
 	"github.com/teeworlds-go/protocol/protocol7"
 	"github.com/teeworlds-go/protocol/snapshot7"
+)
+
+const (
+	UnknownClientId = -1
 )
 
 type Player struct {
@@ -80,56 +84,66 @@ func (client *Client) SnapFindCharacter(clientId int) (character *object7.Charac
 }
 
 func NewClient() *Client {
-	client := &Client{}
-	client.SnapshotStorage = snapshot7.NewStorage()
-	client.Game.Snap = &GameSnap{}
-	client.Game.Input = &messages7.Input{}
-	client.LocalClientId = -1
-	client.LastSend = time.Now()
-	return client
+	return &Client{
+		SnapshotStorage: snapshot7.NewStorage(),
+		Game: Game{
+			Snap:  &GameSnap{},
+			Input: &messages7.Input{},
+		},
+		LocalClientId: UnknownClientId,
+		LastSend:      time.Now(),
+	}
 }
 
-func (client *Client) sendInputIfNeeded() bool {
-	diff := time.Now().Sub(client.LastSend)
+func (client *Client) sendInputIfNeeded() (sent bool, err error) {
 	send := false
 	// at least every 10hz or on change
-	if diff.Microseconds() > 1000000 {
+	// before, this was set to 1 second
+	if time.Since(client.LastSend) > 100*time.Millisecond {
 		send = true
-	}
-	if client.Game.LastSentInput != *client.Game.Input {
+	} else if client.Game.Input != nil && client.Game.LastSentInput != *client.Game.Input {
 		send = true
 	}
 
-	if send {
-		client.SendInput()
+	if !send {
+		return false, nil
 	}
 
-	return send
+	err = client.SendInput()
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
-func (client *Client) gameTick() {
+func (client *Client) gameTick() error {
 	defaultAction := func() {
-		if client.sendInputIfNeeded() == true {
+
+		// either input or keepalive
+		sent, err := client.sendInputIfNeeded()
+		if err != nil {
+			// TODO: FIXME: propagate error correctly back to the caller
+			slog.Error("failed to send input", "error", err)
+		} else if sent {
 			return
 		}
 
-		diff := time.Now().Sub(client.LastSend)
-		if diff.Seconds() > 2 {
-			client.SendKeepAlive()
+		// keepalive in case we did not send anything
+		// rounded to seconds, which is why at least 3 seconds need to pass before
+		// another keepalive is sent
+		if time.Since(client.LastSend).Seconds() > 2 {
+			err = client.SendKeepAlive()
+			if err != nil {
+				slog.Error("failed to send keepalive", "error", err)
+				// TODO: FIXME: propagate error correctly back to the caller
+			}
 		}
 	}
 
 	for _, callback := range client.Callbacks.Tick {
 		callback(defaultAction)
 	}
-}
 
-func (client *Client) throwError(err error) {
-	for _, callback := range client.Callbacks.InternalError {
-		if callback(err) == false {
-			return
-		}
-	}
-
-	log.Fatal(err)
+	// TODO: preparation for error handling and propagation
+	return nil
 }
