@@ -74,12 +74,11 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 				return
 			}
 
-			prevSnap, err := client.SnapshotStorage.Get(deltaTick)
-
-			if err != nil {
+			prevSnap, found := client.SnapshotStorage.Get(deltaTick)
+			if !found {
 				// couldn't find the delta snapshots that the server used
 				// to compress this snapshot. force the server to resync
-				slog.Error("error, couldn't find the delta snapshot", "error", err)
+				slog.Error("error, couldn't find the delta snapshot")
 
 				// ack snapshot
 				// TODO:
@@ -90,7 +89,7 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 			u := &packer.Unpacker{}
 			u.Reset(client.SnapshotStorage.IncomingData())
 
-			newFullSnap, err := snapshot7.UnpackDelata(prevSnap, u)
+			newFullSnap, err := snapshot7.UnpackDelta(prevSnap, u)
 			if err != nil {
 				slog.Error("delta unpack failed!", "error", err)
 				return
@@ -106,7 +105,7 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 			}
 
 			client.Game.Input.AckGameTick = msg.GameTick
-			client.Game.Input.PredictionTick = client.SnapshotStorage.NewestTick
+			client.Game.Input.PredictionTick = client.SnapshotStorage.NewestTick()
 			client.Game.Snap.fill(newFullSnap)
 			client.SnapshotStorage.SetAltSnap(msg.GameTick, newFullSnap)
 
@@ -116,12 +115,12 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 		userMsgCallback(client.Callbacks.SysSnapSingle, msg, func() {
 			deltaTick := msg.GameTick - msg.DeltaTick
 			slog.Debug("got snap single", "delta_tick", deltaTick, "raw_delta_tick", msg.DeltaTick, "game_tick", msg.GameTick)
-			prevSnap, err := client.SnapshotStorage.Get(deltaTick)
+			prevSnap, found := client.SnapshotStorage.Get(deltaTick)
 
-			if err != nil {
+			if !found {
 				// couldn't find the delta snapshots that the server used
 				// to compress this snapshot. force the server to resync
-				slog.Error("error, couldn't find the delta snapshot", "error", err)
+				slog.Error("error, couldn't find the delta snapshot")
 
 				// ack snapshot
 				// TODO:
@@ -132,7 +131,7 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 			u := &packer.Unpacker{}
 			u.Reset(msg.Data)
 
-			newFullSnap, err := snapshot7.UnpackDelata(prevSnap, u)
+			newFullSnap, err := snapshot7.UnpackDelta(prevSnap, u)
 			if err != nil {
 				slog.Error("delta unpack failed!", "error", err)
 				return
@@ -148,7 +147,7 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 			}
 
 			client.Game.Input.AckGameTick = msg.GameTick
-			client.Game.Input.PredictionTick = client.SnapshotStorage.NewestTick
+			client.Game.Input.PredictionTick = client.SnapshotStorage.NewestTick()
 
 			// altSnap := client.CreateAltSnap(prevSnap, newFullSnap)
 			altSnap := newFullSnap
@@ -175,7 +174,7 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 				return
 			}
 
-			err = client.SnapshotStorage.Add(msg.GameTick, prevSnap)
+			err := client.SnapshotStorage.Add(msg.GameTick, prevSnap)
 			if err != nil {
 				slog.Error("failed to store snap", "error", err)
 			}
@@ -186,7 +185,7 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 			}
 
 			client.Game.Input.AckGameTick = msg.GameTick
-			client.Game.Input.PredictionTick = client.SnapshotStorage.NewestTick
+			client.Game.Input.PredictionTick = client.SnapshotStorage.NewestTick()
 			// blazingly fast empty snaps
 			// reuse the old game state
 			// there is no need to refill if it is the same snapshot anyways
