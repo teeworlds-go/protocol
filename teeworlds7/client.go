@@ -84,6 +84,7 @@ func (client *Client) SnapFindCharacter(clientId int) (character *object7.Charac
 
 func NewClient() *Client {
 	return &Client{
+		Name:            "nameless tee",
 		SnapshotStorage: snapshot7.NewStorage(),
 		Game: Game{
 			Snap:  &GameSnap{},
