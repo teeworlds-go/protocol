@@ -88,6 +88,10 @@ func (client *Client) ConnectContext(ctx context.Context, serverIp string, serve
 		}
 	}()
 
+	// wait for the reader goroutine to finish execution, before leaving this function scope
+	var wg sync.WaitGroup
+	defer wg.Wait()
+
 	ch := make(chan []byte, maxPacksize)
 	var d net.Dialer
 	conn, err := d.DialContext(ctx, "udp", fmt.Sprintf("%s:%d", serverIp, serverPort))
@@ -105,10 +109,7 @@ func (client *Client) ConnectContext(ctx context.Context, serverIp string, serve
 	client.Session = protocol7.NewSession()
 	client.Game.Players = make([]Player, network7.MaxClients)
 
-	var wg sync.WaitGroup
 	wg.Add(1)
-	defer wg.Wait() // wait for the reader goroutine to finish execution, before leaving this function scope
-
 	go readNetwork(ctx, cancelCause, &wg, ch, conn)
 
 	err = client.SendPacket(client.Session.CtrlToken())
