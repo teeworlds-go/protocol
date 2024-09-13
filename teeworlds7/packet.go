@@ -54,7 +54,8 @@ func (client *Client) processPacket(packet *protocol7.Packet) (err error) {
 
 	if packet.Header.Flags.Control {
 		if len(packet.Messages) != 1 {
-			return fmt.Errorf("got control packet with %d messages: expected only 1", len(packet.Messages))
+			// TODO: implement resends for when 0 messages were received
+			return fmt.Errorf("got control packet with %d messages", len(packet.Messages))
 		}
 
 		msg := packet.Messages[0]
