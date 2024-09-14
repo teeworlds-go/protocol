@@ -70,7 +70,7 @@ func main() {
 Example usages:
 
 - [client_verbose](./examples/client_verbose/) a verbose client show casing the easy to use high level api
-- [client_simple](./examples/client_simple/) a simple client showing the basic use of the high level api
+- [client_echo](./examples/client_echo/) a simple client echoing messages in chat
 
 ## low level api for power users
 
