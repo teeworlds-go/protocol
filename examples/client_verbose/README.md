@@ -1,7 +1,7 @@
 # client_verbose
 
 ```
-go build client_verbose.go
+go build .
 ./client_verbose
 ```
 
