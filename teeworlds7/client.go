@@ -2,7 +2,6 @@ package teeworlds7
 
 import (
 	"fmt"
-	"log/slog"
 	"net"
 	"time"
 
@@ -85,6 +84,7 @@ func (client *Client) SnapFindCharacter(clientId int) (character *object7.Charac
 
 func NewClient() *Client {
 	return &Client{
+		Name:            "nameless tee",
 		SnapshotStorage: snapshot7.NewStorage(),
 		Game: Game{
 			Snap:  &GameSnap{},
@@ -115,34 +115,47 @@ func (client *Client) sendInputIfNeeded() (sent bool, err error) {
 	return true, nil
 }
 
-func (client *Client) gameTick() error {
-	defaultAction := func() {
+func (client *Client) defaultGameTickAction() error {
+	// either input or keepalive
+	sent, err := client.sendInputIfNeeded()
+	if err != nil {
+		return fmt.Errorf("failed to send input: %w", err)
+	} else if sent {
+		return nil
+	}
 
-		// either input or keepalive
-		sent, err := client.sendInputIfNeeded()
+	// keepalive in case we did not send anything
+	// rounded to seconds, which is why at least 3 seconds need to pass before
+	// another keepalive is sent
+	if time.Since(client.LastSend).Seconds() > 2 {
+		err = client.SendKeepAlive()
 		if err != nil {
-			// TODO: FIXME: propagate error correctly back to the caller
-			slog.Error("failed to send input", "error", err)
-		} else if sent {
-			return
-		}
+			return fmt.Errorf("failed to send keepalive: %w", err)
 
-		// keepalive in case we did not send anything
-		// rounded to seconds, which is why at least 3 seconds need to pass before
-		// another keepalive is sent
-		if time.Since(client.LastSend).Seconds() > 2 {
-			err = client.SendKeepAlive()
-			if err != nil {
-				slog.Error("failed to send keepalive", "error", err)
-				// TODO: FIXME: propagate error correctly back to the caller
-			}
 		}
 	}
-
-	for _, callback := range client.Callbacks.Tick {
-		callback(defaultAction)
-	}
-
-	// TODO: preparation for error handling and propagation
 	return nil
+}
+
+func (client *Client) gameTick() error {
+	var err error
+	for _, callback := range client.Callbacks.Tick {
+		err = callback(client.defaultGameTickAction) // dependency injection
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (client *Client) handleInternalError(userError error) error {
+	err := userError // if this is not overwritten by a callback, it will be returned
+	for _, callback := range client.Callbacks.InternalError {
+		// first callback to return non-nil error will be returned
+		err = callback(userError)
+		if err != nil {
+			return err
+		}
+	}
+	return err
 }

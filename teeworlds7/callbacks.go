@@ -9,7 +9,7 @@ import (
 // Processes the incoming packet
 // It might print to the console
 // It might send a response packet
-type DefaultAction func()
+type DefaultAction func() error
 
 // Internal method to call user hooks and register default behavior for a given message
 // Example:
@@ -21,15 +21,23 @@ type DefaultAction func()
 //	func() { fmt.Println("default action") },
 //
 // )
-func userMsgCallback[T any](userCallbacks []func(T, DefaultAction), msg T, defaultAction DefaultAction) {
+func userMsgCallback[T any](userCallbacks []func(T, DefaultAction) error, msg T, defaultAction DefaultAction) error {
 	if len(userCallbacks) == 0 {
-		defaultAction()
-		return
+		if defaultAction != nil {
+			return defaultAction()
+
+		}
+		return nil
 	}
 
+	var err error
 	for _, callback := range userCallbacks {
-		callback(msg, defaultAction)
+		err = callback(msg, defaultAction)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 // TODO: this should be a map but the type checker broke me
@@ -37,7 +45,7 @@ func userMsgCallback[T any](userCallbacks []func(T, DefaultAction), msg T, defau
 // // key is the network7.MessageId
 // UserMsgCallbacks map[int]UserMsgCallback
 type UserMsgCallbacks struct {
-	Tick []func(DefaultAction)
+	Tick []func(DefaultAction) error
 
 	// return false to drop the packet
 	PacketIn []func(*protocol7.Packet) bool
@@ -129,84 +137,84 @@ type UserMsgCallbacks struct {
 	// return false to drop the error (ignore it)
 	//
 	// return true to pass the error on and finally throw
-	InternalError []func(error) bool
-	MsgUnknown    []func(*messages7.Unknown, DefaultAction)
-	Snapshot      []func(*snapshot7.Snapshot, DefaultAction)
+	InternalError []func(error) error
+	MsgUnknown    []func(*messages7.Unknown, DefaultAction) error
+	Snapshot      []func(*snapshot7.Snapshot, DefaultAction) error
 
-	CtrlKeepAlive []func(*messages7.CtrlKeepAlive, DefaultAction)
-	CtrlConnect   []func(*messages7.CtrlConnect, DefaultAction)
-	CtrlAccept    []func(*messages7.CtrlAccept, DefaultAction)
-	CtrlToken     []func(*messages7.CtrlToken, DefaultAction)
-	CtrlClose     []func(*messages7.CtrlClose, DefaultAction)
+	CtrlKeepAlive []func(*messages7.CtrlKeepAlive, DefaultAction) error
+	CtrlConnect   []func(*messages7.CtrlConnect, DefaultAction) error
+	CtrlAccept    []func(*messages7.CtrlAccept, DefaultAction) error
+	CtrlToken     []func(*messages7.CtrlToken, DefaultAction) error
+	CtrlClose     []func(*messages7.CtrlClose, DefaultAction) error
 
-	SysInfo            []func(*messages7.Info, DefaultAction)
-	SysMapChange       []func(*messages7.MapChange, DefaultAction)
-	SysMapData         []func(*messages7.MapData, DefaultAction)
-	SysServerInfo      []func(*messages7.ServerInfo, DefaultAction)
-	SysConReady        []func(*messages7.ConReady, DefaultAction)
-	SysSnap            []func(*messages7.Snap, DefaultAction)
-	SysSnapEmpty       []func(*messages7.SnapEmpty, DefaultAction)
-	SysSnapSingle      []func(*messages7.SnapSingle, DefaultAction)
-	SysSnapSmall       []func(*messages7.SnapSmall, DefaultAction)
-	SysInputTiming     []func(*messages7.InputTiming, DefaultAction)
-	SysRconAuthOn      []func(*messages7.RconAuthOn, DefaultAction)
-	SysRconAuthOff     []func(*messages7.RconAuthOff, DefaultAction)
-	SysRconLine        []func(*messages7.RconLine, DefaultAction)
-	SysRconCmdAdd      []func(*messages7.RconCmdAdd, DefaultAction)
-	SysRconCmdRem      []func(*messages7.RconCmdRem, DefaultAction)
-	SysAuthChallenge   []func(*messages7.AuthChallenge, DefaultAction)
-	SysAuthResult      []func(*messages7.AuthResult, DefaultAction)
-	SysReady           []func(*messages7.Ready, DefaultAction)
-	SysEnterGame       []func(*messages7.EnterGame, DefaultAction)
-	SysInput           []func(*messages7.Input, DefaultAction)
-	SysRconCmd         []func(*messages7.RconCmd, DefaultAction)
-	SysRconAuth        []func(*messages7.RconAuth, DefaultAction)
-	SysRequestMapData  []func(*messages7.RequestMapData, DefaultAction)
-	SysAuthStart       []func(*messages7.AuthStart, DefaultAction)
-	SysAuthResponse    []func(*messages7.AuthResponse, DefaultAction)
-	SysPing            []func(*messages7.Ping, DefaultAction)
-	SysPingReply       []func(*messages7.PingReply, DefaultAction)
-	SysError           []func(*messages7.Error, DefaultAction)
-	SysMaplistEntryAdd []func(*messages7.MaplistEntryAdd, DefaultAction)
-	SysMaplistEntryRem []func(*messages7.MaplistEntryRem, DefaultAction)
+	SysInfo            []func(*messages7.Info, DefaultAction) error
+	SysMapChange       []func(*messages7.MapChange, DefaultAction) error
+	SysMapData         []func(*messages7.MapData, DefaultAction) error
+	SysServerInfo      []func(*messages7.ServerInfo, DefaultAction) error
+	SysConReady        []func(*messages7.ConReady, DefaultAction) error
+	SysSnap            []func(*messages7.Snap, DefaultAction) error
+	SysSnapEmpty       []func(*messages7.SnapEmpty, DefaultAction) error
+	SysSnapSingle      []func(*messages7.SnapSingle, DefaultAction) error
+	SysSnapSmall       []func(*messages7.SnapSmall, DefaultAction) error
+	SysInputTiming     []func(*messages7.InputTiming, DefaultAction) error
+	SysRconAuthOn      []func(*messages7.RconAuthOn, DefaultAction) error
+	SysRconAuthOff     []func(*messages7.RconAuthOff, DefaultAction) error
+	SysRconLine        []func(*messages7.RconLine, DefaultAction) error
+	SysRconCmdAdd      []func(*messages7.RconCmdAdd, DefaultAction) error
+	SysRconCmdRem      []func(*messages7.RconCmdRem, DefaultAction) error
+	SysAuthChallenge   []func(*messages7.AuthChallenge, DefaultAction) error
+	SysAuthResult      []func(*messages7.AuthResult, DefaultAction) error
+	SysReady           []func(*messages7.Ready, DefaultAction) error
+	SysEnterGame       []func(*messages7.EnterGame, DefaultAction) error
+	SysInput           []func(*messages7.Input, DefaultAction) error
+	SysRconCmd         []func(*messages7.RconCmd, DefaultAction) error
+	SysRconAuth        []func(*messages7.RconAuth, DefaultAction) error
+	SysRequestMapData  []func(*messages7.RequestMapData, DefaultAction) error
+	SysAuthStart       []func(*messages7.AuthStart, DefaultAction) error
+	SysAuthResponse    []func(*messages7.AuthResponse, DefaultAction) error
+	SysPing            []func(*messages7.Ping, DefaultAction) error
+	SysPingReply       []func(*messages7.PingReply, DefaultAction) error
+	SysError           []func(*messages7.Error, DefaultAction) error
+	SysMaplistEntryAdd []func(*messages7.MaplistEntryAdd, DefaultAction) error
+	SysMaplistEntryRem []func(*messages7.MaplistEntryRem, DefaultAction) error
 
-	GameSvMotd              []func(*messages7.SvMotd, DefaultAction)
-	GameSvBroadcast         []func(*messages7.SvBroadcast, DefaultAction)
-	GameSvChat              []func(*messages7.SvChat, DefaultAction)
-	GameSvTeam              []func(*messages7.SvTeam, DefaultAction)
-	GameSvKillMsg           []func(*messages7.SvKillMsg, DefaultAction)
-	GameSvTuneParams        []func(*messages7.SvTuneParams, DefaultAction)
-	GameSvExtraProjectile   []func(*messages7.SvExtraProjectile, DefaultAction)
-	GameSvReadyToEnter      []func(*messages7.SvReadyToEnter, DefaultAction)
-	GameSvWeaponPickup      []func(*messages7.SvWeaponPickup, DefaultAction)
-	GameSvEmoticon          []func(*messages7.SvEmoticon, DefaultAction)
-	GameSvVoteClearOptions  []func(*messages7.SvVoteClearOptions, DefaultAction)
-	GameSvVoteOptionListAdd []func(*messages7.SvVoteOptionListAdd, DefaultAction)
-	GameSvVoteOptionAdd     []func(*messages7.SvVoteOptionAdd, DefaultAction)
-	GameSvVoteOptionRemove  []func(*messages7.SvVoteOptionRemove, DefaultAction)
-	GameSvVoteSet           []func(*messages7.SvVoteSet, DefaultAction)
-	GameSvVoteStatus        []func(*messages7.SvVoteStatus, DefaultAction)
-	GameSvServerSettings    []func(*messages7.SvServerSettings, DefaultAction)
-	GameSvClientInfo        []func(*messages7.SvClientInfo, DefaultAction)
-	GameSvGameInfo          []func(*messages7.SvGameInfo, DefaultAction)
-	GameSvClientDrop        []func(*messages7.SvClientDrop, DefaultAction)
-	GameSvGameMsg           []func(*messages7.SvGameMsg, DefaultAction)
-	GameDeClientEnter       []func(*messages7.DeClientEnter, DefaultAction)
-	GameDeClientLeave       []func(*messages7.DeClientLeave, DefaultAction)
-	GameClSay               []func(*messages7.ClSay, DefaultAction)
-	GameClSetTeam           []func(*messages7.ClSetTeam, DefaultAction)
-	GameClSetSpectatorMode  []func(*messages7.ClSetSpectatorMode, DefaultAction)
-	GameClStartInfo         []func(*messages7.ClStartInfo, DefaultAction)
-	GameClKill              []func(*messages7.ClKill, DefaultAction)
-	GameClReadyChange       []func(*messages7.ClReadyChange, DefaultAction)
-	GameClEmoticon          []func(*messages7.ClEmoticon, DefaultAction)
-	GameClVote              []func(*messages7.ClVote, DefaultAction)
-	GameClCallVote          []func(*messages7.ClCallVote, DefaultAction)
-	GameSvSkinChange        []func(*messages7.SvSkinChange, DefaultAction)
-	GameClSkinChange        []func(*messages7.ClSkinChange, DefaultAction)
-	GameSvRaceFinish        []func(*messages7.SvRaceFinish, DefaultAction)
-	GameSvCheckpoint        []func(*messages7.SvCheckpoint, DefaultAction)
-	GameSvCommandInfo       []func(*messages7.SvCommandInfo, DefaultAction)
-	GameSvCommandInfoRemove []func(*messages7.SvCommandInfoRemove, DefaultAction)
-	GameClCommand           []func(*messages7.ClCommand, DefaultAction)
+	GameSvMotd              []func(*messages7.SvMotd, DefaultAction) error
+	GameSvBroadcast         []func(*messages7.SvBroadcast, DefaultAction) error
+	GameSvChat              []func(*messages7.SvChat, DefaultAction) error
+	GameSvTeam              []func(*messages7.SvTeam, DefaultAction) error
+	GameSvKillMsg           []func(*messages7.SvKillMsg, DefaultAction) error
+	GameSvTuneParams        []func(*messages7.SvTuneParams, DefaultAction) error
+	GameSvExtraProjectile   []func(*messages7.SvExtraProjectile, DefaultAction) error
+	GameSvReadyToEnter      []func(*messages7.SvReadyToEnter, DefaultAction) error
+	GameSvWeaponPickup      []func(*messages7.SvWeaponPickup, DefaultAction) error
+	GameSvEmoticon          []func(*messages7.SvEmoticon, DefaultAction) error
+	GameSvVoteClearOptions  []func(*messages7.SvVoteClearOptions, DefaultAction) error
+	GameSvVoteOptionListAdd []func(*messages7.SvVoteOptionListAdd, DefaultAction) error
+	GameSvVoteOptionAdd     []func(*messages7.SvVoteOptionAdd, DefaultAction) error
+	GameSvVoteOptionRemove  []func(*messages7.SvVoteOptionRemove, DefaultAction) error
+	GameSvVoteSet           []func(*messages7.SvVoteSet, DefaultAction) error
+	GameSvVoteStatus        []func(*messages7.SvVoteStatus, DefaultAction) error
+	GameSvServerSettings    []func(*messages7.SvServerSettings, DefaultAction) error
+	GameSvClientInfo        []func(*messages7.SvClientInfo, DefaultAction) error
+	GameSvGameInfo          []func(*messages7.SvGameInfo, DefaultAction) error
+	GameSvClientDrop        []func(*messages7.SvClientDrop, DefaultAction) error
+	GameSvGameMsg           []func(*messages7.SvGameMsg, DefaultAction) error
+	GameDeClientEnter       []func(*messages7.DeClientEnter, DefaultAction) error
+	GameDeClientLeave       []func(*messages7.DeClientLeave, DefaultAction) error
+	GameClSay               []func(*messages7.ClSay, DefaultAction) error
+	GameClSetTeam           []func(*messages7.ClSetTeam, DefaultAction) error
+	GameClSetSpectatorMode  []func(*messages7.ClSetSpectatorMode, DefaultAction) error
+	GameClStartInfo         []func(*messages7.ClStartInfo, DefaultAction) error
+	GameClKill              []func(*messages7.ClKill, DefaultAction) error
+	GameClReadyChange       []func(*messages7.ClReadyChange, DefaultAction) error
+	GameClEmoticon          []func(*messages7.ClEmoticon, DefaultAction) error
+	GameClVote              []func(*messages7.ClVote, DefaultAction) error
+	GameClCallVote          []func(*messages7.ClCallVote, DefaultAction) error
+	GameSvSkinChange        []func(*messages7.SvSkinChange, DefaultAction) error
+	GameClSkinChange        []func(*messages7.ClSkinChange, DefaultAction) error
+	GameSvRaceFinish        []func(*messages7.SvRaceFinish, DefaultAction) error
+	GameSvCheckpoint        []func(*messages7.SvCheckpoint, DefaultAction) error
+	GameSvCommandInfo       []func(*messages7.SvCommandInfo, DefaultAction) error
+	GameSvCommandInfoRemove []func(*messages7.SvCommandInfoRemove, DefaultAction) error
+	GameClCommand           []func(*messages7.ClCommand, DefaultAction) error
 }
