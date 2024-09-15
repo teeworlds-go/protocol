@@ -25,7 +25,6 @@ func userMsgCallback[T any](userCallbacks []func(T, DefaultAction) error, msg T,
 	if len(userCallbacks) == 0 {
 		if defaultAction != nil {
 			return defaultAction()
-
 		}
 		return nil
 	}
