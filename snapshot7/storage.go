@@ -18,7 +18,7 @@ const (
 )
 
 var (
-	ErrNoAltInSnapStorage = errors.New("there is no alt snap in the storage")
+	ErrNoAltSnapInSnapStorage = errors.New("there is no alt snap in the storage")
 )
 
 // TODO: do we even need this?
@@ -89,7 +89,7 @@ func (s *Storage) OldestTick() int {
 
 func (s *Storage) altSnapshot() (*Snapshot, error) {
 	if s.altSnap.snap == nil {
-		return nil, ErrNoAltInSnapStorage
+		return nil, ErrNoAltSnapInSnapStorage
 	}
 	return s.altSnap.snap, nil
 }
