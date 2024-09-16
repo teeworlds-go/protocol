@@ -109,7 +109,10 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 			client.SnapshotStorage.PurgeUntil(deltaTick)
 
 			for _, callback := range client.Callbacks.Snapshot {
-				callback(newFullSnap, nil)
+				err = callback(newFullSnap, noOpFunc)
+				if err != nil {
+					return fmt.Errorf("failed to execute snapshot callback: %w", err)
+				}
 			}
 
 			client.Game.Input.AckGameTick = msg.GameTick
@@ -151,7 +154,10 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 			client.SnapshotStorage.PurgeUntil(deltaTick)
 
 			for _, callback := range client.Callbacks.Snapshot {
-				callback(newFullSnap, nil)
+				err = callback(newFullSnap, noOpFunc)
+				if err != nil {
+					return fmt.Errorf("failed to execute snapshot callback: %w", err)
+				}
 			}
 
 			client.Game.Input.AckGameTick = msg.GameTick
@@ -193,7 +199,7 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 			client.SnapshotStorage.PurgeUntil(deltaTick)
 
 			for _, callback := range client.Callbacks.Snapshot {
-				err = callback(prevSnap, nil)
+				err = callback(prevSnap, noOpFunc)
 				if err != nil {
 					return fmt.Errorf("failed to execute snapshot callback: %w", err)
 				}
@@ -254,4 +260,8 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 		return false, err
 	}
 	return true, nil
+}
+
+func noOpFunc() error {
+	return nil
 }

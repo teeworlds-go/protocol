@@ -69,6 +69,19 @@ func (client *Client) Connect(serverIp string, serverPort int) error {
 
 func (client *Client) ConnectContext(ctx context.Context, serverIp string, serverPort int) (err error) {
 	ctx, cancelCause := context.WithCancelCause(ctx)
+	defer cancelCause(nil) // always cancel
+
+	// wait for the reader goroutine to finish execution, before leaving this function scope
+	var wg sync.WaitGroup
+	defer wg.Wait()
+
+	ch := make(chan []byte, maxPacksize)
+	var d net.Dialer
+	conn, err := d.DialContext(ctx, "udp", fmt.Sprintf("%s:%d", serverIp, serverPort))
+	if err != nil {
+		return fmt.Errorf("failed to connect to server: %s:%d: %w", serverIp, serverPort, err)
+	}
+	client.Conn = conn
 	defer func() {
 		// only the first cancelation cause is relevant
 		// subsequent cancelations will be ignored
@@ -86,20 +99,9 @@ func (client *Client) ConnectContext(ctx context.Context, serverIp string, serve
 			err = ctxErr
 			return
 		}
-	}()
 
-	// wait for the reader goroutine to finish execution, before leaving this function scope
-	var wg sync.WaitGroup
-	defer wg.Wait()
-
-	ch := make(chan []byte, maxPacksize)
-	var d net.Dialer
-	conn, err := d.DialContext(ctx, "udp", fmt.Sprintf("%s:%d", serverIp, serverPort))
-	if err != nil {
-		return fmt.Errorf("failed to connect to server: %s:%d: %w", serverIp, serverPort, err)
-	}
-	client.Conn = conn
-	defer func() {
+		// close connection after error handling in order not to
+		// hide the actual cause of the error
 		closeErr := client.Conn.Close()
 		if closeErr != nil {
 			slog.Error("failed to close connection", "error", closeErr)

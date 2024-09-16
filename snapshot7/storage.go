@@ -17,6 +17,10 @@ const (
 	UninitializedTick = -1
 )
 
+var (
+	ErrNoAltSnapInSnapStorage = errors.New("there is no alt snap in the storage")
+)
+
 // TODO: do we even need this?
 //
 //	can we just put the snap as is in the map?
@@ -85,7 +89,7 @@ func (s *Storage) OldestTick() int {
 
 func (s *Storage) altSnapshot() (*Snapshot, error) {
 	if s.altSnap.snap == nil {
-		return nil, errors.New("there is no alt snap in the storage")
+		return nil, ErrNoAltSnapInSnapStorage
 	}
 	return s.altSnap.snap, nil
 }
