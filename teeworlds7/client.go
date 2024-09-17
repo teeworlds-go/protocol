@@ -61,8 +61,8 @@ type Client struct {
 	LocalClientId int
 
 	// cancelation & graceful shutdown handling
-	// These fields usually do not need to be accesse by the user
-	// They might only be needed whn you want to change the default behavio
+	// These fields usually do not need to be accessed by the user
+	// They might only be needed in case you want to change the default behavior
 	// of the OnDisconnect callback
 	Ctx         context.Context
 	CancelCause context.CancelCauseFunc
