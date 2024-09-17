@@ -1,11 +1,18 @@
 package teeworlds7
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/teeworlds-go/protocol/messages7"
 	"github.com/teeworlds-go/protocol/network7"
 	"github.com/teeworlds-go/protocol/protocol7"
+)
+
+var (
+	// This error is set as cancel cause in case that we are disconnected from the server
+	// This makes the error tangible for the user
+	ErrDisconnected = errors.New("disconnected")
 )
 
 func printUnknownMessage(msg messages7.NetMessage, msgType string) {
@@ -87,6 +94,7 @@ func (client *Client) processPacket(packet *protocol7.Packet) (err error) {
 			})
 		case *messages7.CtrlClose:
 			err = userMsgCallback(client.Callbacks.CtrlClose, msg, func() error {
+				client.CancelCause(fmt.Errorf("%w: %s", ErrDisconnected, msg.Reason))
 				fmt.Printf("disconnected (%s)\n", msg.Reason)
 				return nil
 			})
