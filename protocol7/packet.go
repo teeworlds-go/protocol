@@ -334,8 +334,6 @@ func (packet *Packet) Unpack(data []byte) (err error) {
 	}
 
 	if packet.Header.Flags.Compression {
-		// TODO: try avoiding repeated initialization of the huffman tree structure
-		// move this into the Packet struct or even further up
 		payload, err = huffman.Decompress(payload)
 		if err != nil {
 			return err
