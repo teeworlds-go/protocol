@@ -93,15 +93,9 @@ func (client *Client) ConnectContext(ctx context.Context, serverIp string, serve
 		if ctxErr := context.Cause(client.Ctx); ctxErr != nil && !errors.Is(ctxErr, context.Canceled) {
 			err = ctxErr
 		} else {
-			// send disconnect message to server before closing the connection.
-			reason := "connection closed"
-			if err != nil {
-				reason = fmt.Sprintf("connection closed: %v", err)
-			}
-
 			// send disconnect message to server in order not to
 			// occupy a slot on the server
-			disconnectErr := client.SendMessage(&messages7.CtrlClose{Reason: reason})
+			disconnectErr := client.SendMessage(&messages7.CtrlClose{})
 			if disconnectErr != nil {
 				slog.Error("failed to send disconnect message", "error", disconnectErr)
 			}
