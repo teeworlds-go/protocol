@@ -20,11 +20,6 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
-	// wrap context with an additional cancel function
-	// which allows to set a cause for the cancelation
-	ctx, cancelCause := context.WithCancelCause(ctx)
-	defer cancelCause(nil)
-
 	client := teeworlds7.NewClient()
 	client.Name = "nameless tee"
 
@@ -74,31 +69,24 @@ func main() {
 	client.OnDisconnect(func(msg *messages7.CtrlClose, defaultAction teeworlds7.DefaultAction) error {
 		fmt.Printf("disconnected (%s)\n", msg.Reason)
 
-		// cancel context on being kicked
-		// this will tell the application to
+		// cancel client context on being kicked
+		// this will tell the client to
 		// gracefully shutdown
-		cancelCause(fmt.Errorf("disconnected from server: %s", msg.Reason))
+		client.CancelCause(teeworlds7.DisconnectError{Reason: msg.Reason})
 		return nil
 	})
 
 	// if you do not implement OnError it will throw on error
 	client.OnError(func(err error) error {
-		fmt.Print(err)
+		fmt.Println(err)
 
 		// return nil to stop the error propagation
 		// return the error in order to quit the client execution
 		return nil
 	})
 
-	go func() {
-		err := client.ConnectContext(ctx, "127.0.0.1", 8303)
-		cancelCause(err)
-	}()
-
-	<-ctx.Done()
-
-	err := context.Cause(ctx)
-	if !errors.Is(err, context.Canceled) {
+	err := client.ConnectContext(ctx, "127.0.0.1", 8303)
+	if err != nil && !errors.Is(err, context.Canceled) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
