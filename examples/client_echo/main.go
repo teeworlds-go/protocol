@@ -29,16 +29,11 @@ func main() {
 		return client.SendChat(msg.Message)
 	})
 
-	client.OnDisconnect(func(msg *messages7.CtrlClose, defaultAction teeworlds7.DefaultAction) error {
-		cancel() // close application when kicked from server
-		return nil
-	})
-
 	err := client.ConnectContext(ctx, "127.0.0.1", 8303)
 	if err != nil && !errors.Is(err, context.Canceled) {
-		fmt.Println("failed to connect:", err)
+		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	fmt.Println("shutdown")
+	fmt.Println("graceful shutdown")
 }

@@ -1,6 +1,7 @@
 package teeworlds7
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"time"
@@ -58,6 +59,13 @@ type Client struct {
 
 	// might be -1 if we do not know our own id yet
 	LocalClientId int
+
+	// cancelation & graceful shutdown handling
+	// These fields usually do not need to be accessed by the user
+	// They might only be needed in case you want to change the default behavior
+	// of the OnDisconnect callback
+	Ctx         context.Context
+	CancelCause context.CancelCauseFunc
 }
 
 // TODO: add this for all items and move it to a different file

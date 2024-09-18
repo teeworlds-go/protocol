@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/teeworlds-go/protocol/messages7"
 	"github.com/teeworlds-go/protocol/network7"
 	"github.com/teeworlds-go/protocol/protocol7"
 )
@@ -68,8 +69,9 @@ func (client *Client) Connect(serverIp string, serverPort int) error {
 }
 
 func (client *Client) ConnectContext(ctx context.Context, serverIp string, serverPort int) (err error) {
-	ctx, cancelCause := context.WithCancelCause(ctx)
-	defer cancelCause(nil) // always cancel
+	// create a child context that we have ownership over.
+	client.Ctx, client.CancelCause = context.WithCancelCause(ctx)
+	defer client.CancelCause(nil) // always cancel
 
 	// wait for the reader goroutine to finish execution, before leaving this function scope
 	var wg sync.WaitGroup
@@ -77,7 +79,7 @@ func (client *Client) ConnectContext(ctx context.Context, serverIp string, serve
 
 	ch := make(chan []byte, maxPacksize)
 	var d net.Dialer
-	conn, err := d.DialContext(ctx, "udp", fmt.Sprintf("%s:%d", serverIp, serverPort))
+	conn, err := d.DialContext(client.Ctx, "udp", fmt.Sprintf("%s:%d", serverIp, serverPort))
 	if err != nil {
 		return fmt.Errorf("failed to connect to server: %s:%d: %w", serverIp, serverPort, err)
 	}
@@ -86,18 +88,17 @@ func (client *Client) ConnectContext(ctx context.Context, serverIp string, serve
 		// only the first cancelation cause is relevant
 		// subsequent cancelations will be ignored
 		// this one might be a subsequent cancelation
-		cancelCause(err)
+		client.CancelCause(err)
 
-		ctxErr := context.Cause(ctx)
-		if ctxErr != nil {
+		if ctxErr := context.Cause(client.Ctx); ctxErr != nil && !errors.Is(ctxErr, context.Canceled) {
 			err = ctxErr
-			return
-		}
-
-		ctxErr = ctx.Err()
-		if ctxErr != nil && !errors.Is(ctxErr, context.Canceled) {
-			err = ctxErr
-			return
+		} else {
+			// send disconnect message to server in order not to
+			// occupy a slot on the server
+			disconnectErr := client.SendMessage(&messages7.CtrlClose{})
+			if disconnectErr != nil {
+				slog.Error("failed to send disconnect message", "error", disconnectErr)
+			}
 		}
 
 		// close connection after error handling in order not to
@@ -112,7 +113,7 @@ func (client *Client) ConnectContext(ctx context.Context, serverIp string, serve
 	client.Game.Players = make([]Player, network7.MaxClients)
 
 	wg.Add(1)
-	go readNetwork(ctx, cancelCause, &wg, ch, conn)
+	go readNetwork(client.Ctx, client.CancelCause, &wg, ch, conn)
 
 	err = client.SendPacket(client.Session.CtrlToken())
 	if err != nil {
@@ -158,7 +159,7 @@ func (client *Client) ConnectContext(ctx context.Context, serverIp string, serve
 					return err
 				}
 			}
-		case <-ctx.Done():
+		case <-client.Ctx.Done():
 			return nil
 		}
 	}
