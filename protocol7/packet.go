@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/teeworlds-go/huffman"
+	"github.com/teeworlds-go/huffman/v2"
 	"github.com/teeworlds-go/protocol/chunk7"
 	"github.com/teeworlds-go/protocol/messages7"
 	"github.com/teeworlds-go/protocol/network7"
@@ -334,10 +334,7 @@ func (packet *Packet) Unpack(data []byte) (err error) {
 	}
 
 	if packet.Header.Flags.Compression {
-		// TODO: try avoiding repeated initialization of the huffman tree structure
-		// move this into the Packet struct or even further up
-		huff := huffman.Huffman{}
-		payload, err = huff.Decompress(payload)
+		payload, err = huffman.Decompress(payload)
 		if err != nil {
 			return err
 		}
@@ -373,10 +370,8 @@ func (packet *Packet) Pack(connection *Session) []byte {
 	}
 
 	if packet.Header.Flags.Compression {
-		// TODO: store huffman object in connection to avoid reallocating memory
-		huff := huffman.Huffman{}
 		var err error
-		payload, err = huff.Compress(payload)
+		payload, err = huffman.Compress(payload)
 		if err != nil {
 			panic(err)
 		}
