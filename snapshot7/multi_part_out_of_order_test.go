@@ -196,9 +196,7 @@ func Test2PartSnap(t *testing.T) {
 
 	// TODO: this crashes
 
-	// // we don't have the actual prev snap here
-	// // just use an empty snap should be fine too
-	// // then the final values will be wrong but it should still parse correctly i think
+	// // this is the first snap being sent so we delta against empty
 	// prevSnap, found := client.SnapshotStorage.Get(snapshot7.EmptySnapTick)
 	// require.True(t, found)
 
