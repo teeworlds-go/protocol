@@ -88,9 +88,6 @@ func (b *Bot) start(ctx context.Context, ip string, port int) error {
 		case "!help", "!h":
 			return client.SendChat("Available commands: !trivia, !top, !score and !leave")
 		}
-		if msg.Message == "!leave" {
-			cancelCause(errors.New("leave command !leave received"))
-		}
 
 		return nil
 	})
