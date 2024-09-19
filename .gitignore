@@ -7,3 +7,4 @@ protocol
 .vscode/
 examples/client_echo/client_echo
 examples/client_verbose/client_verbose
+examples/client_trivia/client_trivia
