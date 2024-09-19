@@ -9,6 +9,8 @@ import (
 )
 
 func TestServerFactory(t *testing.T) {
+	t.Parallel()
+
 	sf := bot.NewServerFactory()
 	ctx := context.Background()
 
