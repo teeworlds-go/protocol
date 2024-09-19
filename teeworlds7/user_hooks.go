@@ -275,6 +275,10 @@ func (client *Client) OnMsgSnapSmall(callback func(msg *messages7.SnapSmall, def
 	client.Callbacks.SysSnapSmall = append(client.Callbacks.SysSnapSmall, callback)
 }
 
+func (client *Client) OnServerInfo(callback func(msg *messages7.ServerInfo, defaultAction DefaultAction) error) {
+	client.Callbacks.SysServerInfo = append(client.Callbacks.SysServerInfo, callback)
+}
+
 // --------------------------------
 // outgoing system messages
 // --------------------------------
