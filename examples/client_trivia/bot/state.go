@@ -59,6 +59,10 @@ func (s *State) Answer(username, answer string) (string, bool) {
 }
 
 func (s *State) Top() string {
+	if len(s.scoreMap) == 0 {
+		return "No scores yet"
+	}
+
 	list := make([]tuple, 0, len(s.scoreMap))
 	for k, v := range s.scoreMap {
 		list = append(list, tuple{PlayerName: k, Score: v})
@@ -72,18 +76,12 @@ func (s *State) Top() string {
 	sb.Grow(16 * len(list))
 
 	for i, t := range list {
-		if t.Score == 0 {
-			break
-		}
 		sb.WriteString(fmt.Sprintf("%d. %s: %d", i+1, t.PlayerName, t.Score))
 		if i < len(list)-1 {
 			sb.WriteString(", ")
 		}
 	}
 
-	if sb.Len() == 0 {
-		return "No scores yet"
-	}
 	return sb.String()
 }
 
