@@ -83,7 +83,7 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 				return fmt.Errorf("failed to store incoming data snap: %w", err)
 			}
 
-			client.SnapshotStorage.SnapshotParts  |= 1 << msg.Part
+			client.SnapshotStorage.SnapshotParts |= 1 << msg.Part
 
 			if msg.Part != msg.NumParts-1 {
 				// TODO: remove this print
