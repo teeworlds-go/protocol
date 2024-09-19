@@ -71,6 +71,7 @@ Example usages:
 
 - [client_verbose](./examples/client_verbose/) a verbose client show casing the easy to use high level api
 - [client_echo](./examples/client_echo/) a simple client echoing messages in chat
+- [client_trivia](./examples/client_trivia/) a trivia chat bot
 
 ## low level api for power users
 
