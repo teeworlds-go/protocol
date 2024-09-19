@@ -62,6 +62,15 @@ type Storage struct {
 	// of multi part snapshots
 	// use AddIncomingData() and IncomingData() to read and write
 	multiPartIncomingData []byte
+
+	// the tick we are currently collecting parts for
+	CurrentRecvTick int
+
+	// received parts for the current tick
+	// as a bit field
+	// to check if we received all previous parts
+	// when we get the last part number
+	SnapshotParts int
 }
 
 func NewStorage() *Storage {

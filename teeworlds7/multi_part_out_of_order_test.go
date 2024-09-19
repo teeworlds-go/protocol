@@ -1,4 +1,4 @@
-package snapshot7_test
+package teeworlds7
 
 import (
 	"testing"
@@ -7,7 +7,6 @@ import (
 	"github.com/teeworlds-go/protocol/messages7"
 	"github.com/teeworlds-go/protocol/network7"
 	"github.com/teeworlds-go/protocol/protocol7"
-	"github.com/teeworlds-go/protocol/teeworlds7"
 )
 
 // go client connected to public ~40 player ddnet Linear server
@@ -188,28 +187,21 @@ func Test2PartSnap(t *testing.T) {
 	// client with state and delta unpacker
 	// ------------------------------------
 
-	client := teeworlds7.NewClient()
+	client := NewClient()
 
-	// part 0-2
-	client.SnapshotStorage.AddIncomingData(part1.Part, part1.NumParts, part1.Data)
-	client.SnapshotStorage.AddIncomingData(part0.Part, part0.NumParts, part0.Data) // out of order
+	client.Session = protocol7.NewSession()
+	client.Game.Players = make([]Player, network7.MaxClients)
+	client.Session.ServerToken = [4]byte{0xd3, 0x1a, 0x0a, 0xd6}
 
-	// TODO: this crashes
+	packet = protocol7.Packet{}
+	err = packet.Unpack(dumpPart1)
+	require.NoError(t, err)
+	err = client.processPacket(&packet)
+	require.NoError(t, err)
 
-	// // this is the first snap being sent so we delta against empty
-	// prevSnap, found := client.SnapshotStorage.Get(snapshot7.EmptySnapTick)
-	// require.True(t, found)
-
-	// u := &packer.Unpacker{}
-	// u.Reset(client.SnapshotStorage.IncomingData())
-
-	// newFullSnap, err := snapshot7.UnpackDelta(prevSnap, u)
-	// require.NoError(t, err)
-
-	// // TODO: should this be part0 here?
-	// err = client.SnapshotStorage.Add(part0.GameTick, newFullSnap)
-	// require.NoError(t, err)
-
-	// // TODO:
-	// // require.Equal(t, 999999, len(newFullSnap.Items))
+	packet = protocol7.Packet{}
+	err = packet.Unpack(dumpPart0)
+	require.NoError(t, err)
+	err = client.processPacket(&packet)
+	require.NoError(t, err)
 }

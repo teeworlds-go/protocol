@@ -68,20 +68,36 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 			deltaTick := msg.GameTick - msg.DeltaTick
 			slog.Debug("got snap", "delta_tick", deltaTick, "raw_delta_tick", msg.DeltaTick, "game_tick", msg.GameTick, "part", msg.Part, "num_parts", msg.NumParts)
 
+			if client.SnapshotStorage.CurrentRecvTick < msg.GameTick {
+				slog.Debug("dropping snap with too old game tick", "game_tick", msg.GameTick, "current_recv_tick", client.SnapshotStorage.CurrentRecvTick)
+				return nil
+			}
+
+			if msg.GameTick != client.SnapshotStorage.CurrentRecvTick {
+				client.SnapshotStorage.SnapshotParts = 0
+				client.SnapshotStorage.CurrentRecvTick = msg.GameTick
+			}
+
 			err := client.SnapshotStorage.AddIncomingData(msg.Part, msg.NumParts, msg.Data)
 			if err != nil {
 				return fmt.Errorf("failed to store incoming data snap: %w", err)
 			}
 
-			// TODO: this is as naive as it gets
-			//       we should check if we actually received all the previous parts
-			//       teeworlds does some fancy bit stuff here
-			//       m_SnapshotParts |= 1<<Part;
+			client.SnapshotStorage.SnapshotParts  |= 1 << msg.Part
+
 			if msg.Part != msg.NumParts-1 {
 				// TODO: remove this print
 				slog.Debug("storing partial snap", "part", msg.Part, "num_parts", msg.NumParts)
 				return nil
 			}
+
+			if client.SnapshotStorage.SnapshotParts != msg.NumParts-1 {
+				// TODO: remove this print
+				slog.Debug("got last part but missing previous parts", "part", msg.Part, "num_parts", msg.NumParts)
+				return nil
+			}
+
+			client.SnapshotStorage.SnapshotParts = 0
 
 			prevSnap, found := client.SnapshotStorage.Get(deltaTick)
 			if !found {
@@ -119,6 +135,7 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 			client.Game.Input.PredictionTick = client.SnapshotStorage.NewestTick()
 			client.Game.Snap.fill(newFullSnap)
 			client.SnapshotStorage.SetAltSnap(msg.GameTick, newFullSnap)
+			client.SnapshotStorage.CurrentRecvTick = msg.GameTick
 
 			response.Messages = append(response.Messages, client.Game.Input)
 			return nil
@@ -127,6 +144,17 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 		err = userMsgCallback(client.Callbacks.SysSnapSingle, msg, func() error {
 			deltaTick := msg.GameTick - msg.DeltaTick
 			slog.Debug("got snap single", "delta_tick", deltaTick, "raw_delta_tick", msg.DeltaTick, "game_tick", msg.GameTick)
+
+			if client.SnapshotStorage.CurrentRecvTick < msg.GameTick {
+				slog.Debug("dropping snap with too old game tick", "game_tick", msg.GameTick, "current_recv_tick", client.SnapshotStorage.CurrentRecvTick)
+				return nil
+			}
+
+			if msg.GameTick != client.SnapshotStorage.CurrentRecvTick {
+				client.SnapshotStorage.SnapshotParts = 0
+				client.SnapshotStorage.CurrentRecvTick = msg.GameTick
+			}
+
 			prevSnap, found := client.SnapshotStorage.Get(deltaTick)
 
 			if !found {
@@ -167,6 +195,7 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 			altSnap := newFullSnap
 			client.Game.Snap.fill(altSnap)
 			client.SnapshotStorage.SetAltSnap(msg.GameTick, altSnap)
+			client.SnapshotStorage.CurrentRecvTick = msg.GameTick
 
 			err = client.SendInput()
 			if err != nil {
@@ -179,6 +208,17 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 		err = userMsgCallback(client.Callbacks.SysSnapEmpty, msg, func() error {
 			deltaTick := msg.GameTick - msg.DeltaTick
 			slog.Debug("got snap empty", "delta_tick", deltaTick, "raw_delta_tick", msg.DeltaTick, "game_tick", msg.GameTick)
+
+			if client.SnapshotStorage.CurrentRecvTick < msg.GameTick {
+				slog.Debug("dropping snap with too old game tick", "game_tick", msg.GameTick, "current_recv_tick", client.SnapshotStorage.CurrentRecvTick)
+				return nil
+			}
+
+			if msg.GameTick != client.SnapshotStorage.CurrentRecvTick {
+				client.SnapshotStorage.SnapshotParts = 0
+				client.SnapshotStorage.CurrentRecvTick = msg.GameTick
+			}
+
 			prevSnap, found := client.SnapshotStorage.Get(deltaTick)
 
 			if !found {
@@ -211,6 +251,7 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 			// reuse the old game state
 			// there is no need to refill if it is the same snapshot anyways
 			// client.Game.Snap.fill(prevSnap)
+			client.SnapshotStorage.CurrentRecvTick = msg.GameTick
 
 			response.Messages = append(response.Messages, client.Game.Input)
 			return nil
