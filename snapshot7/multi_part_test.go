@@ -378,4 +378,35 @@ func Test4PartSnap(t *testing.T) {
 	// and since we don't have the delta the 299 means
 	// that there were 299 changes or additions which could be true
 	require.Equal(t, 299, len(newFullSnap.Items))
+
+	// this full snap has bogus values
+	// because we used a wrong prev snap to undiff
+
+	item := newFullSnap.Items[0]
+	require.Equal(t, 0, item.TypeId())
+	require.Equal(t, 4, item.Size())
+
+	item = newFullSnap.Items[1]
+	require.Equal(t, 0, item.TypeId())
+	require.Equal(t, 4, item.Size())
+
+	item = newFullSnap.Items[2]
+	require.Equal(t, 0, item.TypeId())
+	require.Equal(t, 4, item.Size())
+
+	item = newFullSnap.Items[3]
+	require.Equal(t, 0, item.TypeId())
+	require.Equal(t, 4, item.Size())
+
+	item = newFullSnap.Items[4]
+	require.Equal(t, 0, item.TypeId())
+	require.Equal(t, 4, item.Size())
+
+	item = newFullSnap.Items[5]
+	require.Equal(t, 32767, item.TypeId())
+	require.Equal(t, 3, item.Size())
+
+	item = newFullSnap.Items[6]
+	require.Equal(t, 6, item.TypeId())
+	require.Equal(t, 3, item.Size())
 }
