@@ -14,15 +14,8 @@ import (
 	"github.com/teeworlds-go/protocol/snapshot7"
 )
 
-type ClientLogLevel int
-
 const (
 	UnknownClientId = -1
-)
-
-const (
-	ClientLogLevel_Verbose ClientLogLevel = iota
-	ClientLogLevel_Silent
 )
 
 type Player struct {
@@ -75,8 +68,7 @@ type Client struct {
 	Ctx         context.Context
 	CancelCause context.CancelCauseFunc
 
-	Logger   *log.Logger
-	LogLevel ClientLogLevel
+	Logger *log.Logger
 }
 
 // TODO: add this for all items and move it to a different file
