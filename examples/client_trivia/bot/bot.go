@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"log"
 	"log/slog"
 	"strconv"
 	"strings"
@@ -66,6 +68,7 @@ func (b *Bot) start(ctx context.Context, ip string, port int) error {
 	defer cancelCause(nil)
 
 	client := teeworlds7.NewClient()
+	client.Logger = log.New(io.Discard, "", 0) // an example on how to discard protocol debugging logs
 
 	client.OnUnknown(func(msg *messages7.Unknown, defaultAction teeworlds7.DefaultAction) error {
 		return nil
