@@ -2,6 +2,7 @@ package snapshot7
 
 import (
 	"fmt"
+	"log"
 	"log/slog"
 
 	"github.com/teeworlds-go/protocol/network7"
@@ -143,7 +144,7 @@ func (snap *Snapshot) GetItemIndex(key int) (index int, found bool) {
 // it returns the new full snapshot with the delta applied to the from
 //
 // See also (Snapshot *)Unpack()
-func UnpackDelta(from *Snapshot, u *packer.Unpacker) (*Snapshot, error) {
+func UnpackDelta(l *log.Logger, from *Snapshot, u *packer.Unpacker) (*Snapshot, error) {
 	// TODO: add all the error checking the C++ reference implementation has
 
 	snap := &Snapshot{}
@@ -152,12 +153,12 @@ func UnpackDelta(from *Snapshot, u *packer.Unpacker) (*Snapshot, error) {
 	snap.NumItemDeltas = u.GetInt()
 	u.GetInt() // _zero
 
-	slog.Debug("got new snapshot!", "num_deleted", snap.NumRemovedItems, "num_updates", snap.NumItemDeltas)
+	l.Println("got new snapshot!", "num_deleted", snap.NumRemovedItems, "num_updates", snap.NumItemDeltas)
 
 	deletedKeys := make([]int, snap.NumRemovedItems)
 	for d := 0; d < snap.NumRemovedItems; d++ {
 		deletedKeys[d] = u.GetInt()
-		slog.Debug("delta unpack del key", "key", deletedKeys[d], "d_index", d, "num_deleted", snap.NumRemovedItems, "remaining_data", u.RemainingData())
+		l.Println("delta unpack del key", "key", deletedKeys[d], "d_index", d, "num_deleted", snap.NumRemovedItems, "remaining_data", u.RemainingData())
 	}
 
 	for i := 0; i < len(from.Items); i++ {
@@ -166,7 +167,7 @@ func UnpackDelta(from *Snapshot, u *packer.Unpacker) (*Snapshot, error) {
 
 		for _, deletedKey := range deletedKeys {
 			if deletedKey == ItemKey(fromItem) {
-				slog.Debug("delta del item", "deleted_key", deletedKey, "item_type", fromItem.TypeId(), "item_id", fromItem.Id())
+				l.Println("delta del item", "deleted_key", deletedKey, "item_type", fromItem.TypeId(), "item_id", fromItem.Id())
 				keep = false
 				break
 			}
@@ -181,7 +182,7 @@ func UnpackDelta(from *Snapshot, u *packer.Unpacker) (*Snapshot, error) {
 		itemType := u.GetInt()
 		itemId := u.GetInt()
 
-		slog.Debug("unpack item snap item ", "num", i, "total", snap.NumItemDeltas, "type", itemType, "id", itemId)
+		l.Println("unpack item snap item ", "num", i, "total", snap.NumItemDeltas, "type", itemType, "id", itemId)
 
 		item := object7.NewObject(itemType, itemId, u)
 		err := item.Unpack(u)

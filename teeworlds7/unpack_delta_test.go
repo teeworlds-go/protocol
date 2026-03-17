@@ -1,6 +1,7 @@
 package teeworlds7_test
 
 import (
+	"log"
 	"testing"
 
 	"github.com/teeworlds-go/protocol/internal/testutils/require"
@@ -216,7 +217,7 @@ func TestUnpackDelta(t *testing.T) {
 	u := &packer.Unpacker{}
 	u.Reset(snapSingle1.Data)
 
-	newFullSnap, err := snapshot7.UnpackDelta(prevSnap, u)
+	newFullSnap, err := snapshot7.UnpackDelta(log.Default(), prevSnap, u)
 	require.NoError(t, err)
 
 	err = client.SnapshotStorage.Add(snapSingle1.GameTick, newFullSnap)
@@ -231,7 +232,7 @@ func TestUnpackDelta(t *testing.T) {
 
 	u.Reset(snapSingle2.Data)
 
-	newFullSnap, err = snapshot7.UnpackDelta(prevSnap, u)
+	newFullSnap, err = snapshot7.UnpackDelta(log.Default(), prevSnap, u)
 	require.NoError(t, err)
 
 	err = client.SnapshotStorage.Add(snapSingle2.GameTick, newFullSnap)

@@ -3,6 +3,7 @@ package snapshot7_test
 // ddnet rus production server
 
 import (
+	"log"
 	"testing"
 
 	"github.com/teeworlds-go/protocol/internal/testutils/require"
@@ -196,7 +197,7 @@ func TestDdnetCrash(t *testing.T) {
 	u := &packer.Unpacker{}
 	u.Reset(client.SnapshotStorage.IncomingData())
 
-	newFullSnap, err := snapshot7.UnpackDelta(prevSnap, u)
+	newFullSnap, err := snapshot7.UnpackDelta(log.Default(), prevSnap, u)
 	require.NoError(t, err)
 
 	err = client.SnapshotStorage.Add(part1.GameTick, newFullSnap)

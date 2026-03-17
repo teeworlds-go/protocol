@@ -20,23 +20,23 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 	switch msg := netMsg.(type) {
 	case *messages7.MapChange:
 		err = userMsgCallback(client.Callbacks.SysMapChange, msg, func() error {
-			fmt.Println("got map change")
+			client.Logger.Println("got map change")
 			response.Messages = append(response.Messages, &messages7.Ready{})
 			return nil
 		})
 	case *messages7.MapData:
 		err = userMsgCallback(client.Callbacks.SysMapData, msg, func() error {
-			fmt.Printf("got map chunk %x\n", msg.Data)
+			client.Logger.Printf("got map chunk %x\n", msg.Data)
 			return nil
 		})
 	case *messages7.ServerInfo:
 		err = userMsgCallback(client.Callbacks.SysServerInfo, msg, func() error {
-			fmt.Printf("connected to server with name '%s'\n", msg.Name)
+			client.Logger.Printf("connected to server with name '%s'\n", msg.Name)
 			return nil
 		})
 	case *messages7.ConReady:
 		err = userMsgCallback(client.Callbacks.SysConReady, msg, func() error {
-			fmt.Println("connected, sending info")
+			client.Logger.Println("connected, sending info")
 			info := &messages7.ClStartInfo{
 				Name:                  client.Name,
 				Clan:                  client.Clan,
@@ -114,7 +114,7 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 			u := &packer.Unpacker{}
 			u.Reset(client.SnapshotStorage.IncomingData())
 
-			newFullSnap, err := snapshot7.UnpackDelta(prevSnap, u)
+			newFullSnap, err := snapshot7.UnpackDelta(client.Logger, prevSnap, u)
 			if err != nil {
 				return fmt.Errorf("delta unpack failed: %w", err)
 			}
@@ -171,7 +171,7 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 			u := &packer.Unpacker{}
 			u.Reset(msg.Data)
 
-			newFullSnap, err := snapshot7.UnpackDelta(prevSnap, u)
+			newFullSnap, err := snapshot7.UnpackDelta(client.Logger, prevSnap, u)
 			if err != nil {
 				return fmt.Errorf("delta unpack failed: %w", err)
 			}
@@ -263,38 +263,38 @@ func (client *Client) processSystem(netMsg messages7.NetMessage, response *proto
 		})
 	case *messages7.RconAuthOn:
 		err = userMsgCallback(client.Callbacks.SysRconAuthOn, msg, func() error {
-			fmt.Println("you are now authenticated in rcon")
+			client.Logger.Println("you are now authenticated in rcon")
 			return nil
 		})
 	case *messages7.RconAuthOff:
 		err = userMsgCallback(client.Callbacks.SysRconAuthOff, msg, func() error {
-			fmt.Println("you are no longer authenticated in rcon")
+			client.Logger.Println("you are no longer authenticated in rcon")
 			return nil
 		})
 	case *messages7.RconLine:
 		err = userMsgCallback(client.Callbacks.SysRconLine, msg, func() error {
-			fmt.Printf("[rcon] %s\n", msg.Line)
+			client.Logger.Printf("[rcon] %s\n", msg.Line)
 			return nil
 		})
 	case *messages7.RconCmdAdd:
 		err = userMsgCallback(client.Callbacks.SysRconCmdAdd, msg, func() error {
-			fmt.Printf("got rcon cmd=%s %s %s\n", msg.Name, msg.Params, msg.Help)
+			client.Logger.Printf("got rcon cmd=%s %s %s\n", msg.Name, msg.Params, msg.Help)
 			return nil
 		})
 	case *messages7.RconCmdRem:
 		err = userMsgCallback(client.Callbacks.SysRconCmdRem, msg, func() error {
-			fmt.Printf("removed cmd=%s\n", msg.Name)
+			client.Logger.Printf("removed cmd=%s\n", msg.Name)
 			return nil
 		})
 	case *messages7.Unknown:
 		err = userMsgCallback(client.Callbacks.MsgUnknown, msg, func() error {
 			// TODO: msg id of unknown messages should not be -1
-			fmt.Println("TODO: why is the msg id -1???")
-			printUnknownMessage(msg, "unknown system")
+			client.Logger.Println("TODO: why is the msg id -1???")
+			printUnknownMessage(client.Logger, msg, "unknown system")
 			return nil
 		})
 	default:
-		printUnknownMessage(netMsg, "unprocessed system")
+		printUnknownMessage(client.Logger, netMsg, "unprocessed system")
 		return false, nil
 	}
 	if err != nil {

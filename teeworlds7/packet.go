@@ -2,6 +2,7 @@ package teeworlds7
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/teeworlds-go/protocol/messages7"
 	"github.com/teeworlds-go/protocol/network7"
@@ -20,23 +21,23 @@ func (e DisconnectError) Error() string {
 	return fmt.Sprintf("disconnected: %s", e.Reason)
 }
 
-func printUnknownMessage(msg messages7.NetMessage, msgType string) {
-	fmt.Printf("%s message id=%d\n", msgType, msg.MsgId())
+func printUnknownMessage(l *log.Logger, msg messages7.NetMessage, msgType string) {
+	l.Printf("%s message id=%d\n", msgType, msg.MsgId())
 	if msg.Header() == nil {
-		fmt.Println("  header: nil")
+		l.Println("  header: nil")
 	} else {
-		fmt.Printf("  header: %x\n", msg.Header().Pack())
+		l.Printf("  header: %x\n", msg.Header().Pack())
 	}
-	fmt.Printf("  payload: %x\n", msg.Pack())
+	l.Printf("  payload: %x\n", msg.Pack())
 	if msg.Header() != nil {
-		fmt.Printf("  full msg: %x%x\n", msg.Header().Pack(), msg.Pack())
+		l.Printf("  full msg: %x%x\n", msg.Header().Pack(), msg.Pack())
 	}
 }
 
-func (client *Client) processMessage(msg messages7.NetMessage, response *protocol7.Packet) (process bool, err error) {
+func (client *Client) processMessage(l *log.Logger, msg messages7.NetMessage, response *protocol7.Packet) (process bool, err error) {
 	if msg.Header() == nil {
 		// this is probably an unknown message
-		fmt.Printf("warning ignoring msgId=%d because header is nil\n", msg.MsgId())
+		l.Printf("warning ignoring msgId=%d because header is nil\n", msg.MsgId())
 		return false, nil
 	}
 	if msg.Header().Flags.Vital {
@@ -75,18 +76,18 @@ func (client *Client) processPacket(packet *protocol7.Packet) (err error) {
 		switch msg := msg.(type) {
 		case *messages7.CtrlKeepAlive:
 			err = userMsgCallback(client.Callbacks.CtrlKeepAlive, msg, func() error {
-				fmt.Println("got keep alive")
+				client.Logger.Println("got keep alive")
 				return nil
 			})
 		case *messages7.CtrlConnect:
 			err = userMsgCallback(client.Callbacks.CtrlConnect, msg, func() error {
-				fmt.Println("we got connect as a client. this should never happen lol.")
-				fmt.Println("who is trying to connect to us? We are not a server!")
+				client.Logger.Println("we got connect as a client. this should never happen lol.")
+				client.Logger.Println("who is trying to connect to us? We are not a server!")
 				return nil
 			})
 		case *messages7.CtrlAccept:
 			err = userMsgCallback(client.Callbacks.CtrlAccept, msg, func() error {
-				fmt.Println("got accept")
+				client.Logger.Println("got accept")
 				response.Messages = append(
 					response.Messages,
 					&messages7.Info{
@@ -100,12 +101,12 @@ func (client *Client) processPacket(packet *protocol7.Packet) (err error) {
 		case *messages7.CtrlClose:
 			err = userMsgCallback(client.Callbacks.CtrlClose, msg, func() error {
 				client.CancelCause(DisconnectError{Reason: msg.Reason})
-				fmt.Printf("disconnected (%s)\n", msg.Reason)
+				client.Logger.Printf("disconnected (%s)\n", msg.Reason)
 				return nil
 			})
 		case *messages7.CtrlToken:
 			err = userMsgCallback(client.Callbacks.CtrlToken, msg, func() error {
-				fmt.Printf("got server token %x\n", msg.Token)
+				client.Logger.Printf("got server token %x\n", msg.Token)
 				client.Session.ServerToken = msg.Token
 				response.Header.Token = msg.Token
 				response.Messages = append(
@@ -118,7 +119,7 @@ func (client *Client) processPacket(packet *protocol7.Packet) (err error) {
 			})
 		case *messages7.Unknown:
 			err = userMsgCallback(client.Callbacks.MsgUnknown, msg, func() error {
-				printUnknownMessage(msg, "unknown control")
+				printUnknownMessage(client.Logger, msg, "unknown control")
 				return nil
 			})
 			if err != nil {
@@ -133,7 +134,7 @@ func (client *Client) processPacket(packet *protocol7.Packet) (err error) {
 	}
 
 	for _, msg := range packet.Messages {
-		_, err = client.processMessage(msg, response)
+		_, err = client.processMessage(client.Logger, msg, response)
 		if err != nil {
 			return err
 		}

@@ -1,7 +1,6 @@
 package object7
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/teeworlds-go/protocol/network7"
@@ -85,7 +84,7 @@ func NewObject(typeId int, itemId int, u *packer.Unpacker) SnapObject {
 	} else if typeId == network7.ObjGameDataRace {
 		race := &GameDataRace{ItemId: itemId}
 		size := u.GetInt()
-		fmt.Printf("got gamedata race red size=%d remaining unpacker data=%x\n", size, u.RemainingData())
+		//fmt.Printf("got gamedata race red size=%d remaining unpacker data=%x\n", size, u.RemainingData())
 		if size != race.Size() {
 			log.Panicf("got game data race with size %d but expected size %d\n", size, race.Size())
 		}

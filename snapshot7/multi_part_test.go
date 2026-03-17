@@ -1,6 +1,7 @@
 package snapshot7_test
 
 import (
+	"log"
 	"testing"
 
 	"github.com/teeworlds-go/protocol/internal/testutils/require"
@@ -367,7 +368,7 @@ func Test4PartSnap(t *testing.T) {
 	u := &packer.Unpacker{}
 	u.Reset(client.SnapshotStorage.IncomingData())
 
-	newFullSnap, err := snapshot7.UnpackDelta(prevSnap, u)
+	newFullSnap, err := snapshot7.UnpackDelta(log.Default(), prevSnap, u)
 	require.NoError(t, err)
 
 	err = client.SnapshotStorage.Add(part2.GameTick, newFullSnap)
